@@ -223,6 +223,8 @@
 
   var els = {};
   var dragSrcPos = -1;
+  var orderReceived = false;
+  var migrationTimer = null;
 
   // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -849,15 +851,22 @@
       if (!used[i]) { slot = i; break; }
     }
     if (slot < 0) return;
-    postText("button_order", state.order.concat(slot).join(","));
+    state.order = state.order.concat(slot);
+    renderPreview();
+    renderButtonList();
+    postText("button_order", state.order.join(","));
   }
 
   function deleteButton(slot) {
-    postText("button_order", state.order.filter(function (s) { return s !== slot; }).join(","));
+    state.order = state.order.filter(function (s) { return s !== slot; });
+    if (state.selectedSlot === slot) state.selectedSlot = -1;
+    renderPreview();
+    renderButtonList();
+    renderSettingsPanel();
+    postText("button_order", state.order.join(","));
     postText("button_" + slot + "_entity", "");
     postText("button_" + slot + "_label", "");
     postSelect("button_" + slot + "_icon", "Auto");
-    if (state.selectedSlot === slot) state.selectedSlot = -1;
   }
 
   // ── Clock ───────────────────────────────────────────────────────────
@@ -883,6 +892,7 @@
 
       // --- Button order ---
       if (id === "text-button_order") {
+        orderReceived = true;
         state.order = parseOrder(val);
         renderPreview();
         renderButtonList();
@@ -918,6 +928,7 @@
           if (state.selectedSlot === slot) {
             syncInput(document.getElementById(field === "entity" ? "sp-inp-entity" : "sp-inp-label"), val);
           }
+          scheduleMigration();
         }
         return;
       }
@@ -997,6 +1008,24 @@
 
   function syncInput(el, val) {
     if (el && document.activeElement !== el) el.value = val;
+  }
+
+  function scheduleMigration() {
+    if (orderReceived || state.order.length > 0) return;
+    clearTimeout(migrationTimer);
+    migrationTimer = setTimeout(function () {
+      if (orderReceived || state.order.length > 0) return;
+      var autoOrder = [];
+      for (var i = 0; i < NUM_SLOTS; i++) {
+        if (state.buttons[i].entity) autoOrder.push(i + 1);
+      }
+      if (autoOrder.length > 0) {
+        state.order = autoOrder;
+        renderPreview();
+        renderButtonList();
+        postText("button_order", autoOrder.join(","));
+      }
+    }, 2000);
   }
 
   function updateTempPreview() {

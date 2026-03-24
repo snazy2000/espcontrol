@@ -852,9 +852,8 @@
     }
     if (slot < 0) return;
     state.order = state.order.concat(slot);
-    renderPreview();
-    renderButtonList();
     postText("button_order", state.order.join(","));
+    selectButton(slot);
   }
 
   function deleteButton(slot) {

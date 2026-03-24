@@ -7,7 +7,7 @@
 
 switch:
   - platform: template
-    name: "Display: Indoor Temp"
+    name: "Indoor Temp Enable"
     id: indoor_temp_enable
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
@@ -25,7 +25,7 @@ switch:
             - lambda: 'lv_obj_add_flag(id(temperatures), LV_OBJ_FLAG_HIDDEN);'
 
   - platform: template
-    name: "Display: Outdoor Temp"
+    name: "Outdoor Temp Enable"
     id: outdoor_temp_enable
     optimistic: true
     restore_mode: RESTORE_DEFAULT_OFF
@@ -44,7 +44,7 @@ switch:
 
 text:
   - platform: template
-    name: "Display: Indoor Temp Entity"
+    name: "Indoor Temp Entity"
     id: indoor_temp_entity
     optimistic: true
     restore_value: true
@@ -58,7 +58,7 @@ text:
       sorting_group_id: sg_display
 
   - platform: template
-    name: "Display: Outdoor Temp Entity"
+    name: "Outdoor Temp Entity"
     id: outdoor_temp_entity
     optimistic: true
     restore_value: true
@@ -73,7 +73,7 @@ text:
 
   # Optional presence sensor for screensaver (e.g. mmWave)
   - platform: template
-    name: "Screensaver: Presence Sensor"
+    name: "Presence Sensor Entity"
     id: presence_sensor_entity
     optimistic: true
     restore_value: true
@@ -89,7 +89,7 @@ text:
 number:
   # Screensaver idle timeout
   - platform: template
-    name: "Screensaver: Timeout"
+    name: "Screensaver Timeout"
     id: screensaver_timeout
     min_value: 30
     max_value: 1800

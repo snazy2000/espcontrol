@@ -48,6 +48,20 @@ text:
     web_server:
       sorting_group_id: sg_button
 
+  - platform: template
+    name: "Button ${num} Sensor Unit"
+    id: button_${num}_sensor_unit
+    optimistic: true
+    restore_value: true
+    initial_value: ""
+    min_length: 0
+    max_length: 10
+    mode: text
+    entity_category: config
+    icon: "mdi:format-superscript"
+    web_server:
+      sorting_group_id: sg_button
+
 select:
   - platform: template
     name: "Button ${num} Icon"

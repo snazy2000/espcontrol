@@ -25,33 +25,36 @@ esphome:
               esphome::text::Text *label;
               esphome::select::Select *icon;
               esphome::text::Text *sensor;
+              esphome::text::Text *sensor_unit;
               lv_obj_t *btn;
               lv_obj_t *icon_lbl;
               lv_obj_t *text_lbl;
+              lv_obj_t *sensor_container;
               lv_obj_t *sensor_lbl;
+              lv_obj_t *unit_lbl;
             };
 
             BtnSlot slots[] = {
-              { id(button_1_entity),  id(button_1_label),  id(button_1_icon),  id(button_1_sensor),  id(button_1),  id(button_1_icon_label),  id(button_1_text_label),  id(button_1_sensor_label) },
-              { id(button_2_entity),  id(button_2_label),  id(button_2_icon),  id(button_2_sensor),  id(button_2),  id(button_2_icon_label),  id(button_2_text_label),  id(button_2_sensor_label) },
-              { id(button_3_entity),  id(button_3_label),  id(button_3_icon),  id(button_3_sensor),  id(button_3),  id(button_3_icon_label),  id(button_3_text_label),  id(button_3_sensor_label) },
-              { id(button_4_entity),  id(button_4_label),  id(button_4_icon),  id(button_4_sensor),  id(button_4),  id(button_4_icon_label),  id(button_4_text_label),  id(button_4_sensor_label) },
-              { id(button_5_entity),  id(button_5_label),  id(button_5_icon),  id(button_5_sensor),  id(button_5),  id(button_5_icon_label),  id(button_5_text_label),  id(button_5_sensor_label) },
-              { id(button_6_entity),  id(button_6_label),  id(button_6_icon),  id(button_6_sensor),  id(button_6),  id(button_6_icon_label),  id(button_6_text_label),  id(button_6_sensor_label) },
-              { id(button_7_entity),  id(button_7_label),  id(button_7_icon),  id(button_7_sensor),  id(button_7),  id(button_7_icon_label),  id(button_7_text_label),  id(button_7_sensor_label) },
-              { id(button_8_entity),  id(button_8_label),  id(button_8_icon),  id(button_8_sensor),  id(button_8),  id(button_8_icon_label),  id(button_8_text_label),  id(button_8_sensor_label) },
-              { id(button_9_entity),  id(button_9_label),  id(button_9_icon),  id(button_9_sensor),  id(button_9),  id(button_9_icon_label),  id(button_9_text_label),  id(button_9_sensor_label) },
-              { id(button_10_entity), id(button_10_label), id(button_10_icon), id(button_10_sensor), id(button_10), id(button_10_icon_label), id(button_10_text_label), id(button_10_sensor_label) },
-              { id(button_11_entity), id(button_11_label), id(button_11_icon), id(button_11_sensor), id(button_11), id(button_11_icon_label), id(button_11_text_label), id(button_11_sensor_label) },
-              { id(button_12_entity), id(button_12_label), id(button_12_icon), id(button_12_sensor), id(button_12), id(button_12_icon_label), id(button_12_text_label), id(button_12_sensor_label) },
-              { id(button_13_entity), id(button_13_label), id(button_13_icon), id(button_13_sensor), id(button_13), id(button_13_icon_label), id(button_13_text_label), id(button_13_sensor_label) },
-              { id(button_14_entity), id(button_14_label), id(button_14_icon), id(button_14_sensor), id(button_14), id(button_14_icon_label), id(button_14_text_label), id(button_14_sensor_label) },
-              { id(button_15_entity), id(button_15_label), id(button_15_icon), id(button_15_sensor), id(button_15), id(button_15_icon_label), id(button_15_text_label), id(button_15_sensor_label) },
-              { id(button_16_entity), id(button_16_label), id(button_16_icon), id(button_16_sensor), id(button_16), id(button_16_icon_label), id(button_16_text_label), id(button_16_sensor_label) },
-              { id(button_17_entity), id(button_17_label), id(button_17_icon), id(button_17_sensor), id(button_17), id(button_17_icon_label), id(button_17_text_label), id(button_17_sensor_label) },
-              { id(button_18_entity), id(button_18_label), id(button_18_icon), id(button_18_sensor), id(button_18), id(button_18_icon_label), id(button_18_text_label), id(button_18_sensor_label) },
-              { id(button_19_entity), id(button_19_label), id(button_19_icon), id(button_19_sensor), id(button_19), id(button_19_icon_label), id(button_19_text_label), id(button_19_sensor_label) },
-              { id(button_20_entity), id(button_20_label), id(button_20_icon), id(button_20_sensor), id(button_20), id(button_20_icon_label), id(button_20_text_label), id(button_20_sensor_label) },
+              { id(button_1_entity),  id(button_1_label),  id(button_1_icon),  id(button_1_sensor),  id(button_1_sensor_unit),  id(button_1),  id(button_1_icon_label),  id(button_1_text_label),  id(button_1_sensor_container),  id(button_1_sensor_label),  id(button_1_unit_label) },
+              { id(button_2_entity),  id(button_2_label),  id(button_2_icon),  id(button_2_sensor),  id(button_2_sensor_unit),  id(button_2),  id(button_2_icon_label),  id(button_2_text_label),  id(button_2_sensor_container),  id(button_2_sensor_label),  id(button_2_unit_label) },
+              { id(button_3_entity),  id(button_3_label),  id(button_3_icon),  id(button_3_sensor),  id(button_3_sensor_unit),  id(button_3),  id(button_3_icon_label),  id(button_3_text_label),  id(button_3_sensor_container),  id(button_3_sensor_label),  id(button_3_unit_label) },
+              { id(button_4_entity),  id(button_4_label),  id(button_4_icon),  id(button_4_sensor),  id(button_4_sensor_unit),  id(button_4),  id(button_4_icon_label),  id(button_4_text_label),  id(button_4_sensor_container),  id(button_4_sensor_label),  id(button_4_unit_label) },
+              { id(button_5_entity),  id(button_5_label),  id(button_5_icon),  id(button_5_sensor),  id(button_5_sensor_unit),  id(button_5),  id(button_5_icon_label),  id(button_5_text_label),  id(button_5_sensor_container),  id(button_5_sensor_label),  id(button_5_unit_label) },
+              { id(button_6_entity),  id(button_6_label),  id(button_6_icon),  id(button_6_sensor),  id(button_6_sensor_unit),  id(button_6),  id(button_6_icon_label),  id(button_6_text_label),  id(button_6_sensor_container),  id(button_6_sensor_label),  id(button_6_unit_label) },
+              { id(button_7_entity),  id(button_7_label),  id(button_7_icon),  id(button_7_sensor),  id(button_7_sensor_unit),  id(button_7),  id(button_7_icon_label),  id(button_7_text_label),  id(button_7_sensor_container),  id(button_7_sensor_label),  id(button_7_unit_label) },
+              { id(button_8_entity),  id(button_8_label),  id(button_8_icon),  id(button_8_sensor),  id(button_8_sensor_unit),  id(button_8),  id(button_8_icon_label),  id(button_8_text_label),  id(button_8_sensor_container),  id(button_8_sensor_label),  id(button_8_unit_label) },
+              { id(button_9_entity),  id(button_9_label),  id(button_9_icon),  id(button_9_sensor),  id(button_9_sensor_unit),  id(button_9),  id(button_9_icon_label),  id(button_9_text_label),  id(button_9_sensor_container),  id(button_9_sensor_label),  id(button_9_unit_label) },
+              { id(button_10_entity), id(button_10_label), id(button_10_icon), id(button_10_sensor), id(button_10_sensor_unit), id(button_10), id(button_10_icon_label), id(button_10_text_label), id(button_10_sensor_container), id(button_10_sensor_label), id(button_10_unit_label) },
+              { id(button_11_entity), id(button_11_label), id(button_11_icon), id(button_11_sensor), id(button_11_sensor_unit), id(button_11), id(button_11_icon_label), id(button_11_text_label), id(button_11_sensor_container), id(button_11_sensor_label), id(button_11_unit_label) },
+              { id(button_12_entity), id(button_12_label), id(button_12_icon), id(button_12_sensor), id(button_12_sensor_unit), id(button_12), id(button_12_icon_label), id(button_12_text_label), id(button_12_sensor_container), id(button_12_sensor_label), id(button_12_unit_label) },
+              { id(button_13_entity), id(button_13_label), id(button_13_icon), id(button_13_sensor), id(button_13_sensor_unit), id(button_13), id(button_13_icon_label), id(button_13_text_label), id(button_13_sensor_container), id(button_13_sensor_label), id(button_13_unit_label) },
+              { id(button_14_entity), id(button_14_label), id(button_14_icon), id(button_14_sensor), id(button_14_sensor_unit), id(button_14), id(button_14_icon_label), id(button_14_text_label), id(button_14_sensor_container), id(button_14_sensor_label), id(button_14_unit_label) },
+              { id(button_15_entity), id(button_15_label), id(button_15_icon), id(button_15_sensor), id(button_15_sensor_unit), id(button_15), id(button_15_icon_label), id(button_15_text_label), id(button_15_sensor_container), id(button_15_sensor_label), id(button_15_unit_label) },
+              { id(button_16_entity), id(button_16_label), id(button_16_icon), id(button_16_sensor), id(button_16_sensor_unit), id(button_16), id(button_16_icon_label), id(button_16_text_label), id(button_16_sensor_container), id(button_16_sensor_label), id(button_16_unit_label) },
+              { id(button_17_entity), id(button_17_label), id(button_17_icon), id(button_17_sensor), id(button_17_sensor_unit), id(button_17), id(button_17_icon_label), id(button_17_text_label), id(button_17_sensor_container), id(button_17_sensor_label), id(button_17_unit_label) },
+              { id(button_18_entity), id(button_18_label), id(button_18_icon), id(button_18_sensor), id(button_18_sensor_unit), id(button_18), id(button_18_icon_label), id(button_18_text_label), id(button_18_sensor_container), id(button_18_sensor_label), id(button_18_unit_label) },
+              { id(button_19_entity), id(button_19_label), id(button_19_icon), id(button_19_sensor), id(button_19_sensor_unit), id(button_19), id(button_19_icon_label), id(button_19_text_label), id(button_19_sensor_container), id(button_19_sensor_label), id(button_19_unit_label) },
+              { id(button_20_entity), id(button_20_label), id(button_20_icon), id(button_20_sensor), id(button_20_sensor_unit), id(button_20), id(button_20_icon_label), id(button_20_text_label), id(button_20_sensor_container), id(button_20_sensor_label), id(button_20_unit_label) },
             };
             constexpr int NUM_SLOTS = 20;
 

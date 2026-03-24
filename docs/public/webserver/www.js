@@ -94,6 +94,9 @@
     "display:flex;align-items:center;justify-content:center;cursor:pointer}" +
     ".sp-add-btn:hover{border-color:#03a9f4}" +
     ".sp-add-icon{font-size:5cqw;color:rgba(255,255,255,.35)}" +
+    ".sp-btn.sp-dragging{opacity:.35;cursor:grabbing}" +
+    ".sp-btn.sp-drop-before{border-top:2px solid #03a9f4 !important}" +
+    ".sp-btn.sp-drop-after{border-bottom:2px solid #03a9f4 !important}" +
 
     // Hint
     ".sp-hint{text-align:center;font-size:11px;opacity:.4;padding:6px 0 12px}" +
@@ -230,6 +233,7 @@
 
   var els = {};
   var dragSrcPos = -1;
+  var didDrag = false;
   var orderReceived = false;
   var migrationTimer = null;
 
@@ -704,7 +708,7 @@
     var main = els.previewMain;
     main.innerHTML = "";
 
-    state.order.forEach(function (slot) {
+    state.order.forEach(function (slot, idx) {
       var b = state.buttons[slot - 1];
       var iconName = resolveIcon(slot);
       var label = b.label || b.entity || "Configure";
@@ -713,10 +717,15 @@
       var btn = document.createElement("div");
       btn.className = "sp-btn" + (state.selectedSlot === slot ? " sp-selected" : "");
       btn.style.backgroundColor = "#" + (color.length === 6 ? color : "313131");
+      btn.draggable = true;
       btn.innerHTML =
         '<span class="sp-btn-icon mdi mdi-' + iconName + '"></span>' +
         '<span class="sp-btn-label">' + escHtml(label) + "</span>";
-      btn.addEventListener("click", function () { selectButton(slot); });
+      btn.addEventListener("click", function () {
+        if (didDrag) { didDrag = false; return; }
+        selectButton(slot);
+      });
+      setupPreviewDrag(btn, idx);
       main.appendChild(btn);
     });
 
@@ -893,6 +902,55 @@
   function clearDropIndicators() {
     els.buttonList.querySelectorAll(".sp-drop-before,.sp-drop-after")
       .forEach(function (el) { el.classList.remove("sp-drop-before", "sp-drop-after"); });
+  }
+
+  // ── Preview drag and drop ─────────────────────────────────────────
+
+  function clearPreviewDropIndicators() {
+    els.previewMain.querySelectorAll(".sp-drop-before,.sp-drop-after")
+      .forEach(function (el) { el.classList.remove("sp-drop-before", "sp-drop-after"); });
+  }
+
+  function setupPreviewDrag(btn, idx) {
+    btn.addEventListener("dragstart", function (e) {
+      dragSrcPos = idx;
+      didDrag = true;
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", String(idx));
+      setTimeout(function () { btn.classList.add("sp-dragging"); }, 0);
+    });
+    btn.addEventListener("dragend", function () {
+      btn.classList.remove("sp-dragging");
+      clearPreviewDropIndicators();
+    });
+    btn.addEventListener("dragover", function (e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      clearPreviewDropIndicators();
+      var rect = btn.getBoundingClientRect();
+      if (e.clientY < rect.top + rect.height / 2) {
+        btn.classList.add("sp-drop-before");
+      } else {
+        btn.classList.add("sp-drop-after");
+      }
+    });
+    btn.addEventListener("dragleave", function () {
+      btn.classList.remove("sp-drop-before", "sp-drop-after");
+    });
+    btn.addEventListener("drop", function (e) {
+      e.preventDefault();
+      clearPreviewDropIndicators();
+      if (dragSrcPos < 0) return;
+      var rect = btn.getBoundingClientRect();
+      var toIdx = e.clientY < rect.top + rect.height / 2 ? idx : idx + 1;
+      if (dragSrcPos < toIdx) toIdx--;
+      if (dragSrcPos === toIdx) return;
+      var newOrder = state.order.slice();
+      var moved = newOrder.splice(dragSrcPos, 1)[0];
+      newOrder.splice(toIdx, 0, moved);
+      postText("button_order", newOrder.join(","));
+      dragSrcPos = -1;
+    });
   }
 
   // ── Button settings panel ───────────────────────────────────────────
@@ -1108,7 +1166,11 @@
   function updateTempPreview() {
     var show = state._indoorOn || state._outdoorOn;
     els.temp.className = "sp-temp" + (show ? " sp-visible" : "");
-    if (!els.temp.textContent) els.temp.textContent = "-\u00B0 / -\u00B0";
+    if (state._indoorOn && state._outdoorOn) {
+      els.temp.textContent = "-\u00B0 / -\u00B0";
+    } else if (state._indoorOn || state._outdoorOn) {
+      els.temp.textContent = "-\u00B0";
+    }
   }
 
   // ── Log viewer ──────────────────────────────────────────────────────

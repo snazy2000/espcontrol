@@ -290,8 +290,8 @@
     ".card-header{display:flex;justify-content:space-between;align-items:center;" +
     "cursor:pointer;user-select:none;" +
     "margin:-20px -20px 0 -20px;padding:20px 20px 0 20px}" +
-    ".card-header h3{margin-bottom:0}" +
-    ".card-body{padding-top:14px}" +
+    ".card-header h3{margin:0}" +
+    ".card-body{padding-top:18px}" +
     ".card-chevron{display:inline-flex;align-items:center;justify-content:center;" +
     "width:24px;height:24px;color:var(--text2);transition:transform .2s;flex-shrink:0}" +
     ".card-chevron svg{width:100%;height:100%}" +
@@ -304,8 +304,8 @@
     "margin-bottom:var(--gap);border:1px solid var(--border)}" +
 
     // Form fields
-    ".sp-field{margin-bottom:22px}.sp-field:last-child{margin-bottom:0}" +
-    ".sp-field-label{display:block;font-size:.85rem;color:var(--text2);margin-bottom:6px}" +
+    ".sp-field{margin-bottom:28px}.sp-field:last-child{margin-bottom:0}" +
+    ".sp-field-label{display:block;font-size:.85rem;color:var(--text2);margin-bottom:8px}" +
     ".sp-input,.sp-select{width:100%;padding:10px 12px;background:var(--surface2);" +
     "border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.9rem;" +
     "font-family:inherit;box-sizing:border-box;outline:none;transition:border-color .2s}" +
@@ -345,7 +345,8 @@
 
     // Toggle switch
     ".sp-toggle-row{display:flex;align-items:center;justify-content:space-between;" +
-    "min-height:36px}" +
+    "min-height:36px;margin-bottom:12px}" +
+    ".sp-toggle-row:last-child{margin-bottom:0}" +
     ".sp-toggle-row span{font-size:.9rem}" +
     ".sp-toggle{position:relative;width:44px;height:24px;flex-shrink:0}" +
     ".sp-toggle input{opacity:0;width:0;height:0;position:absolute}" +
@@ -357,11 +358,12 @@
     ".sp-toggle input:checked+.sp-toggle-track:before{transform:translateX(20px)}" +
 
     // Conditional field (shown below toggle when enabled)
-    ".sp-cond-field{padding:0 0 8px;display:none}" +
+    ".sp-cond-field{padding:4px 0 8px;display:none}" +
     ".sp-cond-field.sp-visible{display:block}" +
 
     // Range slider
-    ".sp-range-row{display:flex;align-items:center;gap:12px}" +
+    ".sp-range-row{display:flex;align-items:center;gap:12px;margin-bottom:16px}" +
+    ".sp-range-row:last-child{margin-bottom:0}" +
     ".sp-range{flex:1;height:4px;-webkit-appearance:none;appearance:none;background:var(--surface2);" +
     "border-radius:2px;outline:none}" +
     ".sp-range::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;" +
@@ -372,7 +374,8 @@
     "font-variant-numeric:tabular-nums}" +
 
     // Color picker
-    ".sp-color-row{display:flex;align-items:center;gap:8px}" +
+    ".sp-color-row{display:flex;align-items:center;gap:8px;margin-bottom:16px}" +
+    ".sp-color-row:last-child{margin-bottom:0}" +
     ".sp-color-swatch{width:40px;height:38px;border-radius:6px;border:1px solid var(--border);" +
     "cursor:pointer;flex-shrink:0;position:relative;overflow:hidden;transition:border-color .2s}" +
     ".sp-color-swatch:hover{border-color:var(--accent)}" +
@@ -381,7 +384,8 @@
     ".sp-color-row .sp-input{flex:1}" +
 
     // Number input
-    ".sp-number-row{display:flex;align-items:center;gap:8px}" +
+    ".sp-number-row{display:flex;align-items:center;gap:8px;margin-bottom:16px}" +
+    ".sp-number-row:last-child{margin-bottom:0}" +
     ".sp-number{width:80px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);" +
     "border-radius:6px;color:var(--text);font-size:.9rem;font-family:inherit;text-align:center;" +
     "outline:none;box-sizing:border-box}" +
@@ -447,7 +451,7 @@
     ".sp-backup-btn .mdi{font-size:16px}" +
 
     // Sun info
-    ".sp-sun-info{font-size:.8rem;color:var(--text2);padding:8px 12px;background:var(--surface2);" +
+    ".sp-sun-info{font-size:.8rem;color:var(--text2);padding:8px 12px;margin-top:12px;background:var(--surface2);" +
     "border-radius:6px;text-align:center;display:none}" +
     ".sp-sun-info.sp-visible{display:block}" +
 
@@ -455,7 +459,7 @@
     ".sp-field-hint{font-size:.75rem;color:var(--text2);margin-top:6px}" +
 
     // Firmware
-    ".sp-fw-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:36px}" +
+    ".sp-fw-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:36px;margin-bottom:12px}" +
     ".sp-fw-version{font-size:.9rem;color:var(--text)}" +
     ".sp-fw-label{font-size:.8rem;color:var(--text2)}" +
     ".sp-fw-btn{background:var(--surface2);color:var(--text);border:1px solid var(--border);" +
@@ -752,7 +756,7 @@
     appearBody.appendChild(offColor);
     els.setOffColor = offColor;
 
-    config.appendChild(makeCollapsibleCard("Appearance", appearBody, false));
+    config.appendChild(makeCollapsibleCard("Appearance", appearBody, true));
 
     // --- Brightness ---
     var blBody = document.createElement("div");
@@ -776,7 +780,7 @@
     els.sunInfo = sunInfo;
     updateSunInfo();
 
-    config.appendChild(makeCollapsibleCard("Brightness", blBody, false));
+    config.appendChild(makeCollapsibleCard("Brightness", blBody, true));
 
     // --- Temperature ---
     var tempBody = document.createElement("div");
@@ -893,9 +897,9 @@
       var o = document.createElement("option");
       o.value = opt;
       o.textContent = opt;
-      if (opt === state.updateFrequency) o.selected = true;
       freqSelect.appendChild(o);
     });
+    freqSelect.value = state.updateFrequency;
     freqSelect.addEventListener("change", function () {
       postSelect("Firmware: Update Frequency", this.value);
     });
@@ -1875,8 +1879,7 @@
         if (els.setAutoUpdate) els.setAutoUpdate.checked = state.autoUpdate;
       },
       "select-firmware__update_frequency": function (val, d) {
-        state.updateFrequency = val;
-        if (d.option) state.updateFrequency = d.option;
+        state.updateFrequency = d.value || d.option || val || state.updateFrequency;
         if (els.setUpdateFreq) els.setUpdateFreq.value = state.updateFrequency;
         if (d.options && Array.isArray(d.options)) {
           state.updateFreqOptions = d.options;

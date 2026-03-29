@@ -12,15 +12,15 @@ font:
     size: 48
     bpp: 8
     glyphs:
+      # --- GENERATED:ICONS START ---
       - "\U000F0493"  # mdi-cog (Auto fallback)
       - "\U000F0004"  # mdi-account
       - "\U000F001B"  # mdi-air-conditioner
       - "\U000F0D43"  # mdi-air-filter
       - "\U000F0D44"  # mdi-air-purifier
-      - "\U000F009E"  # mdi-bell-ring (Alarm)
+      - "\U000F009E"  # mdi-bell-ring
       - "\U000F078F"  # mdi-alarm-light
       - "\U000F0614"  # mdi-application-outline
-      # --- Battery ---
       - "\U000F0079"  # mdi-battery
       - "\U000F007A"  # mdi-battery-10
       - "\U000F007B"  # mdi-battery-20
@@ -43,9 +43,9 @@ font:
       - "\U000F0091"  # mdi-battery-unknown
       - "\U000F02E3"  # mdi-bed
       - "\U000F009A"  # mdi-bell
-      - "\U000F1A2C"  # mdi-blinds-horizontal-closed
-      - "\U000F1A2B"  # mdi-blinds-horizontal
       - "\U000F00AC"  # mdi-blinds
+      - "\U000F1A2B"  # mdi-blinds-horizontal
+      - "\U000F1A2C"  # mdi-blinds-horizontal-closed
       - "\U000F1011"  # mdi-blinds-open
       - "\U000F00AF"  # mdi-bluetooth
       - "\U000F00E2"  # mdi-broom
@@ -58,7 +58,6 @@ font:
       - "\U000F1793"  # mdi-chandelier
       - "\U000F0150"  # mdi-clock-outline
       - "\U000F109F"  # mdi-coffee-maker
-      # --- Current / Electrical ---
       - "\U000F1480"  # mdi-current-ac
       - "\U000F095C"  # mdi-current-dc
       - "\U000F1846"  # mdi-curtains
@@ -72,36 +71,36 @@ font:
       - "\U000F0917"  # mdi-tumble-dryer
       - "\U000F05F1"  # mdi-ev-station
       - "\U000F0210"  # mdi-fan
-      - "\U000F07DE"  # mdi-movie-roll
       - "\U000F0238"  # mdi-fire
       - "\U000F0E2E"  # mdi-fireplace
       - "\U000F0241"  # mdi-flash
       - "\U000F08DD"  # mdi-floor-lamp
       - "\U000F096B"  # mdi-fountain
-      # --- Gauge / Meter ---
-      - "\U000F029A"  # mdi-gauge
-      - "\U000F0873"  # mdi-gauge-empty
-      - "\U000F0874"  # mdi-gauge-full
-      - "\U000F0875"  # mdi-gauge-low
       - "\U000F0290"  # mdi-fridge
       - "\U000F0297"  # mdi-gamepad-variant
       - "\U000F0372"  # mdi-garage
       - "\U000F06DA"  # mdi-garage-open
       - "\U000F0299"  # mdi-gate
       - "\U000F116A"  # mdi-gate-open
+      - "\U000F029A"  # mdi-gauge
+      - "\U000F0873"  # mdi-gauge-empty
+      - "\U000F0874"  # mdi-gauge-full
+      - "\U000F0875"  # mdi-gauge-low
+      - "\U000F192C"  # mdi-transmission-tower-export
+      - "\U000F192D"  # mdi-transmission-tower-import
+      - "\U000F19DD"  # mdi-transmission-tower-off
       - "\U000F02CB"  # mdi-headphones
-      - "\U000F0438"  # mdi-radiator (Heater)
+      - "\U000F0438"  # mdi-radiator
       - "\U000F02DC"  # mdi-home
       - "\U000F0828"  # mdi-hot-tub
       - "\U000F1099"  # mdi-air-humidifier
+      - "\U000F1509"  # mdi-water-percent-alert
       - "\U000F1824"  # mdi-iron
       - "\U000F05FA"  # mdi-kettle
       - "\U000F030B"  # mdi-key-variant
       - "\U000F06B5"  # mdi-lamp
       - "\U000F0317"  # mdi-lan
-      - "\U000F140B"  # mdi-lightning-bolt
-      - "\U000F140C"  # mdi-lightning-bolt-outline
-      - "\U000F11F7"  # mdi-robot-mower (Lawnmower)
+      - "\U000F11F7"  # mdi-robot-mower
       - "\U000F032A"  # mdi-leaf
       - "\U000F07D6"  # mdi-led-strip
       - "\U000F1051"  # mdi-led-strip-variant
@@ -114,20 +113,19 @@ font:
       - "\U000F1A4D"  # mdi-lightbulb-night-outline
       - "\U000F0E4F"  # mdi-lightbulb-off
       - "\U000F0336"  # mdi-lightbulb-outline
+      - "\U000F140B"  # mdi-lightning-bolt
       - "\U000F033E"  # mdi-lock
       - "\U000F06EE"  # mdi-mailbox
-      # --- Meter ---
-      - "\U000F1A57"  # mdi-meter-electric
-      - "\U000F1A58"  # mdi-meter-electric-outline
-      - "\U000F1A59"  # mdi-meter-gas
-      - "\U000F1A5A"  # mdi-meter-gas-outline
       - "\U000F036B"  # mdi-message-video
+      - "\U000F1A57"  # mdi-meter-electric
+      - "\U000F1A59"  # mdi-meter-gas
       - "\U000F0C99"  # mdi-microwave
       - "\U000F0379"  # mdi-monitor
       - "\U000F0D91"  # mdi-motion-sensor
+      - "\U000F07DE"  # mdi-movie-roll
       - "\U000F075A"  # mdi-music
-      - "\U000F1020"  # mdi-coach-lamp (Outdoor Lamp)
-      - "\U000F04DE"  # mdi-stove (Oven)
+      - "\U000F1020"  # mdi-coach-lamp
+      - "\U000F04DE"  # mdi-stove
       - "\U000F03D6"  # mdi-package-variant
       - "\U000F03D7"  # mdi-package-variant-closed
       - "\U000F0606"  # mdi-pool
@@ -139,16 +137,15 @@ font:
       - "\U000F070D"  # mdi-robot-vacuum
       - "\U000F1A6B"  # mdi-roller-shade
       - "\U000F1A6C"  # mdi-roller-shade-closed
-      - "\U000F1087"  # mdi-router-network
       - "\U000F0469"  # mdi-router-wireless
-      - "\U000F068A"  # mdi-shield-home (Security)
+      - "\U000F1087"  # mdi-router-network
+      - "\U000F068A"  # mdi-shield-home
       - "\U000F09A1"  # mdi-shower-head
       - "\U000F0392"  # mdi-smoke-detector
       - "\U000F0717"  # mdi-snowflake
       - "\U000F0F29"  # mdi-snowflake-alert
       - "\U000F1A71"  # mdi-snowflake-thermometer
       - "\U000F04B9"  # mdi-sofa
-      # --- Solar / Energy ---
       - "\U000F0D9B"  # mdi-solar-panel
       - "\U000F0D9C"  # mdi-solar-panel-large
       - "\U000F0A72"  # mdi-solar-power
@@ -157,7 +154,7 @@ font:
       - "\U000F04C9"  # mdi-spotlight-beam
       - "\U000F105F"  # mdi-sprinkler
       - "\U000F12BA"  # mdi-string-lights
-      - "\U000F05A8"  # mdi-white-balance-sunny (Sun)
+      - "\U000F05A8"  # mdi-white-balance-sunny
       - "\U000F05BC"  # mdi-table-furniture
       - "\U000F0502"  # mdi-television
       - "\U000F050F"  # mdi-thermometer
@@ -167,19 +164,13 @@ font:
       - "\U000F0393"  # mdi-thermostat
       - "\U000F051B"  # mdi-timer-outline
       - "\U000F09AB"  # mdi-toilet
-      - "\U000F0A79"  # mdi-trash-can
-      # --- Transmission / Grid ---
       - "\U000F0D3E"  # mdi-transmission-tower
-      - "\U000F192C"  # mdi-transmission-tower-export
-      - "\U000F192D"  # mdi-transmission-tower-import
-      - "\U000F19DD"  # mdi-transmission-tower-off
-      - "\U000F0427"  # mdi-power-socket (Wall Outlet)
-      - "\U000F072A"  # mdi-washing-machine (Washer)
+      - "\U000F0A79"  # mdi-trash-can
+      - "\U000F0427"  # mdi-power-socket
+      - "\U000F072A"  # mdi-washing-machine
       - "\U000F058C"  # mdi-water
-      - "\U000F0F92"  # mdi-water-boiler (Water Heater)
+      - "\U000F0F92"  # mdi-water-boiler
       - "\U000F058E"  # mdi-water-percent
-      - "\U000F1509"  # mdi-water-percent-alert
-      # --- Weather ---
       - "\U000F0590"  # mdi-weather-cloudy
       - "\U000F0F2F"  # mdi-weather-cloudy-alert
       - "\U000F1B5A"  # mdi-weather-dust
@@ -210,12 +201,12 @@ font:
       - "\U000F0F38"  # mdi-weather-tornado
       - "\U000F059D"  # mdi-weather-windy
       - "\U000F059E"  # mdi-weather-windy-variant
-      # --- Wind ---
       - "\U000F1A88"  # mdi-wind-power
       - "\U000F0DA5"  # mdi-wind-turbine
       - "\U000F19AB"  # mdi-wind-turbine-alert
       - "\U000F19AC"  # mdi-wind-turbine-check
       - "\U000F111C"  # mdi-window-open-variant
+      # --- GENERATED:ICONS END ---
 
   # Setup screen icons (64px)
   - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'
@@ -229,115 +220,3 @@ font:
 substitutions:
   icon_wifi: "\U000F05A9"
   icon_cog: "\U000F0493"
-  icon_lightbulb: "\U000F0335"
-  icon_lightbulb_group_outline: "\U000F1254"
-  icon_lightbulb_night_outline: "\U000F1A4D"
-  icon_lightbulb_off: "\U000F0E4F"
-  icon_lightbulb_outline: "\U000F0336"
-  icon_printer_3d: "\U000F042B"
-  icon_air_filter: "\U000F0D43"
-  icon_led_strip_variant: "\U000F1051"
-  icon_led_strip_variant_off: "\U000F1A4B"
-  icon_package_closed: "\U000F03D7"
-  icon_led_strip: "\U000F07D6"
-  icon_blinds: "\U000F00AC"
-  icon_blinds_open: "\U000F1011"
-  icon_nightlight: "\U000F1A4C"
-  icon_router_network: "\U000F1087"
-  icon_message_video: "\U000F036B"
-  icon_application: "\U000F0614"
-  icon_battery_charging_70: "\U000F089E"
-  icon_movie_roll: "\U000F07DE"
-  icon_lan: "\U000F0317"
-  # --- Battery ---
-  icon_battery: "\U000F0079"
-  icon_battery_10: "\U000F007A"
-  icon_battery_20: "\U000F007B"
-  icon_battery_30: "\U000F007C"
-  icon_battery_40: "\U000F007D"
-  icon_battery_50: "\U000F007E"
-  icon_battery_60: "\U000F007F"
-  icon_battery_70: "\U000F0080"
-  icon_battery_80: "\U000F0081"
-  icon_battery_90: "\U000F0082"
-  icon_battery_alert: "\U000F0083"
-  icon_battery_charging: "\U000F0084"
-  icon_battery_charging_100: "\U000F0085"
-  icon_battery_high: "\U000F12A3"
-  icon_battery_low: "\U000F12A1"
-  icon_battery_medium: "\U000F12A2"
-  icon_battery_off: "\U000F125D"
-  icon_battery_outline: "\U000F008E"
-  icon_battery_unknown: "\U000F0091"
-  # --- Current / Electrical ---
-  icon_current_ac: "\U000F1480"
-  icon_current_dc: "\U000F095C"
-  icon_lightning_bolt: "\U000F140B"
-  icon_lightning_bolt_outline: "\U000F140C"
-  # --- Gauge / Meter ---
-  icon_gauge: "\U000F029A"
-  icon_gauge_empty: "\U000F0873"
-  icon_gauge_full: "\U000F0874"
-  icon_gauge_low: "\U000F0875"
-  icon_meter_electric: "\U000F1A57"
-  icon_meter_electric_outline: "\U000F1A58"
-  icon_meter_gas: "\U000F1A59"
-  icon_meter_gas_outline: "\U000F1A5A"
-  # --- Solar / Energy / Grid ---
-  icon_solar_panel: "\U000F0D9B"
-  icon_solar_panel_large: "\U000F0D9C"
-  icon_solar_power: "\U000F0A72"
-  icon_solar_power_variant: "\U000F1A73"
-  icon_transmission_tower: "\U000F0D3E"
-  icon_transmission_tower_export: "\U000F192C"
-  icon_transmission_tower_import: "\U000F192D"
-  icon_transmission_tower_off: "\U000F19DD"
-  # --- Thermometer ---
-  icon_thermometer: "\U000F050F"
-  icon_thermometer_alert: "\U000F0E01"
-  icon_thermometer_high: "\U000F10C2"
-  icon_thermometer_low: "\U000F10C3"
-  # --- Snowflake ---
-  icon_snowflake: "\U000F0717"
-  icon_snowflake_alert: "\U000F0F29"
-  icon_snowflake_thermometer: "\U000F1A71"
-  # --- Humidity ---
-  icon_water_percent: "\U000F058E"
-  icon_water_percent_alert: "\U000F1509"
-  # --- Weather ---
-  icon_weather_cloudy: "\U000F0590"
-  icon_weather_cloudy_alert: "\U000F0F2F"
-  icon_weather_dust: "\U000F1B5A"
-  icon_weather_fog: "\U000F0591"
-  icon_weather_hail: "\U000F0592"
-  icon_weather_hazy: "\U000F0F30"
-  icon_weather_hurricane: "\U000F0898"
-  icon_weather_lightning: "\U000F0593"
-  icon_weather_lightning_rainy: "\U000F067E"
-  icon_weather_night: "\U000F0594"
-  icon_weather_night_partly_cloudy: "\U000F0F31"
-  icon_weather_partly_cloudy: "\U000F0595"
-  icon_weather_partly_lightning: "\U000F0F32"
-  icon_weather_partly_rainy: "\U000F0F33"
-  icon_weather_partly_snowy: "\U000F0F34"
-  icon_weather_partly_snowy_rainy: "\U000F0F35"
-  icon_weather_pouring: "\U000F0596"
-  icon_weather_rainy: "\U000F0597"
-  icon_weather_snowy: "\U000F0598"
-  icon_weather_snowy_heavy: "\U000F0F36"
-  icon_weather_snowy_rainy: "\U000F067F"
-  icon_weather_sunny: "\U000F0599"
-  icon_weather_sunny_alert: "\U000F0F37"
-  icon_weather_sunny_off: "\U000F14E4"
-  icon_weather_sunset: "\U000F059A"
-  icon_weather_sunset_down: "\U000F059B"
-  icon_weather_sunset_up: "\U000F059C"
-  icon_weather_tornado: "\U000F0F38"
-  icon_weather_windy: "\U000F059D"
-  icon_weather_windy_variant: "\U000F059E"
-  # --- Wind ---
-  icon_wind_power: "\U000F1A88"
-  icon_wind_turbine: "\U000F0DA5"
-  icon_wind_turbine_alert: "\U000F19AB"
-  icon_wind_turbine_check: "\U000F19AC"
-  icon_table_furniture: "\U000F05BC"

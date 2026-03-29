@@ -25,6 +25,20 @@ esp32:
       CONFIG_SDMMC_HOST_DEFAULT: "y"
 
 # ---------------------------------------------------------------------------
+# External component (sun_calc.h for on-device sunrise/sunset)
+# ---------------------------------------------------------------------------
+external_components:
+  - source:
+      type: git
+      url: https://github.com/jtenniswood/espcontrol
+      ref: main
+      path: components
+    components: [espcontrol]
+    refresh: 0s
+
+espcontrol:
+
+# ---------------------------------------------------------------------------
 # ESPHome core (device name from substitutions)
 # ---------------------------------------------------------------------------
 esphome:

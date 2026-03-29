@@ -89,6 +89,7 @@ esphome:
 
             struct IconEntry { const char* name; const char* glyph; };
             static const IconEntry icon_entries[] = {
+              // --- GENERATED:ICONS START ---
               {"Account",                    "\U000F0004"},
               {"Air Conditioner",            "\U000F001B"},
               {"Air Filter",                 "\U000F0D43"},
@@ -281,6 +282,7 @@ esphome:
               {"Wind Turbine Alert",         "\U000F19AB"},
               {"Wind Turbine Check",         "\U000F19AC"},
               {"Window",                     "\U000F111C"},
+              // --- GENERATED:ICONS END ---
             };
             static constexpr size_t NUM_ICONS = sizeof(icon_entries) / sizeof(icon_entries[0]);
 
@@ -346,6 +348,7 @@ esphome:
                 const char* icon_cp = "\U000F0493";  // cog fallback
                 if (icon_name.empty() || icon_name == "Auto") {
                   std::string domain = entity_id.substr(0, entity_id.find('.'));
+                  // --- GENERATED:DOMAIN_ICONS START ---
                   if      (domain == "light")         icon_cp = "\U000F0335";  // Lightbulb
                   else if (domain == "switch")        icon_cp = "\U000F0654";  // Power Plug
                   else if (domain == "fan")           icon_cp = "\U000F0210";  // Fan
@@ -355,6 +358,7 @@ esphome:
                   else if (domain == "media_player")  icon_cp = "\U000F04C3";  // Speaker
                   else if (domain == "camera")        icon_cp = "\U000F0100";  // Camera
                   else if (domain == "binary_sensor") icon_cp = "\U000F0D91";  // Motion Sensor
+                  // --- GENERATED:DOMAIN_ICONS END ---
                 } else {
                   icon_cp = find_icon(icon_name.c_str());
                 }

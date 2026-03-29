@@ -11,6 +11,7 @@
 
   var ICON_MAP = {
     Auto: "cog",
+    // --- GENERATED:ICONS START ---
     Account: "account",
     "Air Conditioner": "air-conditioner",
     "Air Filter": "air-filter",
@@ -83,11 +84,15 @@
     "Gauge Empty": "gauge-empty",
     "Gauge Full": "gauge-full",
     "Gauge Low": "gauge-low",
+    "Grid Export": "transmission-tower-export",
+    "Grid Import": "transmission-tower-import",
+    "Grid Off": "transmission-tower-off",
     Headphones: "headphones",
     Heater: "radiator",
     Home: "home",
     "Hot Tub": "hot-tub",
     Humidifier: "air-humidifier",
+    "Humidity Alert": "water-percent-alert",
     Iron: "iron",
     Kettle: "kettle",
     Key: "key-variant",
@@ -157,17 +162,13 @@
     Thermostat: "thermostat",
     Timer: "timer-outline",
     Toilet: "toilet",
-    "Trash Can": "trash-can",
     "Transmission Tower": "transmission-tower",
-    "Grid Export": "transmission-tower-export",
-    "Grid Import": "transmission-tower-import",
-    "Grid Off": "transmission-tower-off",
+    "Trash Can": "trash-can",
     "Wall Outlet": "power-socket",
     Washer: "washing-machine",
     Water: "water",
     "Water Heater": "water-boiler",
     "Water Percent": "water-percent",
-    "Humidity Alert": "water-percent-alert",
     "Weather Cloudy": "weather-cloudy",
     "Weather Cloudy Alert": "weather-cloudy-alert",
     "Weather Dust": "weather-dust",
@@ -203,9 +204,11 @@
     "Wind Turbine Alert": "wind-turbine-alert",
     "Wind Turbine Check": "wind-turbine-check",
     Window: "window-open-variant",
+    // --- GENERATED:ICONS END ---
   };
 
   var DOMAIN_ICONS = {
+    // --- GENERATED:DOMAIN_ICONS START ---
     light: "lightbulb",
     switch: "power-plug",
     fan: "fan",
@@ -215,6 +218,7 @@
     media_player: "speaker",
     camera: "camera",
     binary_sensor: "motion-sensor",
+    // --- GENERATED:DOMAIN_ICONS END ---
   };
 
   var ICON_OPTIONS = Object.keys(ICON_MAP).sort();

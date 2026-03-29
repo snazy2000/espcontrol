@@ -1,66 +1,36 @@
 # =============================================================================
-# BACKLIGHT SCHEDULE - Day/Night Brightness via Home Assistant Sun Entity
+# BACKLIGHT SCHEDULE - Day/Night Brightness via On-Device Sun Calculation
 # =============================================================================
-# Automatic day/night brightness using HA's sun.sun state. When the sun is
-# above the horizon, daytime brightness is applied; below → nighttime.
+# Automatic day/night brightness using sunrise/sunset times calculated
+# on-device from the user's timezone (sun_calc.h). No Home Assistant
+# sun entity dependency — works fully standalone.
 # =============================================================================
 
 globals:
   - id: last_is_daytime
     type: bool
     initial_value: 'true'
+  - id: sunrise_hour
+    type: int
+    initial_value: '6'
+  - id: sunrise_minute
+    type: int
+    initial_value: '0'
+  - id: sunset_hour
+    type: int
+    initial_value: '18'
+  - id: sunset_minute
+    type: int
+    initial_value: '0'
+  - id: sunrise_sunset_valid
+    type: bool
+    initial_value: 'false'
 
 # =============================================================================
-# HOME ASSISTANT SUN STATE
+# SUNRISE / SUNSET DISPLAY
 # =============================================================================
 
 text_sensor:
-  - platform: homeassistant
-    entity_id: sun.sun
-    id: ha_sun_state
-    internal: true
-    on_value:
-      then:
-        - script.execute: backlight_apply_brightness
-
-  - platform: homeassistant
-    entity_id: sun.sun
-    attribute: next_rising
-    id: ha_sunrise_attr
-    internal: true
-    on_value:
-      then:
-        - lambda: |-
-            auto s = id(ha_sunrise_attr).state;
-            if (s.length() < 16) return;
-            int h = std::stoi(s.substr(11, 2));
-            int m = std::stoi(s.substr(14, 2));
-            char buf[16];
-            if (h == 0) snprintf(buf, sizeof(buf), "12:%02d AM", m);
-            else if (h < 12) snprintf(buf, sizeof(buf), "%d:%02d AM", h, m);
-            else if (h == 12) snprintf(buf, sizeof(buf), "12:%02d PM", m);
-            else snprintf(buf, sizeof(buf), "%d:%02d PM", h - 12, m);
-            id(sunrise_time_sensor).publish_state(buf);
-
-  - platform: homeassistant
-    entity_id: sun.sun
-    attribute: next_setting
-    id: ha_sunset_attr
-    internal: true
-    on_value:
-      then:
-        - lambda: |-
-            auto s = id(ha_sunset_attr).state;
-            if (s.length() < 16) return;
-            int h = std::stoi(s.substr(11, 2));
-            int m = std::stoi(s.substr(14, 2));
-            char buf[16];
-            if (h == 0) snprintf(buf, sizeof(buf), "12:%02d AM", m);
-            else if (h < 12) snprintf(buf, sizeof(buf), "%d:%02d AM", h, m);
-            else if (h == 12) snprintf(buf, sizeof(buf), "12:%02d PM", m);
-            else snprintf(buf, sizeof(buf), "%d:%02d PM", h - 12, m);
-            id(sunset_time_sensor).publish_state(buf);
-
   - platform: template
     name: "Screen: Sunrise"
     id: sunrise_time_sensor
@@ -123,17 +93,115 @@ number:
 # =============================================================================
 
 script:
+  # ---------------------------------------------------------------------------
+  # Determine correct brightness and apply it
+  # ---------------------------------------------------------------------------
   - id: backlight_apply_brightness
     mode: restart
     then:
       - lambda: |-
           if (id(display_asleep)) return;
-          std::string sun = id(ha_sun_state).state;
-          bool is_day = (sun != "below_horizon");
-          id(last_is_daytime) = is_day;
-          float pct = is_day ? id(brightness_day).state : id(brightness_night).state;
+          float pct;
+          if (id(sunrise_sunset_valid)) {
+            auto now = id(ha_time).now();
+            if (now.is_valid()) {
+              int now_min = now.hour * 60 + now.minute;
+              int rise_min = id(sunrise_hour) * 60 + id(sunrise_minute);
+              int set_min = id(sunset_hour) * 60 + id(sunset_minute);
+              bool is_day = (now_min >= rise_min && now_min < set_min);
+              id(last_is_daytime) = is_day;
+              pct = is_day ? id(brightness_day).state : id(brightness_night).state;
+            } else {
+              pct = id(brightness_day).state;
+            }
+          } else {
+            pct = id(brightness_day).state;
+          }
           float brightness = pct / 100.0f;
           auto call = id(display_backlight).turn_on();
           call.set_brightness(brightness);
           call.set_transition_length(500);
           call.perform();
+
+  # ---------------------------------------------------------------------------
+  # Recalculate sunrise/sunset from timezone coordinates and current date
+  # ---------------------------------------------------------------------------
+  - id: backlight_recalc_sunrise_sunset
+    mode: single
+    then:
+      - lambda: |-
+          auto now = id(ha_time).now();
+          if (!now.is_valid()) return;
+
+          std::string tz_full = id(timezone_select).current_option();
+          std::string tz_id = tz_full.substr(0, tz_full.find(" ("));
+          float tz_offset = parse_tz_offset(tz_full);
+
+          float lat, lon;
+          if (!lookup_tz_coords(tz_id, lat, lon)) {
+            ESP_LOGW("backlight", "No coordinates for timezone %s", tz_id.c_str());
+            id(sunrise_sunset_valid) = false;
+            return;
+          }
+
+          int rh, rm, sh, sm;
+          calc_sunrise_sunset(now.year, now.month, now.day_of_month,
+                              lat, lon, tz_offset, rh, rm, sh, sm);
+
+          id(sunrise_hour) = rh;
+          id(sunrise_minute) = rm;
+          id(sunset_hour) = sh;
+          id(sunset_minute) = sm;
+          id(sunrise_sunset_valid) = true;
+
+          char buf[16];
+          snprintf(buf, sizeof(buf), "%d:%02d AM", (rh == 0) ? 12 : (rh > 12 ? rh - 12 : rh), rm);
+          if (rh >= 12) snprintf(buf, sizeof(buf), "%d:%02d PM", (rh == 12) ? 12 : rh - 12, rm);
+          id(sunrise_time_sensor).publish_state(buf);
+
+          snprintf(buf, sizeof(buf), "%d:%02d PM", (sh == 12) ? 12 : (sh > 12 ? sh - 12 : sh), sm);
+          if (sh < 12) snprintf(buf, sizeof(buf), "%d:%02d AM", (sh == 0) ? 12 : sh, sm);
+          id(sunset_time_sensor).publish_state(buf);
+
+          int lat_c = (int)((lat >= 0 ? lat : -lat) * 100.0f + 0.5f);
+          int lon_c = (int)((lon >= 0 ? lon : -lon) * 100.0f + 0.5f);
+          int tz_c = (int)((tz_offset >= 0 ? tz_offset : -tz_offset) * 10.0f + 0.5f);
+          ESP_LOGI("backlight", "Sunrise %02d:%02d, Sunset %02d:%02d (lat=%s%d.%02d lon=%s%d.%02d tz=%s%d.%d)",
+                   rh, rm, sh, sm,
+                   lat < 0 ? "-" : "", lat_c / 100, lat_c % 100,
+                   lon < 0 ? "-" : "", lon_c / 100, lon_c % 100,
+                   tz_offset < 0 ? "-" : "", tz_c / 10, tz_c % 10);
+
+          id(backlight_apply_brightness).execute();
+
+# =============================================================================
+# PERIODIC CHECK (60 seconds)
+# =============================================================================
+
+interval:
+  - interval: 60s
+    then:
+      - if:
+          condition:
+            lambda: |-
+              if (!id(sunrise_sunset_valid)) return false;
+              auto now = id(ha_time).now();
+              if (!now.is_valid()) return false;
+              int now_min = now.hour * 60 + now.minute;
+              int rise_min = id(sunrise_hour) * 60 + id(sunrise_minute);
+              int set_min = id(sunset_hour) * 60 + id(sunset_minute);
+              bool is_day = (now_min >= rise_min && now_min < set_min);
+              if (is_day != id(last_is_daytime)) {
+                id(last_is_daytime) = is_day;
+                return true;
+              }
+              return false;
+          then:
+            - script.execute: backlight_apply_brightness
+      - if:
+          condition:
+            lambda: |-
+              auto now = id(ha_time).now();
+              return now.is_valid() && now.hour == 0 && now.minute == 0;
+          then:
+            - script.execute: backlight_recalc_sunrise_sunset

@@ -71,6 +71,7 @@ select:
     initial_option: "Auto"
     options: &icon_options
       - "Auto"
+      # --- GENERATED:ICONS START ---
       - "Account"
       - "Air Conditioner"
       - "Air Filter"
@@ -263,6 +264,7 @@ select:
       - "Wind Turbine Alert"
       - "Wind Turbine Check"
       - "Window"
+      # --- GENERATED:ICONS END ---
     entity_category: config
     icon: "mdi:image-outline"
     web_server:

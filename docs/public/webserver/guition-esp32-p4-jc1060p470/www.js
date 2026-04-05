@@ -1293,7 +1293,7 @@
     var hasIconOn = b.icon_on && b.icon_on !== "Auto";
     var hasSensor = !!b.sensor;
     var whenOnEnabled = hasIconOn || hasSensor || !!b._whenOnActive;
-    var whenOnMode = hasSensor ? "sensor" : "icon";
+    var whenOnMode = b._whenOnMode || (hasSensor ? "sensor" : "icon");
 
     var whenOnToggle = toggleRow("When Entity On", "sp-inp-whenon-toggle", whenOnEnabled);
     panel.appendChild(whenOnToggle.row);
@@ -1305,7 +1305,7 @@
     seg.className = "sp-segment";
     var btnIcon = document.createElement("button");
     btnIcon.type = "button";
-    btnIcon.textContent = "Different Icon";
+    btnIcon.textContent = "Replace Icon";
     if (whenOnMode === "icon") btnIcon.classList.add("active");
     var btnSensor = document.createElement("button");
     btnSensor.type = "button";
@@ -1357,6 +1357,7 @@
     function setWhenOnMode(mode) {
       whenOnMode = mode;
       state.buttons[slot - 1]._whenOnActive = true;
+      state.buttons[slot - 1]._whenOnMode = mode;
       btnIcon.classList.toggle("active", mode === "icon");
       btnSensor.classList.toggle("active", mode === "sensor");
       iconOnSection.classList.toggle("sp-visible", mode === "icon");
@@ -1388,6 +1389,7 @@
         whenOnCond.classList.add("sp-visible");
       } else {
         state.buttons[slot - 1]._whenOnActive = false;
+        state.buttons[slot - 1]._whenOnMode = null;
         whenOnCond.classList.remove("sp-visible");
         sensorInp.value = "";
         unitInp.value = "";

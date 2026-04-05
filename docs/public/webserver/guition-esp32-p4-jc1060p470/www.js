@@ -883,6 +883,7 @@
     }
     timerBtn.addEventListener("click", function () { setSsMode("timer"); });
     sensorBtn.addEventListener("click", function () { setSsMode("sensor"); });
+    els.setSsMode = setSsMode;
     setSsMode(ssMode);
 
     config.appendChild(makeCollapsibleCard("Screensaver", ssBody, true));
@@ -1892,6 +1893,7 @@
           syncInput(els.setOutdoorEntity, state.outdoorEntity);
           syncInput(els.setPresence, state.presenceEntity);
           if (els.setSSTimeout) els.setSSTimeout.value = String(state.screensaverTimeout);
+          if (els.setSsMode) els.setSsMode(state.presenceEntity ? "sensor" : "timer");
           updateTempPreview();
         }
 
@@ -1990,6 +1992,7 @@
       "text-presence_sensor_entity": function (val) {
         state.presenceEntity = val;
         syncInput(els.setPresence, val);
+        if (els.setSsMode) els.setSsMode(val ? "sensor" : "timer");
       },
       "number-screen__daytime_brightness": function (val) {
         state.brightnessDayVal = parseFloat(val) || 100;

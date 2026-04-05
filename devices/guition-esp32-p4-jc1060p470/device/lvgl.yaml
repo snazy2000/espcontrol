@@ -74,3 +74,13 @@ lvgl:
         - !include { file: button_widget.yaml, vars: { num: "18" } }
         - !include { file: button_widget.yaml, vars: { num: "19" } }
         - !include { file: button_widget.yaml, vars: { num: "20" } }
+        - !include { file: button_widget.yaml, vars: { num: "21" } }
+        - !include { file: button_widget.yaml, vars: { num: "22" } }
+        - !include { file: button_widget.yaml, vars: { num: "23" } }
+        - !include { file: button_widget.yaml, vars: { num: "24" } }
+        - !include { file: button_widget.yaml, vars: { num: "25" } }
+        - !include { file: button_widget.yaml, vars: { num: "26" } }
+        - !include { file: button_widget.yaml, vars: { num: "27" } }
+        - !include { file: button_widget.yaml, vars: { num: "28" } }
+        - !include { file: button_widget.yaml, vars: { num: "29" } }
+        - !include { file: button_widget.yaml, vars: { num: "30" } }

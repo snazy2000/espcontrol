@@ -7,7 +7,7 @@
 
 // Custom UI: three-page layout (Screen / Settings / Logs)
 (function () {
-  var NUM_SLOTS = 20;
+  var NUM_SLOTS = 30;
 
   var ICON_MAP = {
     Auto: "cog",
@@ -263,10 +263,11 @@
     ".sp-clock{position:absolute;left:50%;transform:translateX(-50%);" +
     "color:#fff;font-size:1.95cqw;white-space:nowrap}" +
     ".sp-main{position:absolute;top:3.9cqw;left:0.49cqw;right:0.49cqw;bottom:0.49cqw;" +
-    "display:flex;flex-direction:column;flex-wrap:wrap;align-content:flex-start;gap:0.98cqw}" +
+    "display:flex;flex-direction:column;flex-wrap:wrap;align-content:flex-start;gap:0.98cqw;" +
+    "overflow-x:auto;overflow-y:hidden}" +
 
     // Preview buttons
-    ".sp-btn{width:19cqw;height:12.5cqw;border-radius:0.78cqw;padding:1.37cqw;" +
+    ".sp-btn{width:22cqw;height:12.5cqw;border-radius:0.78cqw;padding:1.37cqw;" +
     "display:flex;flex-direction:column;justify-content:space-between;" +
     "cursor:pointer;transition:all .2s;box-sizing:border-box;border:2px solid transparent;" +
     "position:relative}" +

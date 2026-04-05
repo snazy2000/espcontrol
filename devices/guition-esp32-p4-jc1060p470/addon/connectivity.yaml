@@ -20,9 +20,15 @@ wifi:
           lambda: 'return !id(button_order).state.empty();'
         then:
           - lvgl.page.show: main_page
-          - lvgl.widget.update:
-              id: temperatures
-              hidden: false
+          - if:
+              condition:
+                or:
+                  - switch.is_on: indoor_temp_enable
+                  - switch.is_on: outdoor_temp_enable
+              then:
+                - lvgl.widget.update:
+                    id: temperatures
+                    hidden: false
           - lvgl.widget.update:
               id: display_time
               hidden: false

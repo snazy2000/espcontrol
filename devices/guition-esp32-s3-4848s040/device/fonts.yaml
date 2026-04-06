@@ -209,14 +209,14 @@ font:
       - "\U000F111C"  # mdi-window-open-variant
       # --- GENERATED:ICONS END ---
 
-  # Button labels (19px, Light weight for clarity on RGB565)
+  # Button labels (22px, Light weight for clarity on RGB565)
   - file: "gfonts://Roboto@Light"
     id: label_font_sm
-    size: 19
+    size: 22
     bpp: 4
 
-  # Top bar clock and temperature (18px, Light weight for clarity on RGB565)
+  # Top bar clock and temperature (20px, Light weight for clarity on RGB565)
   - file: "gfonts://Roboto@Light"
     id: clockbar_font_sm
-    size: 18
+    size: 20
     bpp: 4

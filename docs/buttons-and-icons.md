@@ -6,7 +6,7 @@ description:
 
 # Buttons & Icons
 
-Your panel has a fixed grid of button slots — **20** on the 7-inch, **12** on the 4.3-inch, or **9** on the 4-inch. Each button can control one device in Home Assistant — a light, switch, fan, lock, cover, media player, or anything else that can be toggled.
+Your panel has a fixed grid of button slots — **20** on the 7-inch, **15** on the 4.3-inch, or **9** on the 4-inch. Each button can control one device in Home Assistant — a light, switch, fan, lock, cover, media player, or anything else that can be toggled.
 
 ## Setting up a button
 

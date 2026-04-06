@@ -48,8 +48,11 @@ esphome:
               { id(button_10_entity), id(button_10_label), id(button_10_icon), id(button_10_icon_on), id(button_10_sensor), id(button_10_sensor_unit), id(button_10), id(button_10_icon_label), id(button_10_text_label), id(button_10_sensor_container), id(button_10_sensor_label), id(button_10_unit_label) },
               { id(button_11_entity), id(button_11_label), id(button_11_icon), id(button_11_icon_on), id(button_11_sensor), id(button_11_sensor_unit), id(button_11), id(button_11_icon_label), id(button_11_text_label), id(button_11_sensor_container), id(button_11_sensor_label), id(button_11_unit_label) },
               { id(button_12_entity), id(button_12_label), id(button_12_icon), id(button_12_icon_on), id(button_12_sensor), id(button_12_sensor_unit), id(button_12), id(button_12_icon_label), id(button_12_text_label), id(button_12_sensor_container), id(button_12_sensor_label), id(button_12_unit_label) },
+              { id(button_13_entity), id(button_13_label), id(button_13_icon), id(button_13_icon_on), id(button_13_sensor), id(button_13_sensor_unit), id(button_13), id(button_13_icon_label), id(button_13_text_label), id(button_13_sensor_container), id(button_13_sensor_label), id(button_13_unit_label) },
+              { id(button_14_entity), id(button_14_label), id(button_14_icon), id(button_14_icon_on), id(button_14_sensor), id(button_14_sensor_unit), id(button_14), id(button_14_icon_label), id(button_14_text_label), id(button_14_sensor_container), id(button_14_sensor_label), id(button_14_unit_label) },
+              { id(button_15_entity), id(button_15_label), id(button_15_icon), id(button_15_icon_on), id(button_15_sensor), id(button_15_sensor_unit), id(button_15), id(button_15_icon_label), id(button_15_text_label), id(button_15_sensor_container), id(button_15_sensor_label), id(button_15_unit_label) },
             };
-            constexpr int NUM_SLOTS = 12;
+            constexpr int NUM_SLOTS = 15;
 
             // --- Parse button_order (comma-separated 1-indexed slot numbers) ---
             std::string order_str = id(button_order).state;

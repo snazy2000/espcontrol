@@ -32,7 +32,7 @@ Espcontrol runs on **Guition ESP32** touchscreen panels designed for smart home 
 | Touch | Capacitive touchscreen |
 | Backlight | Adjustable brightness (PWM) |
 | Processor | ESP32-P4 |
-| Layout | Fixed 4x3 grid (12 buttons) |
+| Layout | Fixed 5x3 grid (15 buttons) |
 
 ### 4-inch — 4848S040
 

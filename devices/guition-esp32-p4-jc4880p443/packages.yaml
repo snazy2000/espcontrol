@@ -25,7 +25,7 @@ packages:
   # ---------------------------------------------------------------------------
   button_config:   !include ../../common/config/button.yaml
   display_config:  !include ../../common/config/display.yaml
-  # Per-button entity/label/icon (12 slots — 4x3 grid)
+  # Per-button entity/label/icon (15 slots — 5x3 grid)
   btn_1:           !include { file: ../../common/config/button_template.yaml, vars: { num: "1" } }
   btn_2:           !include { file: ../../common/config/button_template.yaml, vars: { num: "2" } }
   btn_3:           !include { file: ../../common/config/button_template.yaml, vars: { num: "3" } }
@@ -38,6 +38,9 @@ packages:
   btn_10:          !include { file: ../../common/config/button_template.yaml, vars: { num: "10" } }
   btn_11:          !include { file: ../../common/config/button_template.yaml, vars: { num: "11" } }
   btn_12:          !include { file: ../../common/config/button_template.yaml, vars: { num: "12" } }
+  btn_13:          !include { file: ../../common/config/button_template.yaml, vars: { num: "13" } }
+  btn_14:          !include { file: ../../common/config/button_template.yaml, vars: { num: "14" } }
+  btn_15:          !include { file: ../../common/config/button_template.yaml, vars: { num: "15" } }
   # ---------------------------------------------------------------------------
   # Addons
   # ---------------------------------------------------------------------------

@@ -24,7 +24,7 @@ This is where you set up your buttons.
 - **Custom label** — give the button a name, or leave it blank to use the device's name from Home Assistant.
 - **Sensor readout** — optionally show a sensor value on the button (like a temperature reading) by entering a sensor entity and unit.
 
-The number of buttons depends on your panel: **20** on the 7-inch, **12** on the 4.3-inch, or **9** on the 4-inch.
+The number of buttons depends on your panel: **20** on the 7-inch, **15** on the 4.3-inch, or **9** on the 4-inch.
 
 ## Settings tab
 

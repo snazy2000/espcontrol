@@ -68,7 +68,7 @@ The panel includes hundreds of icons from the Material Design Icons set. If the 
 Each panel has a fixed grid of buttons sized to fill the screen:
 
 - **7-inch JC1060P470** — 20 buttons (4 rows x 5 columns)
-- **4.3-inch JC4880P443** — 12 buttons (4 rows x 3 columns)
+- **4.3-inch JC4880P443** — 15 buttons (5 rows x 3 columns)
 - **4-inch 4848S040** — 9 buttons (3 rows x 3 columns)
 
 ## Which panels are supported?

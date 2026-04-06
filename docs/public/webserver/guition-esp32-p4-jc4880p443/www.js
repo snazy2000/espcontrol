@@ -7,7 +7,7 @@
 
 // Custom UI: three-page layout (Screen / Settings / Logs)
 (function () {
-  var NUM_SLOTS = 12;
+  var NUM_SLOTS = 15;
   var DEVICE_ID = "guition-esp32-p4-jc4880p443";
 
   var ICON_MAP = {
@@ -268,7 +268,7 @@
     "overflow:hidden}" +
 
     // Preview buttons
-    ".sp-btn{width:31.25cqw;height:37.08cqw;border-radius:2.08cqw;padding:3.33cqw;" +
+    ".sp-btn{width:31.25cqw;height:29.17cqw;border-radius:2.08cqw;padding:3.33cqw;" +
     "display:flex;flex-direction:column;justify-content:space-between;" +
     "cursor:pointer;transition:all .2s;box-sizing:border-box;border:2px solid transparent;" +
     "position:relative}" +

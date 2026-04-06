@@ -10,7 +10,7 @@ font:
   # Button icons (64px, up from common 48px)
   - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'
     id: icon_font_lg
-    size: 64
+    size: 60
     bpp: 2
     glyphs:
       # --- GENERATED:ICONS START ---
@@ -218,5 +218,5 @@ font:
   # Top bar clock and temperature (26px, up from common 20px)
   - file: "gfonts://Roboto"
     id: clockbar_font_lg
-    size: 26
+    size: 24
     bpp: 2

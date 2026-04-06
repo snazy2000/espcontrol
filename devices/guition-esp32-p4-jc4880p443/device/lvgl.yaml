@@ -45,7 +45,7 @@ lvgl:
       scrollbar_mode: "off"
       layout:
         type: flex
-        flex_flow: row_wrap
+        flex_flow: column_wrap
         pad_row: 12
         pad_column: 12
       width: 100%

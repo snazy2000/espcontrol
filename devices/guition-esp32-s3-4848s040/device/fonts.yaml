@@ -209,14 +209,14 @@ font:
       - "\U000F111C"  # mdi-window-open-variant
       # --- GENERATED:ICONS END ---
 
-  # Button labels (20px, down from common 24px)
-  - file: "gfonts://Roboto"
+  # Button labels (20px Light)
+  - file: "gfonts://Roboto@Light"
     id: label_font_sm
     size: 20
     bpp: 2
 
-  # Top bar clock and temperature (24px)
-  - file: "gfonts://Roboto"
+  # Top bar clock and temperature (20px Light)
+  - file: "gfonts://Roboto@Light"
     id: clockbar_font_sm
-    size: 24
+    size: 20
     bpp: 2

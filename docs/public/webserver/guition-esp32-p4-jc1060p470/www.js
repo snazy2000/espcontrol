@@ -2060,6 +2060,7 @@
         btn.disabled = false;
         btn.textContent = "Apply Configuration";
       });
+      setTimeout(scheduleMigration, 3000);
     });
 
     source.addEventListener("error", function () {

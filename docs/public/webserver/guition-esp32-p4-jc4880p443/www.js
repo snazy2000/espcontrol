@@ -1518,8 +1518,35 @@
           '<span class="sp-btn-icon mdi mdi-' + iconName + '"></span>' +
           '<span class="sp-btn-label">' + escHtml(label) + "</span>";
         (function (s, p) {
-          btn.addEventListener("click", function () {
+          btn.addEventListener("click", function (e) {
             if (didDrag) { didDrag = false; return; }
+            if (e.shiftKey && state.subpageLastClicked > 0) {
+              var anchorPos = sp.grid.indexOf(state.subpageLastClicked);
+              var curPos = p;
+              if (anchorPos !== -1) {
+                var from = Math.min(anchorPos, curPos);
+                var to = Math.max(anchorPos, curPos);
+                state.subpageSelectedSlots = [];
+                for (var i = from; i <= to; i++) {
+                  if (sp.grid[i] > 0) state.subpageSelectedSlots.push(sp.grid[i]);
+                }
+                renderPreview();
+                renderButtonSettings();
+                return;
+              }
+            }
+            if (e.ctrlKey || e.metaKey) {
+              var idx = state.subpageSelectedSlots.indexOf(s);
+              if (idx !== -1) {
+                state.subpageSelectedSlots.splice(idx, 1);
+              } else {
+                state.subpageSelectedSlots.push(s);
+                state.subpageLastClicked = s;
+              }
+              renderPreview();
+              renderButtonSettings();
+              return;
+            }
             if (state.subpageSelectedSlots.length === 1 && state.subpageSelectedSlots[0] === s) {
               state.subpageSelectedSlots = [];
             } else {
@@ -1827,6 +1854,14 @@
     var sp = getSubpage(homeSlot);
 
     if (state.subpageSelectedSlots.length === 0) return;
+
+    if (state.subpageSelectedSlots.length > 1) {
+      var hint = document.createElement("div");
+      hint.className = "sp-hint";
+      hint.textContent = state.subpageSelectedSlots.length + " buttons selected \u2022 right click to delete";
+      container.appendChild(hint);
+      return;
+    }
 
     var slot = state.subpageSelectedSlots[0];
     if (slot < 1 || slot > sp.buttons.length) return;
@@ -2142,12 +2177,20 @@
   // ── Preview drag and drop ─────────────────────────────────────────
 
   function getCellFromEvent(e, container) {
-    var rect = container.getBoundingClientRect();
-    var col = Math.floor((e.clientX - rect.left) / (rect.width / GRID_COLS));
-    var row = Math.floor((e.clientY - rect.top) / (rect.height / GRID_ROWS));
-    col = Math.max(0, Math.min(col, GRID_COLS - 1));
-    row = Math.max(0, Math.min(row, GRID_ROWS - 1));
-    return row * GRID_COLS + col;
+    var x = e.clientX, y = e.clientY;
+    var children = container.children;
+    var skip = dragIsSubpage ? 1 : 0;
+    var bestDist = Infinity, bestPos = -1;
+    for (var i = skip; i < children.length; i++) {
+      var r = children[i].getBoundingClientRect();
+      var pos = parseInt(children[i].getAttribute("data-pos"), 10);
+      if (isNaN(pos)) continue;
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return pos;
+      var cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2;
+      var d = (x - cx) * (x - cx) + (y - cy) * (y - cy);
+      if (d < bestDist) { bestDist = d; bestPos = pos; }
+    }
+    return bestPos;
   }
 
   function clearSpans(grid) {
@@ -2215,9 +2258,9 @@
       for (var i = 0; i < cells.length; i++) {
         cells[i].classList.remove("sp-drop-placeholder");
       }
-      var domIdx = dragIsSubpage ? cellIdx + 1 : cellIdx;
-      if (domIdx >= 0 && domIdx < cells.length) {
-        cells[domIdx].classList.add("sp-drop-placeholder");
+      var target = container.querySelector('[data-pos="' + cellIdx + '"]');
+      if (target) {
+        target.classList.add("sp-drop-placeholder");
       }
     });
 
@@ -2333,6 +2376,22 @@
       });
       ctxMenu.appendChild(delItem);
     } else {
+      var b = state.buttons[slot - 1];
+      if (b && b.type === "subpage") {
+        var setupItem = document.createElement("div");
+        setupItem.className = "sp-ctx-item";
+        setupItem.innerHTML = '<span class="mdi mdi-cog"></span>Setup Subpage';
+        setupItem.addEventListener("mousedown", function (ev) {
+          ev.preventDefault();
+          hideContextMenu();
+          enterSubpage(slot);
+        });
+        ctxMenu.appendChild(setupItem);
+        var spDivider = document.createElement("div");
+        spDivider.className = "sp-ctx-divider";
+        ctxMenu.appendChild(spDivider);
+      }
+
       var isDbl = state.sizes[slot] === 2;
       var dblItem = document.createElement("div");
       dblItem.className = "sp-ctx-item";

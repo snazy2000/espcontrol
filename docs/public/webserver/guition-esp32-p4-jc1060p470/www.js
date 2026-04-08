@@ -1522,8 +1522,35 @@
           '<span class="sp-btn-icon mdi mdi-' + iconName + '"></span>' +
           '<span class="sp-btn-label">' + escHtml(label) + "</span>";
         (function (s, p) {
-          btn.addEventListener("click", function () {
+          btn.addEventListener("click", function (e) {
             if (didDrag) { didDrag = false; return; }
+            if (e.shiftKey && state.subpageLastClicked > 0) {
+              var anchorPos = sp.grid.indexOf(state.subpageLastClicked);
+              var curPos = p;
+              if (anchorPos !== -1) {
+                var from = Math.min(anchorPos, curPos);
+                var to = Math.max(anchorPos, curPos);
+                state.subpageSelectedSlots = [];
+                for (var i = from; i <= to; i++) {
+                  if (sp.grid[i] > 0) state.subpageSelectedSlots.push(sp.grid[i]);
+                }
+                renderPreview();
+                renderButtonSettings();
+                return;
+              }
+            }
+            if (e.ctrlKey || e.metaKey) {
+              var idx = state.subpageSelectedSlots.indexOf(s);
+              if (idx !== -1) {
+                state.subpageSelectedSlots.splice(idx, 1);
+              } else {
+                state.subpageSelectedSlots.push(s);
+                state.subpageLastClicked = s;
+              }
+              renderPreview();
+              renderButtonSettings();
+              return;
+            }
             if (state.subpageSelectedSlots.length === 1 && state.subpageSelectedSlots[0] === s) {
               state.subpageSelectedSlots = [];
             } else {
@@ -1831,6 +1858,14 @@
     var sp = getSubpage(homeSlot);
 
     if (state.subpageSelectedSlots.length === 0) return;
+
+    if (state.subpageSelectedSlots.length > 1) {
+      var hint = document.createElement("div");
+      hint.className = "sp-hint";
+      hint.textContent = state.subpageSelectedSlots.length + " buttons selected \u2022 right click to delete";
+      container.appendChild(hint);
+      return;
+    }
 
     var slot = state.subpageSelectedSlots[0];
     if (slot < 1 || slot > sp.buttons.length) return;
@@ -2243,10 +2278,9 @@
         if (pendingCellIdx === previewDropIdx) return;
         previewDropIdx = pendingCellIdx;
         clearPlaceholder();
-        var cells = container.children;
-        var domIdx = dragIsSubpage ? pendingCellIdx + 1 : pendingCellIdx;
-        if (domIdx >= 0 && domIdx < cells.length) {
-          previewPlaceholder = cells[domIdx];
+        var target = container.querySelector('[data-pos="' + pendingCellIdx + '"]');
+        if (target) {
+          previewPlaceholder = target;
           previewPlaceholder.classList.add("sp-drop-placeholder");
         }
       });
@@ -2359,6 +2393,22 @@
       });
       ctxMenu.appendChild(delItem);
     } else {
+      var b = state.buttons[slot - 1];
+      if (b && b.type === "subpage") {
+        var setupItem = document.createElement("div");
+        setupItem.className = "sp-ctx-item";
+        setupItem.innerHTML = '<span class="mdi mdi-cog"></span>Setup Subpage';
+        setupItem.addEventListener("mousedown", function (ev) {
+          ev.preventDefault();
+          hideContextMenu();
+          enterSubpage(slot);
+        });
+        ctxMenu.appendChild(setupItem);
+        var spDivider = document.createElement("div");
+        spDivider.className = "sp-ctx-divider";
+        ctxMenu.appendChild(spDivider);
+      }
+
       var isDbl = state.sizes[slot] === 2;
       var dblItem = document.createElement("div");
       dblItem.className = "sp-ctx-item";

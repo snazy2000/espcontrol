@@ -463,6 +463,13 @@ esphome:
             static lv_coord_t sp_row_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
             const lv_font_t *sp_icon_fnt = lv_obj_get_style_text_font(slots[0].icon_lbl, LV_PART_MAIN);
 
+            // Extract theme styles from a home button so subpage buttons match
+            lv_obj_t *ref_btn = slots[0].btn;
+            lv_coord_t sp_radius = lv_obj_get_style_radius(ref_btn, LV_PART_MAIN);
+            lv_coord_t sp_pad = lv_obj_get_style_pad_top(ref_btn, LV_PART_MAIN);
+            const lv_font_t *sp_btn_fnt = lv_obj_get_style_text_font(ref_btn, LV_PART_MAIN);
+            lv_color_t sp_txt_color = lv_obj_get_style_text_color(ref_btn, LV_PART_MAIN);
+
             for (int si = 0; si < NUM_SLOTS; si++) {
               if (btn_types[si]->state != "subpage") continue;
               std::string cfg = sp_configs[si]->state;
@@ -534,6 +541,11 @@ esphome:
               lv_obj_clear_flag(sub_scr, LV_OBJ_FLAG_SCROLLABLE);
 
               lv_obj_t *back_btn = lv_btn_create(sub_scr);
+              lv_obj_set_style_radius(back_btn, sp_radius, LV_PART_MAIN);
+              lv_obj_set_style_pad_all(back_btn, sp_pad, LV_PART_MAIN);
+              lv_obj_set_style_text_font(back_btn, sp_btn_fnt, LV_PART_MAIN);
+              lv_obj_set_style_text_color(back_btn, sp_txt_color, LV_PART_MAIN);
+              lv_obj_set_style_shadow_width(back_btn, 0, LV_PART_MAIN);
               if (has_off) lv_obj_set_style_bg_color(back_btn, lv_color_hex(off_val),
                 static_cast<lv_style_selector_t>(LV_PART_MAIN) | static_cast<lv_style_selector_t>(LV_STATE_DEFAULT));
               lv_obj_set_grid_cell(back_btn, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_STRETCH, 0, 1);
@@ -560,6 +572,11 @@ esphome:
                 int rs = sp_dbl[bn - 1] ? 2 : 1;
 
                 lv_obj_t *sb_btn = lv_btn_create(sub_scr);
+                lv_obj_set_style_radius(sb_btn, sp_radius, LV_PART_MAIN);
+                lv_obj_set_style_pad_all(sb_btn, sp_pad, LV_PART_MAIN);
+                lv_obj_set_style_text_font(sb_btn, sp_btn_fnt, LV_PART_MAIN);
+                lv_obj_set_style_text_color(sb_btn, sp_txt_color, LV_PART_MAIN);
+                lv_obj_set_style_shadow_width(sb_btn, 0, LV_PART_MAIN);
                 if (has_off) lv_obj_set_style_bg_color(sb_btn, lv_color_hex(off_val),
                   static_cast<lv_style_selector_t>(LV_PART_MAIN) | static_cast<lv_style_selector_t>(LV_STATE_DEFAULT));
                 if (has_on) lv_obj_set_style_bg_color(sb_btn, lv_color_hex(on_val),

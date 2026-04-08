@@ -73,6 +73,7 @@ text:
     mode: text
     entity_category: config
     icon: "mdi:home-thermometer"
+    update_interval: never
     web_server:
       sorting_group_id: sg_display
 
@@ -88,6 +89,7 @@ text:
     mode: text
     entity_category: config
     icon: "mdi:sun-thermometer"
+    update_interval: never
     web_server:
       sorting_group_id: sg_display
 
@@ -104,6 +106,7 @@ text:
     mode: text
     entity_category: config
     icon: "mdi:motion-sensor"
+    update_interval: never
     web_server:
       sorting_group_id: sg_screensaver
 

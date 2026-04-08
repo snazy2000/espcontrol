@@ -1,127 +1,24 @@
 # =============================================================================
 # CONFIG: BUTTON TEMPLATE (parameterized by ${num})
 # =============================================================================
-# Per-button entity binding, label, and icon. Included once per button slot
-# from packages.yaml with vars: { num: "N" }.
+# Per-button config stored as a single semicolon-delimited string:
+#   entity_id;label;icon;icon_on;sensor;sensor_unit;type;subpage_config
+# Included once per button slot from packages.yaml with vars: { num: "N" }.
 # =============================================================================
 
 text:
   - platform: template
-    name: "Button ${num} Entity"
+    name: "Button ${num} Config"
     internal: true
-    id: button_${num}_entity
+    id: button_${num}_config
     optimistic: true
     restore_value: true
     initial_value: ""
     min_length: 0
-    max_length: 100
+    max_length: 500
     mode: text
     entity_category: config
-    icon: "mdi:link-variant"
-    web_server:
-      sorting_group_id: sg_button
-
-  - platform: template
-    name: "Button ${num} Label"
-    internal: true
-    id: button_${num}_label
-    optimistic: true
-    restore_value: true
-    initial_value: ""
-    min_length: 0
-    max_length: 30
-    mode: text
-    entity_category: config
-    icon: "mdi:label-outline"
-    web_server:
-      sorting_group_id: sg_button
-
-  - platform: template
-    name: "Button ${num} Sensor"
-    internal: true
-    id: button_${num}_sensor
-    optimistic: true
-    restore_value: true
-    initial_value: ""
-    min_length: 0
-    max_length: 100
-    mode: text
-    entity_category: config
-    icon: "mdi:gauge"
-    web_server:
-      sorting_group_id: sg_button
-
-  - platform: template
-    name: "Button ${num} Sensor Unit"
-    internal: true
-    id: button_${num}_sensor_unit
-    optimistic: true
-    restore_value: true
-    initial_value: ""
-    min_length: 0
-    max_length: 10
-    mode: text
-    entity_category: config
-    icon: "mdi:format-superscript"
-    web_server:
-      sorting_group_id: sg_button
-
-  - platform: template
-    name: "Button ${num} Icon"
-    internal: true
-    id: button_${num}_icon
-    optimistic: true
-    restore_value: true
-    initial_value: "Auto"
-    min_length: 0
-    max_length: 30
-    mode: text
-    entity_category: config
-    icon: "mdi:image-outline"
-    web_server:
-      sorting_group_id: sg_button
-
-  - platform: template
-    name: "Button ${num} Icon On"
-    internal: true
-    id: button_${num}_icon_on
-    optimistic: true
-    restore_value: true
-    initial_value: "Auto"
-    min_length: 0
-    max_length: 30
-    mode: text
-    entity_category: config
-    icon: "mdi:image-check-outline"
-    web_server:
-      sorting_group_id: sg_button
-
-  - platform: template
-    name: "Button ${num} Type"
-    internal: true
-    id: button_${num}_type
-    optimistic: true
-    restore_value: true
-    initial_value: ""
-    min_length: 0
-    max_length: 10
-    mode: text
-    entity_category: config
-    icon: "mdi:page-layout-body"
-    web_server:
-      sorting_group_id: sg_button
-
-  - platform: template
-    name: "Subpage ${num} Config"
-    internal: true
-    id: subpage_${num}_config
-    optimistic: true
-    restore_value: true
-    initial_value: ""
-    min_length: 0
-    max_length: 255
-    mode: text
-    entity_category: config
-    icon: "mdi:file-tree"
+    icon: "mdi:cog"
+    update_interval: never
     web_server:
       sorting_group_id: sg_button

@@ -19,15 +19,15 @@
     "cols": 3,
     "rows": 5,
     "dragMode": "displace",
-    "dragAnimation": false,
+    "dragAnimation": true,
     "screen": { "width": "66%", "aspect": "480/800" },
-    "topbar": { "height": 10.83, "padding": "0 1.67cqw", "fontSize": 5 },
-    "grid": { "top": 10.83, "left": 1.04, "right": 1.04, "bottom": 1.04, "gap": 2.08, "fr": "minmax(0,1fr)" },
-    "btn": { "radius": 2.08, "padding": 3.33, "iconSize": 12.5, "labelSize": 5.42 },
-    "emptyCell": { "radius": 2.08 },
-    "sensorBadge": { "top": 2.5, "right": 2.5, "fontSize": 3.75 },
-    "subpageBadge": { "bottom": 1, "right": 1, "fontSize": 2 },
-    "backBtn": { "radius": 0.78, "padding": 1.37, "iconSize": 4.69, "labelSize": 1.8 }
+    "topbar": { "height": 7.5, "padding": "0.83cqw", "fontSize": 3.75 },
+    "grid": { "top": 7.5, "left": 1.04, "right": 1.04, "bottom": 0.83, "gap": 2.08, "fr": "1fr" },
+    "btn": { "radius": 1.67, "padding": 2.92, "iconSize": 9.58, "labelSize": 3.96 },
+    "emptyCell": { "radius": 1.67 },
+    "sensorBadge": { "top": 2.08, "right": 2.08, "fontSize": 3.33 },
+    "subpageBadge": { "bottom": 2.08, "right": 2.08, "fontSize": 4 },
+    "backBtn": { "radius": 1.67, "padding": 2.92, "iconSize": 9.58, "labelSize": 3.96 }
   },
   "guition-esp32-s3-4848s040": {
     "slots": 9,

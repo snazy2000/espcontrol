@@ -53,23 +53,29 @@ button:
         text: "Configure"
   # Navigate to subpage or toggle the bound HA entity on press
   on_short_click:
-    - if:
-        condition:
-          lambda: 'return id(button_${num}_type).state == "subpage";'
-        then:
-          - lambda: |-
-              lv_obj_t *sub_scr = (lv_obj_t *)lv_obj_get_user_data(id(button_${num}));
-              if (sub_scr) {
-                lv_scr_load_anim(sub_scr, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
-              }
-        else:
-          - if:
-              condition:
-                lambda: 'return !id(button_${num}_entity).state.empty();'
-              then:
-                - homeassistant.action:
-                    action: homeassistant.toggle
-                    data_template:
-                      entity_id: "{{ entity_id }}"
-                    variables:
-                      entity_id: !lambda 'return id(button_${num}_entity).state;'
+    - lambda: |-
+        std::string cfg = id(button_${num}_config).state;
+        size_t p6 = 0;
+        for (int i = 0; i < 6; i++) { p6 = cfg.find(';', p6); if (p6 == std::string::npos) break; p6++; }
+        std::string btn_type;
+        if (p6 != std::string::npos && p6 > 0) {
+          size_t p7 = cfg.find(';', p6);
+          btn_type = (p7 == std::string::npos) ? cfg.substr(p6) : cfg.substr(p6, p7 - p6);
+        }
+        if (btn_type == "subpage") {
+          lv_obj_t *sub_scr = (lv_obj_t *)lv_obj_get_user_data(id(button_${num}));
+          if (sub_scr) lv_scr_load_anim(sub_scr, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
+        } else {
+          size_t p1 = cfg.find(';');
+          std::string entity_id = (p1 != std::string::npos) ? cfg.substr(0, p1) : cfg;
+          if (!entity_id.empty()) {
+            api::HomeassistantActionRequest req;
+            req.service = decltype(req.service)("homeassistant.toggle");
+            req.is_event = false;
+            req.data.init(1);
+            auto &kv = req.data.emplace_back();
+            kv.key = decltype(kv.key)("entity_id");
+            kv.value = decltype(kv.value)(entity_id.c_str());
+            api::global_api_server->send_homeassistant_action(req);
+          }
+        }

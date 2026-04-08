@@ -128,10 +128,7 @@ sensor:
     name: "${friendly_name} Uptime"
 ```
 
-See the [Package Layout](/package-layout) page for details on how the remote packages are structured.
-
 ## Related
 
 - [Install](/install) — browser-based installer (no ESPHome required)
-- [Package Layout](/package-layout) — how the firmware packages are organised
 - [Firmware Updates](/firmware-updates) — OTA update settings

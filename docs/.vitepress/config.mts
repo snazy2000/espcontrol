@@ -151,7 +151,6 @@ export default defineConfig({
       {
         text: 'Reference',
         items: [
-          { text: 'Specifications', link: '/hardware-architecture' },
           { text: 'Icon Reference', link: '/icons' },
           { text: 'FAQ', link: '/faq' },
           { text: 'Roadmap', link: '/roadmap' },
@@ -161,14 +160,6 @@ export default defineConfig({
         text: 'Advanced',
         items: [
           { text: 'ESPHome Manual Setup', link: '/esphome-manual-setup' },
-        ],
-      },
-      {
-        text: 'Developer',
-        collapsed: true,
-        items: [
-          { text: 'Package Layout', link: '/package-layout' },
-          { text: 'External Component', link: '/external-component' },
         ],
       },
     ],

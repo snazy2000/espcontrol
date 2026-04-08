@@ -39,7 +39,7 @@ Right-click a button to see these options:
 
 | Option | What it does |
 | --- | --- |
-| **Setup Subpage** | Opens the subpage editor (only appears on Subpage buttons) |
+| **Edit Subpage** | Opens the subpage editor (only appears on Subpage buttons) |
 | **Double Height** / **Single Height** | Makes the button tall (spans two rows) or reverts to normal |
 | **Duplicate** | Creates a copy of the button in the next available space |
 | **Cut** | Removes the button and saves it so you can paste it elsewhere |
@@ -73,7 +73,7 @@ Each subpage has its own set of button spaces, one fewer than the home screen (b
 To set up a subpage:
 
 1. Select a button and change its type to **Subpage**.
-2. Click **Configure Subpage**, or right-click the button and choose **Setup Subpage**.
+2. Click **Configure Subpage**, or right-click the button and choose **Edit Subpage**.
 3. The preview switches to the subpage. Set up buttons here the same way you would on the home screen.
 4. Click the back arrow to return to the home screen.
 

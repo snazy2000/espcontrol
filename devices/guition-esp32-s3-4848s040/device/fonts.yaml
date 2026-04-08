@@ -14,14 +14,14 @@ font:
     bpp: 4
     glyphs: !include ../../../common/assets/icon_glyphs.yaml
 
-  # Button labels (22px, Light weight for clarity on RGB565)
-  - file: "gfonts://Roboto@Light"
+  # Button labels (22px)
+  - file: "gfonts://Roboto"
     id: label_font_sm
     size: 22
     bpp: 4
 
-  # Top bar clock and temperature (20px, Light weight for clarity on RGB565)
-  - file: "gfonts://Roboto@Light"
+  # Top bar clock and temperature (20px)
+  - file: "gfonts://Roboto"
     id: clockbar_font_sm
     size: 20
     bpp: 4

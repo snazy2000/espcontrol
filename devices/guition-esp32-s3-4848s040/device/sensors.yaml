@@ -430,6 +430,15 @@ esphome:
                     })
                   );
                 }
+              } else {
+                std::string custom_label = s.label->state;
+                if (!custom_label.empty()) {
+                  lv_label_set_text(s.text_lbl, custom_label.c_str());
+                }
+                std::string icon_name = s.icon->state;
+                if (!icon_name.empty() && icon_name != "Auto") {
+                  lv_label_set_text(s.icon_lbl, find_icon(icon_name.c_str()));
+                }
               }
             }
 
@@ -621,10 +630,10 @@ esphome:
                       api::HomeassistantActionRequest req;
                       req.service = decltype(req.service)("homeassistant.toggle");
                       req.is_event = false;
-                      api::HomeassistantServiceMap kv;
+                      req.data.init(1);
+                      auto &kv = req.data.emplace_back();
                       kv.key = decltype(kv.key)("entity_id");
                       kv.value = decltype(kv.value)(en->c_str());
-                      req.data.push_back(kv);
                       api::global_api_server->send_homeassistant_action(req);
                     }
                   }, LV_EVENT_CLICKED, eid);

@@ -33,7 +33,7 @@ The subpage has one fewer button space than the home screen, because the first s
 To set up a subpage:
 
 1. Select a button and change its type to **Subpage**.
-2. Click **Configure Subpage**, or right-click the button and choose **Setup Subpage**.
+2. Click **Configure Subpage**, or right-click the button and choose **Edit Subpage**.
 3. The preview switches to the subpage. Add and arrange buttons here the same way you would on the home screen.
 4. Click the back arrow to return to the home screen.
 

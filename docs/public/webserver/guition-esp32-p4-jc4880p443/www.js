@@ -2241,8 +2241,7 @@
       if (!c.isSub) {
         var b = state.buttons[slot - 1];
         if (b && b.type === "subpage") {
-          addCtxItem("cog", "Setup Subpage", function () { enterSubpage(slot); });
-          addCtxDivider();
+          addCtxItem("cog", "Edit Subpage", function () { enterSubpage(slot); });
         }
       }
 

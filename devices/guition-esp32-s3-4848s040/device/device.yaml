@@ -2,7 +2,7 @@
 # DEVICE - Guition ESP32-S3-4848S040 hardware definition
 # =============================================================================
 # Pin assignments, peripherals, and platform config for the 4" square panel.
-# Includes the ESP32-S3 SoC (native WiFi), ST7701S SPI display, GT911
+# Includes the ESP32-S3 SoC (native WiFi), MIPI RGB display, GT911
 # capacitive touchscreen, and backlight PWM.
 # =============================================================================
 
@@ -126,14 +126,6 @@ light:
     gamma_correct: 1.0
 
 # ---------------------------------------------------------------------------
-# SPI bus (display communication)
-# ---------------------------------------------------------------------------
-spi:
-  - id: lcd_spi
-    clk_pin: GPIO48
-    mosi_pin: GPIO47
-
-# ---------------------------------------------------------------------------
 # I2C bus and touchscreen (GT911 capacitive, wakes screensaver on touch)
 # ---------------------------------------------------------------------------
 i2c:
@@ -151,38 +143,12 @@ touchscreen:
       - script.execute: screensaver_wake
 
 # ---------------------------------------------------------------------------
-# Display (4" 480x480 ST7701S SPI panel)
+# Display (4" 480x480 MIPI RGB panel)
 # ---------------------------------------------------------------------------
 display:
-  - platform: st7701s
+  - platform: mipi_rgb
+    model: GUITION-4848S040
     id: my_display
-    dimensions:
-      width: 480
-      height: 480
-    spi_mode: MODE3
-    data_rate: 2MHz
-    color_order: RGB
-    invert_colors: False
-    cs_pin: 39
-    de_pin: 18
-    hsync_pin: 16
-    vsync_pin: 17
-    pclk_pin: 21
-    pclk_frequency: 16MHz
-    pclk_inverted: True
-    hsync_pulse_width: 8
-    hsync_front_porch: 10
-    hsync_back_porch: 20
-    vsync_pulse_width: 8
-    vsync_front_porch: 10
-    vsync_back_porch: 10
+    pclk_frequency: 8MHz
     update_interval: never
     auto_clear_enabled: False
-    init_sequence:
-      - 1
-      - [0xFF, 0x77, 0x01, 0x00, 0x00, 0x10] # CMD2_BKSEL_BK0
-      - [0xCD, 0x00] # disable MDT flag
-    data_pins:
-      red: [11, 12, 13, 14, 0]
-      green: [8, 20, 3, 46, 9, 10]
-      blue: [4, 5, 6, 7, 15]

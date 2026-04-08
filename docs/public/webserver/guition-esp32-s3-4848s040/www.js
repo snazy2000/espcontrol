@@ -16,7 +16,6 @@
     Auto: "cog",
     // --- GENERATED:ICONS START ---
     Account: "account",
-    "Arrow Left": "arrow-left",
     "Air Conditioner": "air-conditioner",
     "Air Filter": "air-filter",
     "Air Purifier": "air-purifier",
@@ -57,7 +56,6 @@
     CCTV: "cctv",
     "Ceiling Fan": "ceiling-fan",
     "Ceiling Light": "ceiling-light",
-    "Chevron Right": "chevron-right",
     Chandelier: "chandelier",
     Clock: "clock-outline",
     "Coffee Maker": "coffee-maker",

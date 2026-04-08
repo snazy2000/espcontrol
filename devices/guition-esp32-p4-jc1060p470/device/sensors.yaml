@@ -105,7 +105,6 @@ esphome:
               // --- GENERATED:ICONS START ---
               {"Account",                    "\U000F0004"},
               {"Air Conditioner",            "\U000F001B"},
-              {"Arrow Left",                 "\U000F004D"},
               {"Air Filter",                 "\U000F0D43"},
               {"Air Purifier",               "\U000F0D44"},
               {"Alarm",                      "\U000F009E"},

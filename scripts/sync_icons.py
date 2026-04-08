@@ -21,7 +21,7 @@ DEVICES = [
 ]
 
 SHARED_TARGETS = {
-    "icons_yaml": ROOT / "common" / "assets" / "icons.yaml",
+    "icon_glyphs_yaml": ROOT / "common" / "assets" / "icon_glyphs.yaml",
 }
 
 
@@ -48,13 +48,17 @@ def replace_between_markers(text, start_tag, end_tag, new_content):
 # Generators for each target file
 # ---------------------------------------------------------------------------
 
-def gen_icons_yaml_glyphs(data):
+def gen_icon_glyphs(data):
     """Font glyph codepoint list for LVGL font subsetting."""
     fb = data["fallback"]
-    lines = [f'      - "\\U{fb["codepoint"]:>08s}"  # mdi-{fb["mdi"]} (Auto fallback)\n']
+    lines = [f'- "\\U{fb["codepoint"]:>08s}"  # mdi-{fb["mdi"]} (Auto fallback)\n']
+    for icon in data.get("structural", []):
+        comment = icon.get("comment", "")
+        suffix = f" ({comment})" if comment else ""
+        lines.append(f'- "\\U{icon["codepoint"]:>08s}"  # mdi-{icon["mdi"]}{suffix}\n')
     for icon in data["icons"]:
         cp = icon["codepoint"]
-        lines.append(f'      - "\\U{cp:>08s}"  # mdi-{icon["mdi"]}\n')
+        lines.append(f'- "\\U{cp:>08s}"  # mdi-{icon["mdi"]}\n')
     return "".join(lines)
 
 
@@ -123,10 +127,10 @@ def sync(check_only=False):
 
     patches = [
         (
-            SHARED_TARGETS["icons_yaml"],
+            SHARED_TARGETS["icon_glyphs_yaml"],
             "GENERATED:ICONS START",
             "GENERATED:ICONS END",
-            gen_icons_yaml_glyphs,
+            gen_icon_glyphs,
         ),
     ]
 

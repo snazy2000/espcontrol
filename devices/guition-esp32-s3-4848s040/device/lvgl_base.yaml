@@ -5,6 +5,6 @@
 # =============================================================================
 
 lvgl:
-  buffer_size: 100%
+  buffer_size: 25%
   displays: my_display
   touchscreens: my_touchscreen

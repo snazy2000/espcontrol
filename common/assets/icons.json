@@ -4,6 +4,20 @@
     "codepoint": "F0493",
     "mdi": "cog"
   },
+  "structural": [
+    {
+      "name": "Arrow Left",
+      "codepoint": "F004D",
+      "mdi": "arrow-left",
+      "comment": "Back button"
+    },
+    {
+      "name": "Chevron Right",
+      "codepoint": "F0142",
+      "mdi": "chevron-right",
+      "comment": "Subpage indicator"
+    }
+  ],
   "icons": [
     {
       "name": "Account",

@@ -915,14 +915,6 @@
 
     var tempBody = document.createElement("div");
 
-    var indoor = createEntityToggleSection("Indoor Temperature", "sp-set-indoor-toggle", state._indoorOn,
-      "Indoor Temp Enable", "Indoor Temp Entity", "Indoor Temp Entity", "sensor.indoor_temperature");
-    tempBody.appendChild(indoor.toggle.row);
-    tempBody.appendChild(indoor.field);
-    els.setIndoorToggle = indoor.toggle.input;
-    els.setIndoorField = indoor.field;
-    els.setIndoorEntity = indoor.input;
-
     var outdoor = createEntityToggleSection("Outdoor Temperature", "sp-set-outdoor-toggle", state._outdoorOn,
       "Outdoor Temp Enable", "Outdoor Temp Entity", "Outdoor Temp Entity", "sensor.outdoor_temperature");
     tempBody.appendChild(outdoor.toggle.row);
@@ -930,6 +922,14 @@
     els.setOutdoorToggle = outdoor.toggle.input;
     els.setOutdoorField = outdoor.field;
     els.setOutdoorEntity = outdoor.input;
+
+    var indoor = createEntityToggleSection("Indoor Temperature", "sp-set-indoor-toggle", state._indoorOn,
+      "Indoor Temp Enable", "Indoor Temp Entity", "Indoor Temp Entity", "sensor.indoor_temperature");
+    tempBody.appendChild(indoor.toggle.row);
+    tempBody.appendChild(indoor.field);
+    els.setIndoorToggle = indoor.toggle.input;
+    els.setIndoorField = indoor.field;
+    els.setIndoorEntity = indoor.input;
 
     config.appendChild(makeCollapsibleCard("Temperature", tempBody, true));
 
@@ -2928,11 +2928,11 @@
     var indoor = state._indoorVal != null ? state._indoorVal + "\u00B0" : "24\u00B0";
     var outdoor = state._outdoorVal != null ? state._outdoorVal + "\u00B0" : "17\u00B0";
     if (state._indoorOn && state._outdoorOn) {
-      els.temp.textContent = indoor + " / " + outdoor;
-    } else if (state._indoorOn) {
-      els.temp.textContent = indoor;
+      els.temp.textContent = outdoor + " / " + indoor;
     } else if (state._outdoorOn) {
       els.temp.textContent = outdoor;
+    } else if (state._indoorOn) {
+      els.temp.textContent = indoor;
     }
   }
 

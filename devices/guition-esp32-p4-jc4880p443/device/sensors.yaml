@@ -442,14 +442,6 @@ esphome:
               return (end == std::string::npos) ? cfg.substr(start) : cfg.substr(start, end - start);
             };
 
-            struct IconEntry { const char* name; const char* glyph; };
-            extern const IconEntry icon_entries[];
-            extern size_t NUM_ICONS;
-            auto find_icon = [](const char* name) -> const char* {
-              // Reimport from Phase 1 via same static table
-              return "\U000F0493";
-            };
-
             struct BtnSlot {
               esphome::text::Text *config;
               lv_obj_t *btn;

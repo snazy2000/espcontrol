@@ -356,7 +356,9 @@
 
     ".sp-btn-label-row{display:flex;align-items:baseline;width:100%}" +
     ".sp-btn-label-row .sp-btn-label{flex:1;min-width:0}" +
-    ".sp-subpage-badge{font-size:var(--btn-label);line-height:1.2;opacity:.5;flex-shrink:0}";
+    ".sp-subpage-badge{font-size:var(--btn-label);line-height:1.2;opacity:.5;flex-shrink:0;" +
+    "cursor:pointer;padding:2px 0 2px 4px;border-radius:4px;transition:opacity .15s}" +
+    ".sp-subpage-badge:hover{opacity:1}";
 
   // ── State ──────────────────────────────────────────────────────────────
 
@@ -585,7 +587,7 @@
       var op = parts[0].split(",");
       for (var i = 0; i < op.length; i++) {
         var s = op[i].trim();
-        if (s) order.push(s);
+        order.push(s);
       }
     }
     var buttons = [];
@@ -1304,7 +1306,7 @@
       var backBtn = document.createElement("div");
       backBtn.className = "sp-back-btn";
       backBtn.innerHTML =
-        '<span class="sp-btn-icon mdi mdi-arrow-left"></span>' +
+        '<span class="sp-btn-icon mdi mdi-chevron-left"></span>' +
         '<span class="sp-btn-label">Back</span>';
       backBtn.style.cursor = "pointer";
       backBtn.addEventListener("click", exitSubpage);
@@ -1872,6 +1874,13 @@
 
     // Click delegation
     container.addEventListener("click", function (e) {
+      if (e.target.closest(".sp-subpage-badge")) {
+        var btnEl = e.target.closest("[data-slot]");
+        if (btnEl) {
+          enterSubpage(parseInt(btnEl.getAttribute("data-slot"), 10));
+          return;
+        }
+      }
       var target = e.target.closest("[data-pos]");
       if (!target) return;
       var pos = parseInt(target.getAttribute("data-pos"), 10);

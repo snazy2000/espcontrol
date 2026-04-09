@@ -585,7 +585,7 @@
       var op = parts[0].split(",");
       for (var i = 0; i < op.length; i++) {
         var s = op[i].trim();
-        if (s) order.push(s);
+        order.push(s);
       }
     }
     var buttons = [];

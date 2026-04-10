@@ -42,10 +42,6 @@ packages:
   btn_14:          !include { file: ../../common/config/button_template.yaml, vars: { num: "14" } }
   btn_15:          !include { file: ../../common/config/button_template.yaml, vars: { num: "15" } }
   # ---------------------------------------------------------------------------
-  # Features
-  # ---------------------------------------------------------------------------
-  webui:           !include ../../common/feature/webui.yaml
-  # ---------------------------------------------------------------------------
   # Addons
   # ---------------------------------------------------------------------------
   connectivity:    !include addon/connectivity.yaml

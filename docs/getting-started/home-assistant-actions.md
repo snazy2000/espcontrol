@@ -14,19 +14,19 @@ Your display will prompt you to do this during first-time setup. Follow the step
 
 1. **Open Home Assistant** and go to **Settings > Devices & Services** and add the discovered device (if the device wasn't discovered, find it's IP address and add it as an ESPHome device).
 
-![Home Assistant discovering the Espcontrol device](/ha-actions-step-1.png)
+![Home Assistant discovering the Espcontrol device](/images/ha-actions-step-1.png)
 
 2. **Find the ESPHome integration** and click on the top half (ESPHome > ), if you click on the number of devices, you'll end up on a different view.
 
-![ESPHome integration showing connected devices](/ha-actions-step-2.png)
+![ESPHome integration showing connected devices](/images/ha-actions-step-2.png)
 
 3. **Find your Espcontrol device** in the list. Click the **Configure** button (gear icon) next to it.
 
-![Espcontrol device entry with configure button](/ha-actions-step-3.png)
+![Espcontrol device entry with configure button](/images/ha-actions-step-3.png)
 
 4. **Check "Allow the device to perform Home Assistant actions"** and click **Submit**.
 
-![Options dialog with the actions checkbox enabled](/ha-actions-step-4.png)
+![Options dialog with the actions checkbox enabled](/images/ha-actions-step-4.png)
 
 5. **Go back to your display** and tap **Done** on the setup screen. Your buttons will now be able to control Home Assistant devices.
 

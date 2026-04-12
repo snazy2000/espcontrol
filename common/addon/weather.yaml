@@ -79,7 +79,7 @@ script:
                           return;
                         }
                         json::parse_json(body, [](JsonObject root) -> bool {
-                          if (!root.containsKey("current")) {
+                          if (!root["current"].is<JsonObject>()) {
                             ESP_LOGW("weather", "No 'current' key in response");
                             return false;
                           }

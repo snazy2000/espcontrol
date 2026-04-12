@@ -67,11 +67,11 @@ The panel includes hundreds of icons from the Material Design Icons set. If the 
 
 The home screen has a grid of buttons sized to fill the screen:
 
-- **7-inch JC1060P470** — 20 buttons (4 rows, 5 columns)
+- **7-inch JC1060P470** — 15 buttons (3 rows, 5 columns)
 - **4.3-inch JC4880P443** — 15 buttons (5 rows, 3 columns)
 - **4-inch 4848S040** — 9 buttons (3 rows, 3 columns)
 
-You can have even more using **subpages**. Any button can be turned into a folder that opens a new page of buttons. So you could have 20 buttons on the home screen, and each one could open a subpage with up to 19 more. See [Subpages](/features/subpages) for details.
+You can have even more using **subpages**. Any button can be turned into a folder that opens a new page of buttons. So you could have 15 buttons on the home screen, and each one could open a subpage with up to 14 more. See [Subpages](/features/subpages) for details.
 
 ## What are subpages?
 

@@ -1,6 +1,6 @@
 # Guition ESP32-P4 JC1060P470 (7")
 
-7-inch 1024x600 touchscreen panel that runs Espcontrol firmware for Home Assistant. A fixed 4x5 grid of 20 configurable buttons lets you control lights, switches, fans, and other smart home devices with a single tap. The display also shows a live clock, indoor/outdoor temperature, and includes a screensaver with adjustable brightness.
+7-inch 1024x600 touchscreen panel that runs Espcontrol firmware for Home Assistant. A fixed 3x5 grid of 15 configurable buttons lets you control lights, switches, fans, and other smart home devices with a single tap. The display also shows a live clock, indoor/outdoor temperature, and includes a screensaver with adjustable brightness.
 
 After the initial install, everything is configured through the built-in web page — no coding or file editing required.
 
@@ -12,7 +12,7 @@ After the initial install, everything is configured through the built-in web pag
 
 ## Features
 
-- **20 buttons** (4x5 grid) — control any Home Assistant device
+- **15 buttons** (3x5 grid) — control any Home Assistant device
 - **Drag-and-drop ordering** — rearrange buttons from your browser
 - **Automatic icons** — or choose from hundreds of icons manually
 - **Custom labels** — name buttons however you like

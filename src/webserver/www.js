@@ -189,9 +189,12 @@
     ".sp-btn.sp-selected{border-color:var(--accent)}" +
     ".sp-btn-icon{font-size:var(--btn-icon);line-height:1;color:#fff}" +
     ".sp-btn-label{font-size:var(--btn-label);line-height:1.2;color:#fff;" +
-    "white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+    "display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:var(--btn-lines);" +
+    "overflow:hidden;word-break:break-word;min-height:0}" +
     ".sp-sensor-badge{position:absolute;top:var(--sensor-top);right:var(--sensor-right);font-size:var(--sensor-fs);opacity:.5}" +
     ".sp-btn-double{grid-row:span 2}" +
+    ".sp-btn-double .sp-btn-label{-webkit-line-clamp:var(--btn-lines-dbl)}" +
+    ".sp-btn-double .sp-btn-label-row .sp-btn-label{-webkit-line-clamp:var(--btn-lines-dbl)}" +
     ".sp-empty-cell{border:2px dashed rgba(255,255,255,.15);background:transparent;" +
     "border-radius:var(--empty-r);display:flex;align-items:center;justify-content:center;" +
     "cursor:pointer;transition:border-color .2s}" +

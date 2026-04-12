@@ -440,6 +440,14 @@ esphome:
                   lv_label_set_text(s.icon_lbl, find_icon(icon_name.c_str()));
                 } else if (cfg_field(cfg, 6) == "push") {
                   lv_label_set_text(s.icon_lbl, "\U000F0741");
+                  static const lv_style_prop_t push_props[] = {LV_STYLE_BG_COLOR, LV_STYLE_PROP_INV};
+                  static lv_style_transition_dsc_t push_trans;
+                  static bool push_trans_inited = false;
+                  if (!push_trans_inited) {
+                    lv_style_transition_dsc_init(&push_trans, push_props, lv_anim_path_ease_out, 400, 0, NULL);
+                    push_trans_inited = true;
+                  }
+                  lv_obj_set_style_transition(s.btn, &push_trans, LV_PART_MAIN | LV_STATE_DEFAULT);
                 }
               }
             }

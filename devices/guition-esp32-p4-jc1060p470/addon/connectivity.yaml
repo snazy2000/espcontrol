@@ -4,12 +4,14 @@
 # Handles network connectivity and navigates between screens based on
 # connection state using lvgl.page.show.
 #
-# Screen flow:
+# Screen flow (initial setup):
 #   loading → wifi_setup   (if no WiFi)
 #           → ha_setup     (if WiFi OK but HA not connected)
 #           → ha_actions   (allow device to perform HA actions)
 #           → button_setup (if no buttons configured)
 #           → main_page
+# On reboot (buttons already configured):
+#   loading → main_page    (skips setup screens)
 # =============================================================================
 
 esphome:
@@ -39,8 +41,12 @@ wifi:
         then:
           - script.execute: navigate_after_api
         else:
-          - lvgl.page.show: ha_setup_page
-          - script.execute: setup_screen_dim
+          - if:
+              condition:
+                lambda: 'return id(button_order).state.empty();'
+              then:
+                - lvgl.page.show: ha_setup_page
+                - script.execute: setup_screen_dim
   on_disconnect:
     - if:
         condition:
@@ -63,6 +69,8 @@ api:
         then:
           - script.stop: setup_screen_dim
           - lvgl.page.show: ha_actions_page
+        else:
+          - script.execute: navigate_after_api
 
 script:
   - id: navigate_after_api

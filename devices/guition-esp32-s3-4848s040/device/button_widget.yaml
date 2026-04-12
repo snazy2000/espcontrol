@@ -64,7 +64,6 @@ button:
           ? ((e == std::string::npos) ? cfg.substr(p) : cfg.substr(p, e - p))
           : "";
         if (t == "push") {
-          id(push_button_event).trigger("push_${num}");
           size_t lp = cfg.find(';');
           std::string label = "";
           if (lp != std::string::npos) {

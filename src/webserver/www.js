@@ -213,6 +213,9 @@
 
     ".sp-section-title{font-size:.8rem;font-weight:600;color:var(--text2);" +
     "margin:var(--gap) 0 8px;text-transform:uppercase;letter-spacing:.5px}" +
+    ".sp-settings-modal .sp-section-title{font-size:1.1rem;color:var(--text);" +
+    "margin:0 0 12px;letter-spacing:.3px}" +
+    ".sp-settings-modal .sp-panel{background:none;border:none;padding:0;margin:0}" +
 
     ".card{background:var(--surface);border:1px solid var(--border);" +
     "border-radius:var(--radius);padding:20px;margin-bottom:var(--gap)}" +
@@ -270,6 +273,9 @@
     "font-weight:500;cursor:pointer;font-family:inherit;transition:background .2s,opacity .2s}" +
     ".sp-action-btn:active{opacity:.8}" +
     ".sp-delete-btn{background:var(--danger);color:#fff}" +
+    ".sp-save-btn{background:var(--accent);color:#fff}" +
+    ".sp-save-btn:hover{background:var(--accent-hover)}" +
+    ".sp-btn-row--save{margin-top:24px}" +
 
     ".sp-toggle-row{display:flex;align-items:center;justify-content:space-between;" +
     "min-height:36px;margin-bottom:14px}" +
@@ -1927,6 +1933,15 @@
       btnRow.appendChild(delBtn);
       panel.appendChild(btnRow);
     }
+
+    var saveRow = document.createElement("div");
+    saveRow.className = "sp-btn-row sp-btn-row--save";
+    var saveBtn = document.createElement("button");
+    saveBtn.className = "sp-action-btn sp-save-btn";
+    saveBtn.textContent = "Save";
+    saveBtn.addEventListener("click", function () { closeSettings(); });
+    saveRow.appendChild(saveBtn);
+    panel.appendChild(saveRow);
 
     container.appendChild(panel);
   }

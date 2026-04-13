@@ -349,11 +349,12 @@
     ".sp-ctx-item.sp-ctx-danger .mdi{color:var(--danger)}" +
     ".sp-ctx-divider{height:1px;background:var(--border);margin:4px 0}" +
     ".sp-ctx-sub{position:relative}" +
-    ".sp-ctx-sub::after{content:'\\203A';position:absolute;right:10px;font-size:16px;color:var(--text2)}" +
-    ".sp-ctx-submenu{display:none;position:absolute;left:100%;top:0;background:var(--surface);" +
-    "border:1px solid var(--border);border-radius:var(--radius);min-width:140px;overflow:hidden;" +
-    "box-shadow:0 4px 16px rgba(0,0,0,.4);padding:4px 0}" +
-    ".sp-ctx-sub:hover>.sp-ctx-submenu,.sp-ctx-sub.sp-ctx-sub-open>.sp-ctx-submenu{display:block}" +
+    ".sp-ctx-sub::after{content:'\\F0142';font-family:'Material Design Icons';position:absolute;right:10px;font-size:14px;opacity:.5}" +
+    ".sp-ctx-submenu{display:none;position:absolute;top:-4px;left:100%;background:var(--surface);" +
+    "border:1px solid var(--border);border-radius:var(--radius);padding:4px 0;min-width:120px;" +
+    "box-shadow:0 4px 16px rgba(0,0,0,.5);z-index:201}" +
+    ".sp-ctx-sub:hover>.sp-ctx-submenu{display:block}" +
+    ".sp-ctx-check{font-size:14px;width:18px;text-align:center;color:var(--accent)}" +
 
     ".sp-banner{padding:10px var(--gap);font-size:.85rem;text-align:center;display:none}" +
     ".sp-banner.sp-error{display:block;background:var(--danger);color:#fff}" +
@@ -2523,40 +2524,81 @@
     var wrapper = document.createElement("div");
     wrapper.className = "sp-ctx-item sp-ctx-sub";
     wrapper.innerHTML = '<span class="mdi mdi-' + icon + '"></span>' + escHtml(text);
-    var submenu = document.createElement("div");
-    submenu.className = "sp-ctx-submenu";
-    buildFn(submenu);
-    wrapper.appendChild(submenu);
-    function adjustPos() {
-      submenu.style.left = "100%";
-      submenu.style.right = "auto";
-      var rect = submenu.getBoundingClientRect();
-      if (rect.right > window.innerWidth - 4) {
-        submenu.style.left = "auto";
-        submenu.style.right = "100%";
-      }
-    }
-    wrapper.addEventListener("mouseenter", adjustPos);
-    wrapper.addEventListener("mousedown", function (ev) {
-      ev.preventDefault();
-      ev.stopPropagation();
-      wrapper.classList.toggle("sp-ctx-sub-open");
-      if (wrapper.classList.contains("sp-ctx-sub-open")) adjustPos();
+    var sub = document.createElement("div");
+    sub.className = "sp-ctx-submenu";
+    buildFn(sub);
+    wrapper.appendChild(sub);
+    wrapper.addEventListener("mouseenter", function () {
+      sub.style.left = "100%"; sub.style.right = "auto";
+      var r = sub.getBoundingClientRect();
+      if (r.right > window.innerWidth - 4) { sub.style.left = "auto"; sub.style.right = "100%"; }
     });
+    wrapper.addEventListener("mousedown", function (ev) { ev.preventDefault(); ev.stopPropagation(); });
     ctxMenu.appendChild(wrapper);
   }
 
-  function addCtxSubItem(submenu, icon, text, handler) {
+  function addSubItem(container, icon, text, handler, active) {
     var item = document.createElement("div");
     item.className = "sp-ctx-item";
-    item.innerHTML = '<span class="mdi mdi-' + icon + '"></span>' + escHtml(text);
+    item.innerHTML = (active ? '<span class="sp-ctx-check mdi mdi-check"></span>' : '<span style="width:18px"></span>') + escHtml(text);
     item.addEventListener("mousedown", function (ev) {
       ev.preventDefault();
       ev.stopPropagation();
       hideContextMenu();
       handler();
     });
-    submenu.appendChild(item);
+    container.appendChild(item);
+  }
+
+  function resizeSlot(slot, targetSz) {
+    var c = ctx();
+    var slotPos = slot === -2 ? c.grid.indexOf(-2) : c.grid.indexOf(slot);
+    if (slotPos < 0) return;
+    var curSz = c.sizes[slot] || 1;
+    if (curSz === targetSz) return;
+
+    var curD = curSz === 2 || curSz === 4;
+    var curW = curSz === 3 || curSz === 4;
+    if (curD) { var bp = slotPos + GRID_COLS; if (bp < c.maxSlots && c.grid[bp] === -1) c.grid[bp] = 0; }
+    if (curW) { var rp = slotPos + 1; if (rp < c.maxSlots && c.grid[rp] === -1) c.grid[rp] = 0; }
+    if (curSz === 4) { var dp = slotPos + GRID_COLS + 1; if (dp < c.maxSlots && c.grid[dp] === -1) c.grid[dp] = 0; }
+
+    var wantD = targetSz === 2 || targetSz === 4;
+    var wantW = targetSz === 3 || targetSz === 4;
+    var need = [];
+    if (wantD) need.push(slotPos + GRID_COLS);
+    if (wantW) need.push(slotPos + 1);
+    if (wantD && wantW) need.push(slotPos + GRID_COLS + 1);
+
+    for (var i = 0; i < need.length; i++) {
+      var p = need[i];
+      if (p >= c.maxSlots) { if (targetSz > 1) delete c.sizes[slot]; return; }
+      if (wantW && (slotPos + 1) % GRID_COLS === 0) { if (targetSz > 1) delete c.sizes[slot]; return; }
+      if (c.grid[p] > 0 || c.grid[p] === -2) {
+        if (c.isSub && c.grid[p] > 0) return;
+        var displaced = c.grid[p];
+        c.grid[p] = 0;
+        if (c.isSub) {
+          for (var j = 0; j < c.maxSlots; j++) { if (c.grid[j] === 0 && need.indexOf(j) === -1) { c.grid[j] = displaced; break; } }
+        } else {
+          var fc = firstFreeCell(p + 1);
+          if (fc >= 0) c.grid[fc] = displaced;
+        }
+      }
+    }
+    for (var i = 0; i < need.length; i++) c.grid[need[i]] = -1;
+
+    if (targetSz === 1) delete c.sizes[slot]; else c.sizes[slot] = targetSz;
+
+    if (c.isSub) {
+      var sp = getSubpage(state.editingSubpage);
+      sp.order = serializeSubpageGrid(sp);
+      saveSubpageConfig(state.editingSubpage);
+    } else {
+      postText("Button Order", serializeGrid(state.grid));
+    }
+    renderPreview();
+    renderButtonSettings();
   }
 
   function showContextMenu(e, slot) {
@@ -2578,16 +2620,6 @@
       var bulkSlots = c.selected.slice();
       addCtxItem("clipboard-outline", "Copy " + bulkSlots.length + " Buttons", function () { copyButtons(bulkSlots); });
       addCtxItem("content-cut", "Cut " + bulkSlots.length + " Buttons", function () { cutButtons(bulkSlots); });
-      var multiTargets = getPageTargets();
-      if (multiTargets.length > 0) {
-        addCtxSubmenu("file-send", "Copy " + bulkSlots.length + " to\u2026", function (submenu) {
-          var entries = [];
-          bulkSlots.forEach(function (s) { entries.push(buildClipboardEntry(s)); });
-          multiTargets.forEach(function (t) {
-            addCtxSubItem(submenu, t.icon, t.label, function () { copyToPage(entries, t.slot); });
-          });
-        });
-      }
       addCtxItem("delete", "Delete " + bulkSlots.length + " Buttons", function () { deleteButtons(bulkSlots); }, true);
     } else {
       if (!c.isSub) {
@@ -2599,143 +2631,11 @@
       }
 
       var sz = c.sizes[slot] || 1;
-      var isDbl = sz === 2 || sz === 4;
-      var isWide = sz === 3 || sz === 4;
-      addCtxItem("arrow-expand-vertical", isDbl ? "Single Height" : "Double Height", function () {
-        var slotPos = c.grid.indexOf(slot);
-        var belowPos = slotPos + GRID_COLS;
-        if (isDbl) {
-          if (belowPos < c.maxSlots && c.grid[belowPos] === -1) c.grid[belowPos] = 0;
-          if (sz === 4) {
-            var diagPos = slotPos + GRID_COLS + 1;
-            if (diagPos < c.maxSlots && c.grid[diagPos] === -1) c.grid[diagPos] = 0;
-            c.sizes[slot] = 3;
-          } else {
-            delete c.sizes[slot];
-          }
-        } else {
-          if (belowPos >= c.maxSlots) return;
-          if (c.grid[belowPos] > 0) {
-            if (c.isSub) return;
-            var displaced = c.grid[belowPos];
-            c.grid[belowPos] = 0;
-            var freeCell = firstFreeCell(belowPos + 1);
-            if (freeCell >= 0) c.grid[freeCell] = displaced;
-          }
-          c.grid[belowPos] = -1;
-          if (isWide) {
-            var diagPos = slotPos + GRID_COLS + 1;
-            if (diagPos >= c.maxSlots) return;
-            if (c.grid[diagPos] > 0) {
-              if (c.isSub) return;
-              var displaced = c.grid[diagPos];
-              c.grid[diagPos] = 0;
-              var freeCell = firstFreeCell(diagPos + 1);
-              if (freeCell >= 0) c.grid[freeCell] = displaced;
-            }
-            c.grid[diagPos] = -1;
-            c.sizes[slot] = 4;
-          } else {
-            c.sizes[slot] = 2;
-          }
-        }
-        if (c.isSub) {
-          var sp = getSubpage(state.editingSubpage);
-          sp.order = serializeSubpageGrid(sp);
-          saveSubpageConfig(state.editingSubpage);
-        } else {
-          postText("Button Order", serializeGrid(state.grid));
-        }
-        renderPreview();
-        renderButtonSettings();
-      });
-      addCtxItem("arrow-expand-horizontal", isWide ? "Single Width" : "Double Wide", function () {
-        var slotPos = c.grid.indexOf(slot);
-        var rightPos = slotPos + 1;
-        if (isWide) {
-          if (rightPos < c.maxSlots && c.grid[rightPos] === -1) c.grid[rightPos] = 0;
-          if (sz === 4) {
-            var diagPos = slotPos + GRID_COLS + 1;
-            if (diagPos < c.maxSlots && c.grid[diagPos] === -1) c.grid[diagPos] = 0;
-            c.sizes[slot] = 2;
-          } else {
-            delete c.sizes[slot];
-          }
-        } else {
-          if (rightPos >= c.maxSlots || rightPos % GRID_COLS === 0) return;
-          if (c.grid[rightPos] > 0) {
-            if (c.isSub) return;
-            var displaced = c.grid[rightPos];
-            c.grid[rightPos] = 0;
-            var freeCell = firstFreeCell(rightPos + 1);
-            if (freeCell >= 0) c.grid[freeCell] = displaced;
-          }
-          c.grid[rightPos] = -1;
-          if (isDbl) {
-            var diagPos = slotPos + GRID_COLS + 1;
-            if (diagPos >= c.maxSlots) return;
-            if (c.grid[diagPos] > 0) {
-              if (c.isSub) return;
-              var displaced = c.grid[diagPos];
-              c.grid[diagPos] = 0;
-              var freeCell = firstFreeCell(diagPos + 1);
-              if (freeCell >= 0) c.grid[freeCell] = displaced;
-            }
-            c.grid[diagPos] = -1;
-            c.sizes[slot] = 4;
-          } else {
-            c.sizes[slot] = 3;
-          }
-        }
-        if (c.isSub) {
-          var sp = getSubpage(state.editingSubpage);
-          sp.order = serializeSubpageGrid(sp);
-          saveSubpageConfig(state.editingSubpage);
-        } else {
-          postText("Button Order", serializeGrid(state.grid));
-        }
-        renderPreview();
-        renderButtonSettings();
-      });
-      var isBig = sz === 4;
-      addCtxItem("arrow-expand-all", isBig ? "Single Size" : "2\u00d72", function () {
-        var slotPos = c.grid.indexOf(slot);
-        var belowPos = slotPos + GRID_COLS;
-        var rightPos = slotPos + 1;
-        var diagPos = slotPos + GRID_COLS + 1;
-        if (isBig) {
-          if (belowPos < c.maxSlots && c.grid[belowPos] === -1) c.grid[belowPos] = 0;
-          if (rightPos < c.maxSlots && c.grid[rightPos] === -1) c.grid[rightPos] = 0;
-          if (diagPos < c.maxSlots && c.grid[diagPos] === -1) c.grid[diagPos] = 0;
-          delete c.sizes[slot];
-        } else {
-          if (belowPos >= c.maxSlots || rightPos >= c.maxSlots || rightPos % GRID_COLS === 0 || diagPos >= c.maxSlots) return;
-          if (isDbl && belowPos < c.maxSlots && c.grid[belowPos] === -1) c.grid[belowPos] = 0;
-          if (isWide && rightPos < c.maxSlots && c.grid[rightPos] === -1) c.grid[rightPos] = 0;
-          var cells = [belowPos, rightPos, diagPos];
-          for (var ci = 0; ci < cells.length; ci++) {
-            if (c.grid[cells[ci]] > 0) {
-              if (c.isSub) return;
-              var displaced = c.grid[cells[ci]];
-              c.grid[cells[ci]] = 0;
-              var freeCell = firstFreeCell(cells[ci] + 1);
-              if (freeCell >= 0) c.grid[freeCell] = displaced;
-            }
-          }
-          c.grid[belowPos] = -1;
-          c.grid[rightPos] = -1;
-          c.grid[diagPos] = -1;
-          c.sizes[slot] = 4;
-        }
-        if (c.isSub) {
-          var sp = getSubpage(state.editingSubpage);
-          sp.order = serializeSubpageGrid(sp);
-          saveSubpageConfig(state.editingSubpage);
-        } else {
-          postText("Button Order", serializeGrid(state.grid));
-        }
-        renderPreview();
-        renderButtonSettings();
+      addCtxSubmenu("arrow-expand-all", "Size", function (sub) {
+        addSubItem(sub, "", "1\u00d71", function () { resizeSlot(slot, 1); }, sz === 1);
+        addSubItem(sub, "", "2\u00d71", function () { resizeSlot(slot, 2); }, sz === 2);
+        addSubItem(sub, "", "1\u00d72", function () { resizeSlot(slot, 3); }, sz === 3);
+        addSubItem(sub, "", "2\u00d72", function () { resizeSlot(slot, 4); }, sz === 4);
       });
 
       addCtxDivider();
@@ -2744,15 +2644,6 @@
       });
 
       addCtxItem("clipboard-outline", "Copy", function () { copySlot(slot); });
-      var singleTargets = getPageTargets();
-      if (singleTargets.length > 0) {
-        addCtxSubmenu("file-send", "Copy to\u2026", function (submenu) {
-          var entry = buildClipboardEntry(slot);
-          singleTargets.forEach(function (t) {
-            addCtxSubItem(submenu, t.icon, t.label, function () { copyToPage([entry], t.slot); });
-          });
-        });
-      }
       addCtxItem("content-cut", "Cut", function () { cutSlot(slot); });
       addCtxItem("delete", "Delete", function () { deleteSlot(slot); }, true);
     }
@@ -2767,128 +2658,11 @@
     ctxMenu.className = "sp-ctx-menu";
     var sp = getSubpage(state.editingSubpage);
     var bkSz = sp.sizes[-2] || 1;
-    var isDbl = bkSz === 2 || bkSz === 4;
-    var isWide = bkSz === 3 || bkSz === 4;
-    addCtxItem("arrow-expand-vertical", isDbl ? "Single Height" : "Double Height", function () {
-      var backPos = sp.grid.indexOf(-2);
-      var belowPos = backPos + GRID_COLS;
-      if (isDbl) {
-        if (belowPos < NUM_SLOTS && sp.grid[belowPos] === -1) sp.grid[belowPos] = 0;
-        if (bkSz === 4) {
-          var diagPos = backPos + GRID_COLS + 1;
-          if (diagPos < NUM_SLOTS && sp.grid[diagPos] === -1) sp.grid[diagPos] = 0;
-          sp.sizes[-2] = 3;
-        } else {
-          delete sp.sizes[-2];
-        }
-      } else {
-        if (belowPos >= NUM_SLOTS) return;
-        if (sp.grid[belowPos] > 0) {
-          var displaced = sp.grid[belowPos];
-          sp.grid[belowPos] = 0;
-          for (var j = 0; j < NUM_SLOTS; j++) {
-            if (sp.grid[j] === 0) { sp.grid[j] = displaced; break; }
-          }
-        }
-        sp.grid[belowPos] = -1;
-        if (isWide) {
-          var diagPos = backPos + GRID_COLS + 1;
-          if (diagPos >= NUM_SLOTS) return;
-          if (sp.grid[diagPos] > 0) {
-            var displaced = sp.grid[diagPos];
-            sp.grid[diagPos] = 0;
-            for (var j = 0; j < NUM_SLOTS; j++) {
-              if (sp.grid[j] === 0) { sp.grid[j] = displaced; break; }
-            }
-          }
-          sp.grid[diagPos] = -1;
-          sp.sizes[-2] = 4;
-        } else {
-          sp.sizes[-2] = 2;
-        }
-      }
-      sp.order = serializeSubpageGrid(sp);
-      saveSubpageConfig(state.editingSubpage);
-      renderPreview();
-      renderButtonSettings();
-    });
-    addCtxItem("arrow-expand-horizontal", isWide ? "Single Width" : "Double Wide", function () {
-      var backPos = sp.grid.indexOf(-2);
-      var rightPos = backPos + 1;
-      if (isWide) {
-        if (rightPos < NUM_SLOTS && sp.grid[rightPos] === -1) sp.grid[rightPos] = 0;
-        if (bkSz === 4) {
-          var diagPos = backPos + GRID_COLS + 1;
-          if (diagPos < NUM_SLOTS && sp.grid[diagPos] === -1) sp.grid[diagPos] = 0;
-          sp.sizes[-2] = 2;
-        } else {
-          delete sp.sizes[-2];
-        }
-      } else {
-        if (rightPos >= NUM_SLOTS || rightPos % GRID_COLS === 0) return;
-        if (sp.grid[rightPos] > 0) {
-          var displaced = sp.grid[rightPos];
-          sp.grid[rightPos] = 0;
-          for (var j = 0; j < NUM_SLOTS; j++) {
-            if (sp.grid[j] === 0) { sp.grid[j] = displaced; break; }
-          }
-        }
-        sp.grid[rightPos] = -1;
-        if (isDbl) {
-          var diagPos = backPos + GRID_COLS + 1;
-          if (diagPos >= NUM_SLOTS) return;
-          if (sp.grid[diagPos] > 0) {
-            var displaced = sp.grid[diagPos];
-            sp.grid[diagPos] = 0;
-            for (var j = 0; j < NUM_SLOTS; j++) {
-              if (sp.grid[j] === 0) { sp.grid[j] = displaced; break; }
-            }
-          }
-          sp.grid[diagPos] = -1;
-          sp.sizes[-2] = 4;
-        } else {
-          sp.sizes[-2] = 3;
-        }
-      }
-      sp.order = serializeSubpageGrid(sp);
-      saveSubpageConfig(state.editingSubpage);
-      renderPreview();
-      renderButtonSettings();
-    });
-    var isBkBig = bkSz === 4;
-    addCtxItem("arrow-expand-all", isBkBig ? "Single Size" : "2\u00d72", function () {
-      var backPos = sp.grid.indexOf(-2);
-      var belowPos = backPos + GRID_COLS;
-      var rightPos = backPos + 1;
-      var diagPos = backPos + GRID_COLS + 1;
-      if (isBkBig) {
-        if (belowPos < NUM_SLOTS && sp.grid[belowPos] === -1) sp.grid[belowPos] = 0;
-        if (rightPos < NUM_SLOTS && sp.grid[rightPos] === -1) sp.grid[rightPos] = 0;
-        if (diagPos < NUM_SLOTS && sp.grid[diagPos] === -1) sp.grid[diagPos] = 0;
-        delete sp.sizes[-2];
-      } else {
-        if (belowPos >= NUM_SLOTS || rightPos >= NUM_SLOTS || rightPos % GRID_COLS === 0 || diagPos >= NUM_SLOTS) return;
-        if (isDbl && belowPos < NUM_SLOTS && sp.grid[belowPos] === -1) sp.grid[belowPos] = 0;
-        if (isWide && rightPos < NUM_SLOTS && sp.grid[rightPos] === -1) sp.grid[rightPos] = 0;
-        var cells = [belowPos, rightPos, diagPos];
-        for (var ci = 0; ci < cells.length; ci++) {
-          if (sp.grid[cells[ci]] > 0) {
-            var displaced = sp.grid[cells[ci]];
-            sp.grid[cells[ci]] = 0;
-            for (var j = 0; j < NUM_SLOTS; j++) {
-              if (sp.grid[j] === 0) { sp.grid[j] = displaced; break; }
-            }
-          }
-        }
-        sp.grid[belowPos] = -1;
-        sp.grid[rightPos] = -1;
-        sp.grid[diagPos] = -1;
-        sp.sizes[-2] = 4;
-      }
-      sp.order = serializeSubpageGrid(sp);
-      saveSubpageConfig(state.editingSubpage);
-      renderPreview();
-      renderButtonSettings();
+    addCtxSubmenu("arrow-expand-all", "Size", function (sub) {
+      addSubItem(sub, "", "1\u00d71", function () { resizeSlot(-2, 1); }, bkSz === 1);
+      addSubItem(sub, "", "2\u00d71", function () { resizeSlot(-2, 2); }, bkSz === 2);
+      addSubItem(sub, "", "1\u00d72", function () { resizeSlot(-2, 3); }, bkSz === 3);
+      addSubItem(sub, "", "2\u00d72", function () { resizeSlot(-2, 4); }, bkSz === 4);
     });
     document.body.appendChild(ctxMenu);
     positionMenu(ctxMenu, e);
@@ -2917,96 +2691,6 @@
       ctxMenu.parentNode.removeChild(ctxMenu);
     }
     ctxMenu = null;
-  }
-
-  // ── Copy to page ─────────────────────────────────────────────────────
-
-  function getPageTargets() {
-    var targets = [];
-    if (state.editingSubpage) {
-      targets.push({ slot: null, label: "Home", icon: "home" });
-    }
-    for (var i = 0; i < NUM_SLOTS; i++) {
-      var s = state.grid[i];
-      if (s > 0 && state.buttons[s - 1].type === "subpage" && s !== state.editingSubpage) {
-        targets.push({ slot: s, label: state.buttons[s - 1].label || "Subpage " + s, icon: "card-multiple" });
-      }
-    }
-    return targets;
-  }
-
-  function copyToPage(entries, targetHomeSlot) {
-    if (targetHomeSlot === null) {
-      for (var i = 0; i < entries.length; i++) {
-        var newSlot = firstFreeSlot();
-        if (newSlot < 0) break;
-        var cell = firstFreeCell(0);
-        if (cell < 0) break;
-        var e = entries[i];
-        state.buttons[newSlot - 1] = {
-          entity: e.entity, label: e.label, icon: e.icon,
-          icon_on: e.icon_on, sensor: e.sensor, unit: e.unit, type: e.type || "",
-        };
-        if (e.size === 2) state.sizes[newSlot] = 2;
-        else if (e.size === 3) state.sizes[newSlot] = 3;
-        state.grid[cell] = newSlot;
-        if (e.size === 2) {
-          var below = cell + GRID_COLS;
-          if (below < NUM_SLOTS && state.grid[below] === 0) state.grid[below] = -1;
-        }
-        if (e.size === 3) {
-          var right = cell + 1;
-          if (right < NUM_SLOTS && right % GRID_COLS !== 0 && state.grid[right] === 0) state.grid[right] = -1;
-        }
-        if (e.subpageConfig) {
-          var spCopy = parseSubpageConfig(e.subpageConfig);
-          spCopy.sizes = {};
-          buildSubpageGrid(spCopy);
-          state.subpages[newSlot] = spCopy;
-        }
-        saveButtonConfig(newSlot);
-        saveSubpageEntity(newSlot);
-      }
-      postText("Button Order", serializeGrid(state.grid));
-    } else {
-      var sp = getSubpage(targetHomeSlot);
-      for (var i = 0; i < entries.length; i++) {
-        var cell = -1;
-        for (var c = 0; c < NUM_SLOTS; c++) {
-          if (sp.grid[c] === 0) { cell = c; break; }
-        }
-        if (cell < 0) break;
-        var newSlot = subpageFirstFreeSlot(sp);
-        while (sp.buttons.length < newSlot) {
-          sp.buttons.push({ entity: "", label: "", icon: "Auto", icon_on: "Auto", sensor: "", unit: "" });
-        }
-        var e = entries[i];
-        sp.buttons[newSlot - 1] = {
-          entity: e.entity, label: e.label, icon: e.icon,
-          icon_on: e.icon_on, sensor: e.sensor, unit: e.unit,
-        };
-        if (e.size === 4) sp.sizes[newSlot] = 4;
-        else if (e.size === 2) sp.sizes[newSlot] = 2;
-        else if (e.size === 3) sp.sizes[newSlot] = 3;
-        sp.grid[cell] = newSlot;
-        if (e.size === 2 || e.size === 4) {
-          var below = cell + GRID_COLS;
-          if (below < NUM_SLOTS && sp.grid[below] === 0) sp.grid[below] = -1;
-        }
-        if (e.size === 3 || e.size === 4) {
-          var right = cell + 1;
-          if (right < NUM_SLOTS && right % GRID_COLS !== 0 && sp.grid[right] === 0) sp.grid[right] = -1;
-        }
-        if (e.size === 4) {
-          var diag = cell + GRID_COLS + 1;
-          if (diag < NUM_SLOTS && (cell + 1) % GRID_COLS !== 0 && sp.grid[diag] === 0) sp.grid[diag] = -1;
-        }
-      }
-      sp.order = serializeSubpageGrid(sp);
-      saveSubpageConfig(targetHomeSlot);
-    }
-    renderPreview();
-    renderButtonSettings();
   }
 
   // ── Cut / Paste ────────────────────────────────────────────────────────

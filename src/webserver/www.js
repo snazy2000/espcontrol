@@ -533,6 +533,25 @@
         }
         grid[below] = -1;
       }
+      if ((grid[i] > 0 || grid[i] === -2) && sizes[grid[i]] === 3) {
+        var right = i + 1;
+        if (right >= maxSlots || right % GRID_COLS === 0) {
+          delete sizes[grid[i]];
+          continue;
+        }
+        if (grid[right] > 0 || grid[right] === -2) {
+          var displaced = grid[right];
+          var placed = false;
+          for (var j = 0; j < maxSlots; j++) {
+            if (grid[j] === 0) { grid[j] = displaced; placed = true; break; }
+          }
+          if (!placed) {
+            delete sizes[grid[i]];
+            continue;
+          }
+        }
+        grid[right] = -1;
+      }
     }
   }
 

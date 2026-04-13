@@ -1706,6 +1706,7 @@
       textInput: textInput,
       bindField: bindField,
       saveField: saveField,
+      toggleRow: toggleRow,
       idPrefix: idPrefix,
     };
 

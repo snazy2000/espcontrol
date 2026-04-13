@@ -14,6 +14,14 @@ registerButtonType("subpage", {
         renderPreview();
       }
     ));
+    var indicatorToggle = helpers.toggleRow(
+      "Activity indicator", helpers.idPrefix + "indicator", b.sensor === "indicator"
+    );
+    indicatorToggle.input.addEventListener("change", function () {
+      b.sensor = this.checked ? "indicator" : "";
+      helpers.saveField("sensor", b.sensor);
+    });
+    panel.appendChild(indicatorToggle.row);
     var configBtn = document.createElement("button");
     configBtn.className = "sp-action-btn";
     configBtn.style.background = "var(--accent)";

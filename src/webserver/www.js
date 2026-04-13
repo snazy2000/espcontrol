@@ -180,6 +180,7 @@
     ".sp-btn-double{grid-row:span 2}" +
     ".sp-btn-double .sp-btn-label{-webkit-line-clamp:var(--btn-lines-dbl)}" +
     ".sp-btn-double .sp-btn-label-row .sp-btn-label{-webkit-line-clamp:var(--btn-lines-dbl)}" +
+    ".sp-btn-wide{grid-column:span 2}" +
     ".sp-empty-cell{border:2px dashed rgba(255,255,255,.15);background:transparent;" +
     "border-radius:var(--empty-r);display:flex;align-items:center;justify-content:center;" +
     "cursor:pointer;transition:border-color .2s}" +
@@ -383,17 +384,13 @@
     "overflow:hidden;word-break:break-word;min-height:0}" +
     ".sp-back-btn.sp-btn-double{grid-row:span 2}" +
     ".sp-back-btn.sp-btn-double .sp-btn-label{-webkit-line-clamp:var(--back-lines-dbl)}" +
+    ".sp-back-btn.sp-btn-wide{grid-column:span 2}" +
 
     ".sp-btn-label-row{display:flex;align-items:baseline;width:100%;overflow:hidden}" +
     ".sp-btn-label-row .sp-btn-label{flex:1;min-width:0}" +
     ".sp-subpage-badge{font-size:var(--btn-label);line-height:1.2;opacity:.5;flex-shrink:0;" +
     "cursor:pointer;padding:2px 0 2px 4px;border-radius:4px;transition:opacity .15s}" +
-    ".sp-subpage-badge:hover{opacity:1}" +
-
-    ".sp-wx-results{display:flex;flex-direction:column;gap:4px;margin:6px 0}" +
-    ".sp-wx-result{display:block;width:100%;text-align:left;padding:8px 10px;border:1px solid #333;" +
-    "border-radius:6px;background:#1a1a1a;color:#ccc;cursor:pointer;font-size:13px;transition:background .15s}" +
-    ".sp-wx-result:hover{background:#2a2a2a}";
+    ".sp-subpage-badge:hover{opacity:1}";
 
   // ── State ──────────────────────────────────────────────────────────────
 
@@ -431,10 +428,6 @@
     subpageSelectedSlots: [],
     subpageLastClicked: -1,
     clipboard: null,
-    weatherApiKey: "",
-    weatherLat: "",
-    weatherLon: "",
-    weatherLocation: "",
   };
 
   for (var i = 0; i < NUM_SLOTS; i++) {
@@ -508,11 +501,14 @@
     for (var i = 0; i < parts.length && i < NUM_SLOTS; i++) {
       var s = parts[i].trim();
       if (!s) continue;
-      var dbl = s.charAt(s.length - 1) === "d";
+      var last = s.charAt(s.length - 1);
+      var dbl = last === "d";
+      var wide = last === "w";
       var n = parseInt(s, 10);
       if (n >= 1 && n <= NUM_SLOTS && !isNaN(n)) {
         grid[i] = n;
         if (dbl) state.sizes[n] = 2;
+        else if (wide) state.sizes[n] = 3;
       }
     }
     applySpans(grid, state.sizes, NUM_SLOTS);
@@ -548,7 +544,8 @@
     if (last < 0) return "";
     return grid.slice(0, last + 1).map(function (slot) {
       if (slot <= 0) return "";
-      return slot + (state.sizes[slot] === 2 ? "d" : "");
+      var sz = state.sizes[slot];
+      return slot + (sz === 2 ? "d" : sz === 3 ? "w" : "");
     }).join(",");
   }
 
@@ -1080,97 +1077,6 @@
 
     config.appendChild(makeCollapsibleCard("Temperature", tempBody, true));
 
-    var wxBody = document.createElement("div");
-
-    wxBody.appendChild(fieldLabel("API Key"));
-    var wxApiKeyInp = textInput("sp-set-wx-apikey", state.weatherApiKey, "Pirate Weather API key");
-    wxBody.appendChild(wxApiKeyInp);
-    bindTextPost(wxApiKeyInp, "Weather API Key", {});
-    els.setWxApiKey = wxApiKeyInp;
-
-    wxBody.appendChild(fieldLabel("City Search"));
-    var wxSearchRow = document.createElement("div");
-    wxSearchRow.className = "sp-backup-btns";
-    var wxSearchInp = textInput("sp-set-wx-search", "", "e.g. London");
-    wxSearchInp.style.flex = "1";
-    wxSearchRow.appendChild(wxSearchInp);
-    var wxSearchBtn = document.createElement("button");
-    wxSearchBtn.className = "sp-backup-btn";
-    wxSearchBtn.textContent = "Search";
-    wxSearchRow.appendChild(wxSearchBtn);
-    wxBody.appendChild(wxSearchRow);
-
-    var wxResults = document.createElement("div");
-    wxResults.className = "sp-wx-results";
-    wxBody.appendChild(wxResults);
-
-    wxSearchBtn.addEventListener("click", function () {
-      var q = wxSearchInp.value.trim();
-      if (!q) return;
-      wxSearchBtn.disabled = true;
-      wxSearchBtn.textContent = "Searching\u2026";
-      wxResults.innerHTML = "";
-      fetch("https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(q) + "&count=5")
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          wxSearchBtn.disabled = false;
-          wxSearchBtn.textContent = "Search";
-          if (!data.results || !data.results.length) {
-            wxResults.textContent = "No results found";
-            return;
-          }
-          data.results.forEach(function (r) {
-            var opt = document.createElement("button");
-            opt.className = "sp-wx-result";
-            opt.textContent = r.name + (r.admin1 ? ", " + r.admin1 : "") + (r.country ? " \u2014 " + r.country : "");
-            opt.addEventListener("click", function () {
-              var lat = String(r.latitude);
-              var lon = String(r.longitude);
-              var loc = r.name + (r.country ? ", " + r.country : "");
-              state.weatherLat = lat;
-              state.weatherLon = lon;
-              state.weatherLocation = loc;
-              syncInput(els.setWxLat, lat);
-              syncInput(els.setWxLon, lon);
-              if (els.wxLocationLabel) els.wxLocationLabel.textContent = loc;
-              postText("Weather Latitude", lat);
-              postText("Weather Longitude", lon);
-              postText("Weather Location", loc);
-              wxResults.innerHTML = "";
-            });
-            wxResults.appendChild(opt);
-          });
-        })
-        .catch(function () {
-          wxSearchBtn.disabled = false;
-          wxSearchBtn.textContent = "Search";
-          wxResults.textContent = "Search failed \u2014 check connection";
-        });
-    });
-    wxSearchInp.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") wxSearchBtn.click();
-    });
-
-    var wxLocLabel = document.createElement("div");
-    wxLocLabel.className = "sp-hint";
-    wxLocLabel.textContent = state.weatherLocation || "No location set";
-    wxBody.appendChild(wxLocLabel);
-    els.wxLocationLabel = wxLocLabel;
-
-    wxBody.appendChild(fieldLabel("Latitude"));
-    var wxLatInp = textInput("sp-set-wx-lat", state.weatherLat, "e.g. 51.5074");
-    wxBody.appendChild(wxLatInp);
-    bindTextPost(wxLatInp, "Weather Latitude", {});
-    els.setWxLat = wxLatInp;
-
-    wxBody.appendChild(fieldLabel("Longitude"));
-    var wxLonInp = textInput("sp-set-wx-lon", state.weatherLon, "e.g. -0.1278");
-    wxBody.appendChild(wxLonInp);
-    bindTextPost(wxLonInp, "Weather Longitude", {});
-    els.setWxLon = wxLonInp;
-
-    config.appendChild(makeCollapsibleCard("Weather", wxBody, true));
-
     var ssBody = document.createElement("div");
     var ssMode = state.presenceEntity ? "sensor" : "timer";
 
@@ -1568,7 +1474,7 @@
         var b = c.buttons[bIdx];
         var iconName = resolveIcon(b);
         var label = b.label || b.entity || "Configure";
-        var color = (b.type === "sensor" || b.type === "weather") ? state.sensorColor : state.offColor;
+        var color = (b.type === "sensor") ? state.sensorColor : state.offColor;
         var previewTypeDef = !c.isSub ? (BUTTON_TYPES[b.type || ""] || null) : null;
         var typePreview = previewTypeDef && previewTypeDef.renderPreview
           ? previewTypeDef.renderPreview(b, { escHtml: escHtml })
@@ -2741,10 +2647,6 @@
         outdoor_temp_entity: state.outdoorEntity,
         presence_sensor_entity: state.presenceEntity,
         screensaver_timeout: state.screensaverTimeout,
-        weather_api_key: state.weatherApiKey,
-        weather_latitude: state.weatherLat,
-        weather_longitude: state.weatherLon,
-        weather_location: state.weatherLocation,
       },
     };
 
@@ -2941,20 +2843,6 @@
           if (els.setSsMode) els.setSsMode(state.presenceEntity ? "sensor" : "timer");
           updateTempPreview();
 
-          if (s.weather_latitude != null) {
-            postText("Weather API Key", s.weather_api_key || "");
-            postText("Weather Latitude", s.weather_latitude || "");
-            postText("Weather Longitude", s.weather_longitude || "");
-            postText("Weather Location", s.weather_location || "");
-            state.weatherApiKey = s.weather_api_key || "";
-            state.weatherLat = s.weather_latitude || "";
-            state.weatherLon = s.weather_longitude || "";
-            state.weatherLocation = s.weather_location || "";
-            syncInput(els.setWxApiKey, state.weatherApiKey);
-            syncInput(els.setWxLat, state.weatherLat);
-            syncInput(els.setWxLon, state.weatherLon);
-            if (els.wxLocationLabel) els.wxLocationLabel.textContent = state.weatherLocation || "No location set";
-          }
         }
 
         state.selectedSlots = [];
@@ -3068,22 +2956,6 @@
         state.presenceEntity = val;
         syncInput(els.setPresence, val);
         if (els.setSsMode) els.setSsMode(val ? "sensor" : "timer");
-      },
-      "text-weather_api_key": function (val) {
-        state.weatherApiKey = val;
-        syncInput(els.setWxApiKey, val);
-      },
-      "text-weather_latitude": function (val) {
-        state.weatherLat = val;
-        syncInput(els.setWxLat, val);
-      },
-      "text-weather_longitude": function (val) {
-        state.weatherLon = val;
-        syncInput(els.setWxLon, val);
-      },
-      "text-weather_location": function (val) {
-        state.weatherLocation = val;
-        if (els.wxLocationLabel) els.wxLocationLabel.textContent = val || "No location set";
       },
       "number-screen__daytime_brightness": function (val) {
         state.brightnessDayVal = parseFloat(val) || 100;

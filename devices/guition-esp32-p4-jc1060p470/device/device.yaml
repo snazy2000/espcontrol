@@ -211,3 +211,10 @@ display:
     rotation: 0
     update_interval: never
     auto_clear_enabled: false
+
+# ---------------------------------------------------------------------------
+# LVGL base (display binding, must be before any page definitions)
+# ---------------------------------------------------------------------------
+lvgl:
+  displays: my_display
+  byte_order: little_endian

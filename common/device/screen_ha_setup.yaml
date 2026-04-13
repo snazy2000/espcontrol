@@ -1,19 +1,21 @@
 # =============================================================================
-# SCREEN: WIFI SETUP
+# SCREEN: HOME ASSISTANT SETUP
 # =============================================================================
-# Captive portal instructions shown when WiFi is disconnected.
+# Shown when WiFi is connected but the Home Assistant API client has not
+# connected yet. Tells the user to add the device in Home Assistant.
+# Automatically advances when the API client connects.
 # =============================================================================
 
 lvgl:
   pages:
-    - id: wifi_setup_page
+    - id: ha_setup_page
       bg_color: 0x000000
       scrollable: false
       pad_all: 0
       widgets:
         - obj:
-            width: 480
-            height: 800
+            width: $screen_width
+            height: $screen_height
             bg_opa: 0%
             border_width: 0
             pad_all: 0
@@ -29,7 +31,7 @@ lvgl:
             widgets:
               - obj:
                   align: center
-                  width: 440
+                  width: $content_width
                   height: SIZE_CONTENT
                   bg_opa: 0%
                   border_width: 0
@@ -45,19 +47,24 @@ lvgl:
                   widgets:
                     - label:
                         text_font: icon_font_setup
-                        text: $icon_wifi
+                        text: $icon_home_assistant
                         text_color: 0xFFFFFF
                         text_align: center
                     - label:
-                        text: "WiFi Setup"
+                        text: "Home Assistant"
                         text_font: setup_title_font
                         text_color: 0xFFFFFF
-                        width: 440
+                        width: $content_width
                         text_align: center
                     - label:
-                        id: wifi_setup_instructions
-                        text: "Connect to the WiFi hotspot\nto configure your network"
+                        text: "Add this device in Home Assistant\nto enable control"
                         text_font: setup_body_font
                         text_color: 0x888888
-                        width: 440
+                        width: $content_width
+                        text_align: center
+                    - label:
+                        text: "Settings > Devices & Services"
+                        text_font: setup_body_font
+                        text_color: 0xFFFFFF
+                        width: $content_width
                         text_align: center

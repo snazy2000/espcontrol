@@ -41,12 +41,12 @@ button:
               id: button_${num}_sensor_label
               text: "--"
           - label:
-              text_font: label_font_lg
+              text_font: $unit_font
               text_color: $button_text_color
               id: button_${num}_unit_label
               text: ""
               pad_bottom: 6
-    # Entity name label (bottom of button, wraps to two lines)
+    # Entity name label (bottom of button, wraps to fit available space)
     - label:
         align: bottom_left
         id: button_${num}_text_label

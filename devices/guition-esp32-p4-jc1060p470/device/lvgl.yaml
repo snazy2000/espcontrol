@@ -58,18 +58,18 @@ lvgl:
       pad_right: 5
 
       widgets:
-        - !include { file: button_widget.yaml, vars: { num: "1" } }
-        - !include { file: button_widget.yaml, vars: { num: "2" } }
-        - !include { file: button_widget.yaml, vars: { num: "3" } }
-        - !include { file: button_widget.yaml, vars: { num: "4" } }
-        - !include { file: button_widget.yaml, vars: { num: "5" } }
-        - !include { file: button_widget.yaml, vars: { num: "6" } }
-        - !include { file: button_widget.yaml, vars: { num: "7" } }
-        - !include { file: button_widget.yaml, vars: { num: "8" } }
-        - !include { file: button_widget.yaml, vars: { num: "9" } }
-        - !include { file: button_widget.yaml, vars: { num: "10" } }
-        - !include { file: button_widget.yaml, vars: { num: "11" } }
-        - !include { file: button_widget.yaml, vars: { num: "12" } }
-        - !include { file: button_widget.yaml, vars: { num: "13" } }
-        - !include { file: button_widget.yaml, vars: { num: "14" } }
-        - !include { file: button_widget.yaml, vars: { num: "15" } }
+        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "1" } }
+        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "2" } }
+        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "3" } }
+        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "4" } }
+        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "5" } }
+        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "6" } }
+        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "7" } }
+        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "8" } }
+        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "9" } }
+        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "10" } }
+        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "11" } }
+        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "12" } }
+        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "13" } }
+        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "14" } }
+        - !include { file: ../../../common/device/button_widget.yaml, vars: { num: "15" } }

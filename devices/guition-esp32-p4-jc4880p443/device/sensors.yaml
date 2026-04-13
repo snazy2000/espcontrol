@@ -1,20 +1,9 @@
 # =============================================================================
-# SENSORS - Dynamic HA entity subscriptions
+# SENSORS - Dynamic HA entity subscriptions (P4-4880 - 15 buttons, 3×5 grid)
 # =============================================================================
-# On boot, parses button_order and consolidated button configs to determine
-# which buttons are active, shows/positions them on the LVGL display, and
-# subscribes to Home Assistant state updates. Split into yielding phases to
-# avoid blocking the API handshake.
-#
-# Config format per button (semicolon-delimited):
-#   entity_id;label;icon;icon_on;sensor;sensor_unit;type
-#   0         1     2    3       4      5           6
-# Subpage config is stored in a separate entity (subpage_N_config).
-#
-# MIGRATION: Devices upgrading from the old per-field entity format
-# (Button N Entity, Label, Icon, etc.) need to export their config via the
-# web UI before upgrading, then import the backup after. The old NVS
-# entries are not auto-migrated.
+# Uses shared C++ from button_grid.h and icons.h for parsing, icon lookup,
+# color handling, sensor cards, toggle visuals, and HA subscriptions.
+# This device requires color_correction for accurate display colors.
 # =============================================================================
 
 globals:
@@ -31,7 +20,6 @@ esphome:
       then:
         # Phase 1: Parse config, position buttons, apply colors/icons/labels
         - lambda: |-
-            // Migration check: button_order exists but all configs empty
             std::string order_check = id(button_order).state;
             if (!order_check.empty()) {
               bool all_empty = true;
@@ -49,27 +37,6 @@ esphome:
                   "from the old firmware's web UI and import it after upgrading.");
               }
             }
-
-            static auto cfg_field = [](const std::string &cfg, int idx) -> std::string {
-              size_t start = 0;
-              for (int i = 0; i < idx; i++) {
-                size_t pos = cfg.find(';', start);
-                if (pos == std::string::npos) return "";
-                start = pos + 1;
-              }
-              size_t end = cfg.find(';', start);
-              return (end == std::string::npos) ? cfg.substr(start) : cfg.substr(start, end - start);
-            };
-
-            struct BtnSlot {
-              esphome::text::Text *config;
-              lv_obj_t *btn;
-              lv_obj_t *icon_lbl;
-              lv_obj_t *text_lbl;
-              lv_obj_t *sensor_container;
-              lv_obj_t *sensor_lbl;
-              lv_obj_t *unit_lbl;
-            };
 
             static BtnSlot slots[] = {
               { id(button_1_config), id(button_1), id(button_1_icon_label), id(button_1_text_label), id(button_1_sensor_container), id(button_1_sensor_label), id(button_1_unit_label) },
@@ -91,396 +58,50 @@ esphome:
             static constexpr int NUM_SLOTS = 15;
             static constexpr int COLS = 3;
 
-            static int positions[NUM_SLOTS] = {};
-            static bool is_double[NUM_SLOTS] = {};
-            static bool is_wide[NUM_SLOTS] = {};
-            std::string order_str = id(button_order).state;
-            memset(positions, 0, sizeof(positions));
-            memset(is_double, 0, sizeof(is_double));
-            memset(is_wide, 0, sizeof(is_wide));
-            if (!order_str.empty()) {
-              size_t gpos = 0, start = 0;
-              while (start <= order_str.length() && gpos < (size_t)NUM_SLOTS) {
-                size_t comma = order_str.find(',', start);
-                if (comma == std::string::npos) comma = order_str.length();
-                if (comma > start) {
-                  std::string token = order_str.substr(start, comma - start);
-                  bool dbl = !token.empty() && token.back() == 'd';
-                  bool wide = !token.empty() && token.back() == 'w';
-                  bool big = !token.empty() && token.back() == 'b';
-                  if (big) { dbl = true; wide = true; }
-                  if (dbl || wide) token.pop_back();
-                  int v = atoi(token.c_str());
-                  if (v >= 1 && v <= NUM_SLOTS) { positions[gpos] = v; is_double[v - 1] = dbl; is_wide[v - 1] = wide; }
-                }
-                gpos++;
-                start = comma + 1;
-              }
-            }
-            for (int p = 0; p < NUM_SLOTS; p++) {
-              if (positions[p] > 0 && is_double[positions[p] - 1] && p + COLS < NUM_SLOTS) {
-                positions[p + COLS] = 0;
-              }
-              if (positions[p] > 0 && is_wide[positions[p] - 1] && (p + 1) % COLS != 0 && p + 1 < NUM_SLOTS) {
-                positions[p + 1] = 0;
-              }
-              if (positions[p] > 0 && is_double[positions[p] - 1] && is_wide[positions[p] - 1] && (p + 1) % COLS != 0 && p + COLS + 1 < NUM_SLOTS) {
-                positions[p + COLS + 1] = 0;
-              }
-            }
+            OrderResult parsed, order;
+            parse_order_string(id(button_order).state, NUM_SLOTS, parsed);
+            clear_spanned_cells(parsed, NUM_SLOTS, COLS, order);
 
-            static auto correct_color = [](uint32_t rgb) -> uint32_t {
-              uint8_t r = (rgb >> 16) & 0xFF;
-              uint8_t g = (uint8_t)(((rgb >> 8) & 0xFF) * 80 / 100);
-              uint8_t b = rgb & 0xFF;
-              return ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
-            };
-
-            static uint32_t on_val = 0, off_val = 0, sensor_val = 0;
-            static bool has_on = false, has_off = false, has_sensor_color = false;
-            std::string on_hex = id(button_on_color).state;
-            std::string off_hex = id(button_off_color).state;
-            std::string sensor_hex = id(sensor_card_color).state;
-            has_on = on_hex.length() == 6;
-            has_off = off_hex.length() == 6;
-            has_sensor_color = sensor_hex.length() == 6;
-            if (has_on) on_val = strtoul(on_hex.c_str(), nullptr, 16);
-            if (has_off) off_val = strtoul(off_hex.c_str(), nullptr, 16);
-            if (has_sensor_color) sensor_val = strtoul(sensor_hex.c_str(), nullptr, 16);
+            bool has_on, has_off, has_sensor_color;
+            uint32_t on_val = parse_hex_color(id(button_on_color).state, has_on);
+            uint32_t off_val = parse_hex_color(id(button_off_color).state, has_off);
+            uint32_t sensor_val = parse_hex_color(id(sensor_card_color).state, has_sensor_color);
 
             if (has_on) on_val = correct_color(on_val);
             if (has_off) off_val = correct_color(off_val);
             if (has_sensor_color) sensor_val = correct_color(sensor_val);
 
-            for (int i = 0; i < NUM_SLOTS; i++) {
+            for (int i = 0; i < NUM_SLOTS; i++)
               lv_obj_add_flag(slots[i].btn, LV_OBJ_FLAG_HIDDEN);
-            }
-
-            struct IconEntry { const char* name; const char* glyph; };
-            static const IconEntry icon_entries[] = {
-              // --- GENERATED:ICONS START ---
-              {"Account",                    "\U000F0004"},
-              {"Air Conditioner",            "\U000F001B"},
-              {"Air Filter",                 "\U000F0D43"},
-              {"Air Purifier",               "\U000F0D44"},
-              {"Alarm",                      "\U000F009E"},
-              {"Alarm Light",                "\U000F078F"},
-              {"Application",                "\U000F0614"},
-              {"Battery",                    "\U000F0079"},
-              {"Battery 10%",                "\U000F007A"},
-              {"Battery 20%",                "\U000F007B"},
-              {"Battery 30%",                "\U000F007C"},
-              {"Battery 40%",                "\U000F007D"},
-              {"Battery 50%",                "\U000F007E"},
-              {"Battery 60%",                "\U000F007F"},
-              {"Battery 70%",                "\U000F0080"},
-              {"Battery 80%",                "\U000F0081"},
-              {"Battery 90%",                "\U000F0082"},
-              {"Battery Alert",              "\U000F0083"},
-              {"Battery Charging",           "\U000F0084"},
-              {"Battery Charging 100",       "\U000F0085"},
-              {"Battery Charging 70",        "\U000F089E"},
-              {"Battery High",               "\U000F12A3"},
-              {"Battery Low",                "\U000F12A1"},
-              {"Battery Medium",             "\U000F12A2"},
-              {"Battery Off",                "\U000F125D"},
-              {"Battery Outline",            "\U000F008E"},
-              {"Battery Unknown",            "\U000F0091"},
-              {"Bed",                        "\U000F02E3"},
-              {"Bell",                       "\U000F009A"},
-              {"Blinds",                     "\U000F00AC"},
-              {"Blinds Horizontal",          "\U000F1A2B"},
-              {"Blinds Horizontal Closed",   "\U000F1A2C"},
-              {"Blinds Open",                "\U000F1011"},
-              {"Bluetooth",                  "\U000F00AF"},
-              {"Broom",                      "\U000F00E2"},
-              {"Camera",                     "\U000F0100"},
-              {"Car Electric",               "\U000F0B6C"},
-              {"Cast",                       "\U000F0118"},
-              {"CCTV",                       "\U000F07AE"},
-              {"Ceiling Fan",                "\U000F1797"},
-              {"Ceiling Light",              "\U000F0769"},
-              {"Chandelier",                 "\U000F1793"},
-              {"Clock",                      "\U000F0150"},
-              {"Coffee Maker",               "\U000F109F"},
-              {"Current AC",                 "\U000F1480"},
-              {"Current DC",                 "\U000F095C"},
-              {"Curtains",                   "\U000F1846"},
-              {"Curtains Closed",            "\U000F1847"},
-              {"Desk Lamp",                  "\U000F095F"},
-              {"Dishwasher",                 "\U000F0AAC"},
-              {"Dog",                        "\U000F0A43"},
-              {"Door",                       "\U000F081A"},
-              {"Door Open",                  "\U000F081C"},
-              {"Doorbell",                   "\U000F0869"},
-              {"Dryer",                      "\U000F0917"},
-              {"EV Charger",                 "\U000F05F1"},
-              {"Fan",                        "\U000F0210"},
-              {"Fire",                       "\U000F0238"},
-              {"Fireplace",                  "\U000F0E2E"},
-              {"Flash",                      "\U000F0241"},
-              {"Floor Lamp",                 "\U000F08DD"},
-              {"Fountain",                   "\U000F096B"},
-              {"Fridge",                     "\U000F0290"},
-              {"Gamepad",                    "\U000F0297"},
-              {"Garage",                     "\U000F0372"},
-              {"Garage Open",                "\U000F06DA"},
-              {"Gate",                       "\U000F0299"},
-              {"Gate Open",                  "\U000F116A"},
-              {"Gesture Tap",                "\U000F0741"},
-              {"Gauge",                      "\U000F029A"},
-              {"Gauge Empty",                "\U000F0873"},
-              {"Gauge Full",                 "\U000F0874"},
-              {"Gauge Low",                  "\U000F0875"},
-              {"Grid Export",                "\U000F192C"},
-              {"Grid Import",                "\U000F192D"},
-              {"Grid Off",                   "\U000F19DD"},
-              {"Headphones",                 "\U000F02CB"},
-              {"Heater",                     "\U000F0438"},
-              {"Home",                       "\U000F02DC"},
-              {"Hot Tub",                    "\U000F0828"},
-              {"Humidifier",                 "\U000F1099"},
-              {"Humidity Alert",             "\U000F1509"},
-              {"Iron",                       "\U000F1824"},
-              {"Kettle",                     "\U000F05FA"},
-              {"Key",                        "\U000F030B"},
-              {"Lamp",                       "\U000F06B5"},
-              {"LAN",                        "\U000F0317"},
-              {"Lawnmower",                  "\U000F11F7"},
-              {"Leaf",                       "\U000F032A"},
-              {"LED Strip",                  "\U000F07D6"},
-              {"LED Strip Variant",          "\U000F1051"},
-              {"LED Strip Variant Off",      "\U000F1A4B"},
-              {"Light Switch",               "\U000F097E"},
-              {"Lightbulb",                  "\U000F0335"},
-              {"Lightbulb Group",            "\U000F1253"},
-              {"Lightbulb Group Outline",    "\U000F1254"},
-              {"Lightbulb Night",            "\U000F1A4C"},
-              {"Lightbulb Night Outline",    "\U000F1A4D"},
-              {"Lightbulb Off",              "\U000F0E4F"},
-              {"Lightbulb Outline",          "\U000F0336"},
-              {"Lightning Bolt",             "\U000F140B"},
-              {"Lock",                       "\U000F033E"},
-              {"Mailbox",                    "\U000F06EE"},
-              {"Message Video",              "\U000F036B"},
-              {"Meter Electric",             "\U000F1A57"},
-              {"Meter Gas",                  "\U000F1A59"},
-              {"Microwave",                  "\U000F0C99"},
-              {"Monitor",                    "\U000F0379"},
-              {"Motion Sensor",              "\U000F0D91"},
-              {"Movie Roll",                 "\U000F07DE"},
-              {"Music",                      "\U000F075A"},
-              {"Outdoor Lamp",               "\U000F1020"},
-              {"Oven",                       "\U000F04DE"},
-              {"Package",                    "\U000F03D6"},
-              {"Package Closed",             "\U000F03D7"},
-              {"Pool",                       "\U000F0606"},
-              {"Power",                      "\U000F0425"},
-              {"Power Plug",                 "\U000F0654"},
-              {"Printer",                    "\U000F042A"},
-              {"Printer 3D",                 "\U000F042B"},
-              {"Projector",                  "\U000F042E"},
-              {"Robot Vacuum",               "\U000F070D"},
-              {"Roller Shade",               "\U000F1A6B"},
-              {"Roller Shade Closed",        "\U000F1A6C"},
-              {"Router",                     "\U000F0469"},
-              {"Router Network",             "\U000F1087"},
-              {"Security",                   "\U000F068A"},
-              {"Shower",                     "\U000F09A1"},
-              {"Smoke Detector",             "\U000F0392"},
-              {"Snowflake",                  "\U000F0717"},
-              {"Snowflake Alert",            "\U000F0F29"},
-              {"Snowflake Thermometer",      "\U000F1A71"},
-              {"Sofa",                       "\U000F04B9"},
-              {"Solar Panel",                "\U000F0D9B"},
-              {"Solar Panel Large",          "\U000F0D9C"},
-              {"Solar Power",                "\U000F0A72"},
-              {"Solar Power Variant",        "\U000F1A73"},
-              {"Speaker",                    "\U000F04C3"},
-              {"Spotlight",                  "\U000F04C9"},
-              {"Sprinkler",                  "\U000F105F"},
-              {"String Lights",              "\U000F12BA"},
-              {"Sun",                        "\U000F05A8"},
-              {"Table",                      "\U000F05BC"},
-              {"Television",                 "\U000F0502"},
-              {"Thermometer",                "\U000F050F"},
-              {"Thermometer Alert",          "\U000F0E01"},
-              {"Thermometer High",           "\U000F10C2"},
-              {"Thermometer Low",            "\U000F10C3"},
-              {"Thermostat",                 "\U000F0393"},
-              {"Timer",                      "\U000F051B"},
-              {"Toilet",                     "\U000F09AB"},
-              {"Transmission Tower",         "\U000F0D3E"},
-              {"Trash Can",                  "\U000F0A79"},
-              {"Wall Outlet",                "\U000F0427"},
-              {"Washer",                     "\U000F072A"},
-              {"Water",                      "\U000F058C"},
-              {"Water Heater",               "\U000F0F92"},
-              {"Water Percent",              "\U000F058E"},
-              {"Weather Cloudy",             "\U000F0590"},
-              {"Weather Cloudy Alert",       "\U000F0F2F"},
-              {"Weather Dust",               "\U000F1B5A"},
-              {"Weather Fog",                "\U000F0591"},
-              {"Weather Hail",               "\U000F0592"},
-              {"Weather Hazy",               "\U000F0F30"},
-              {"Weather Hurricane",          "\U000F0898"},
-              {"Weather Lightning",          "\U000F0593"},
-              {"Weather Lightning Rainy",    "\U000F067E"},
-              {"Weather Night",              "\U000F0594"},
-              {"Weather Night Cloudy",       "\U000F0F31"},
-              {"Weather Partly Cloudy",      "\U000F0595"},
-              {"Weather Partly Lightning",   "\U000F0F32"},
-              {"Weather Partly Rainy",       "\U000F0F33"},
-              {"Weather Partly Snowy",       "\U000F0F34"},
-              {"Weather Partly Snowy Rainy", "\U000F0F35"},
-              {"Weather Pouring",            "\U000F0596"},
-              {"Weather Rainy",              "\U000F0597"},
-              {"Weather Snowy",              "\U000F0598"},
-              {"Weather Snowy Heavy",        "\U000F0F36"},
-              {"Weather Snowy Rainy",        "\U000F067F"},
-              {"Weather Sunny",              "\U000F0599"},
-              {"Weather Sunny Alert",        "\U000F0F37"},
-              {"Weather Sunny Off",          "\U000F14E4"},
-              {"Weather Sunset",             "\U000F059A"},
-              {"Weather Sunset Down",        "\U000F059B"},
-              {"Weather Sunset Up",          "\U000F059C"},
-              {"Weather Tornado",            "\U000F0F38"},
-              {"Weather Windy",              "\U000F059D"},
-              {"Weather Windy Variant",      "\U000F059E"},
-              {"Wind Power",                 "\U000F1A88"},
-              {"Wind Turbine",               "\U000F0DA5"},
-              {"Wind Turbine Alert",         "\U000F19AB"},
-              {"Wind Turbine Check",         "\U000F19AC"},
-              {"Window",                     "\U000F111C"},
-              // --- GENERATED:ICONS END ---
-            };
-            static constexpr size_t NUM_ICONS = sizeof(icon_entries) / sizeof(icon_entries[0]);
-
-            static auto find_icon = [](const char* name) -> const char* {
-              for (size_t i = 0; i < NUM_ICONS; i++) {
-                if (strcmp(icon_entries[i].name, name) == 0) return icon_entries[i].glyph;
-              }
-              return "\U000F0493";
-            };
-
-            static bool has_sensor[NUM_SLOTS] = {};
-            static bool has_icon_on[NUM_SLOTS] = {};
-            static const char* icon_off_cp[NUM_SLOTS] = {};
-            static const char* icon_on_cp[NUM_SLOTS] = {};
 
             for (int p = 0; p < NUM_SLOTS; p++) {
-              int idx = positions[p];
+              int idx = order.positions[p];
               if (idx < 1 || idx > NUM_SLOTS) continue;
               auto &s = slots[idx - 1];
               std::string cfg = s.config->state;
               lv_obj_clear_flag(s.btn, LV_OBJ_FLAG_HIDDEN);
-              int col = p % COLS;
-              int row = p / COLS;
-              int row_span = is_double[idx - 1] ? 2 : 1;
-              int col_span = is_wide[idx - 1] ? 2 : 1;
+              int col = p % COLS, row = p / COLS;
+              int row_span = order.is_double[idx - 1] ? 2 : 1;
+              int col_span = order.is_wide[idx - 1] ? 2 : 1;
               lv_obj_set_grid_cell(s.btn,
                 LV_GRID_ALIGN_STRETCH, col, col_span,
                 LV_GRID_ALIGN_STRETCH, row, row_span);
 
-              if (has_on) {
-                lv_obj_set_style_bg_color(s.btn, lv_color_hex(on_val),
-                  static_cast<lv_style_selector_t>(LV_PART_MAIN) | static_cast<lv_style_selector_t>(LV_STATE_CHECKED));
-              }
-              if (has_off) {
-                lv_obj_set_style_bg_color(s.btn, lv_color_hex(off_val),
-                  static_cast<lv_style_selector_t>(LV_PART_MAIN) | static_cast<lv_style_selector_t>(LV_STATE_DEFAULT));
-              }
+              apply_button_colors(s.btn, has_on, on_val, has_off, off_val);
 
               std::string btn_type = cfg_field(cfg, 6);
               if (btn_type == "sensor") {
                 std::string sensor_id = cfg_field(cfg, 4);
                 if (sensor_id.empty()) continue;
-                if (has_sensor_color) {
-                  lv_obj_set_style_bg_color(s.btn, lv_color_hex(sensor_val),
-                    static_cast<lv_style_selector_t>(LV_PART_MAIN) | static_cast<lv_style_selector_t>(LV_STATE_DEFAULT));
-                }
-                lv_obj_clear_flag(s.btn, LV_OBJ_FLAG_CLICKABLE);
-                lv_obj_add_flag(s.icon_lbl, LV_OBJ_FLAG_HIDDEN);
-                lv_obj_clear_flag(s.sensor_container, LV_OBJ_FLAG_HIDDEN);
-                std::string unit_str = cfg_field(cfg, 5);
-                if (!unit_str.empty()) {
-                  lv_label_set_text(s.unit_lbl, unit_str.c_str());
-                }
-                std::string custom_label = cfg_field(cfg, 1);
-                if (!custom_label.empty()) {
-                  lv_label_set_text(s.text_lbl, custom_label.c_str());
-                }
+                setup_sensor_card(s, cfg, has_sensor_color, sensor_val);
                 continue;
               }
-
-              std::string sensor_id = cfg_field(cfg, 4);
-              has_sensor[idx - 1] = !sensor_id.empty();
-
-              std::string icon_on_name = cfg_field(cfg, 3);
-              has_icon_on[idx - 1] = !icon_on_name.empty() && icon_on_name != "Auto";
-              if (has_icon_on[idx - 1]) {
-                icon_on_cp[idx - 1] = find_icon(icon_on_name.c_str());
-              }
-
-              std::string entity_id = cfg_field(cfg, 0);
-              if (!entity_id.empty()) {
-                std::string custom_label = cfg_field(cfg, 1);
-                if (!custom_label.empty()) {
-                  lv_label_set_text(s.text_lbl, custom_label.c_str());
-                }
-
-                std::string icon_name = cfg_field(cfg, 2);
-                const char* icon_cp = "\U000F0493";
-                if (icon_name.empty() || icon_name == "Auto") {
-                  std::string domain = entity_id.substr(0, entity_id.find('.'));
-                  // --- GENERATED:DOMAIN_ICONS START ---
-                  if      (domain == "light")         icon_cp = "\U000F0335";  // Lightbulb
-                  else if (domain == "switch")        icon_cp = "\U000F0654";  // Power Plug
-                  else if (domain == "fan")           icon_cp = "\U000F0210";  // Fan
-                  else if (domain == "lock")          icon_cp = "\U000F033E";  // Lock
-                  else if (domain == "cover")         icon_cp = "\U000F1A2B";  // Blinds Horizontal
-                  else if (domain == "climate")       icon_cp = "\U000F001B";  // Air Conditioner
-                  else if (domain == "media_player")  icon_cp = "\U000F04C3";  // Speaker
-                  else if (domain == "camera")        icon_cp = "\U000F0100";  // Camera
-                  else if (domain == "binary_sensor") icon_cp = "\U000F0D91";  // Motion Sensor
-                  // --- GENERATED:DOMAIN_ICONS END ---
-                } else {
-                  icon_cp = find_icon(icon_name.c_str());
-                }
-                lv_label_set_text(s.icon_lbl, icon_cp);
-                icon_off_cp[idx - 1] = icon_cp;
-
-                if (has_sensor[idx - 1]) {
-                  std::string unit_str = cfg_field(cfg, 5);
-                  if (!unit_str.empty()) {
-                    lv_label_set_text(s.unit_lbl, unit_str.c_str());
-                  }
-                }
-              } else {
-                std::string custom_label = cfg_field(cfg, 1);
-                if (!custom_label.empty()) {
-                  lv_label_set_text(s.text_lbl, custom_label.c_str());
-                }
-                std::string icon_name = cfg_field(cfg, 2);
-                if (!icon_name.empty() && icon_name != "Auto") {
-                  lv_label_set_text(s.icon_lbl, find_icon(icon_name.c_str()));
-                } else if (cfg_field(cfg, 6) == "push") {
-                  lv_label_set_text(s.icon_lbl, "\U000F0741");
-                  static const lv_style_prop_t push_props[] = {LV_STYLE_BG_COLOR, LV_STYLE_PROP_INV};
-                  static lv_style_transition_dsc_t push_trans;
-                  static bool push_trans_inited = false;
-                  if (!push_trans_inited) {
-                    lv_style_transition_dsc_init(&push_trans, push_props, lv_anim_path_ease_out, 400, 0, NULL);
-                    push_trans_inited = true;
-                  }
-                  lv_obj_set_style_transition(s.btn, &push_trans, static_cast<lv_style_selector_t>(LV_PART_MAIN) | LV_STATE_DEFAULT);
-                }
-              }
+              setup_toggle_visual(s, cfg);
             }
 
         - delay: 100ms
 
-        # Phase 2: Subscribe to HA entities + create subpages
+        # Phase 2: HA subscriptions + subpage creation
         - lambda: |-
             constexpr int NUM_SLOTS = 15;
             constexpr int COLS = 3;
@@ -489,27 +110,6 @@ esphome:
             static bool has_icon_on[NUM_SLOTS] = {};
             static const char* icon_off_cp[NUM_SLOTS] = {};
             static const char* icon_on_cp[NUM_SLOTS] = {};
-
-            auto cfg_field = [](const std::string &cfg, int idx) -> std::string {
-              size_t start = 0;
-              for (int i = 0; i < idx; i++) {
-                size_t pos = cfg.find(';', start);
-                if (pos == std::string::npos) return "";
-                start = pos + 1;
-              }
-              size_t end = cfg.find(';', start);
-              return (end == std::string::npos) ? cfg.substr(start) : cfg.substr(start, end - start);
-            };
-
-            struct BtnSlot {
-              esphome::text::Text *config;
-              lv_obj_t *btn;
-              lv_obj_t *icon_lbl;
-              lv_obj_t *text_lbl;
-              lv_obj_t *sensor_container;
-              lv_obj_t *sensor_lbl;
-              lv_obj_t *unit_lbl;
-            };
 
             BtnSlot slots[] = {
               { id(button_1_config), id(button_1), id(button_1_icon_label), id(button_1_text_label), id(button_1_sensor_container), id(button_1_sensor_label), id(button_1_unit_label) },
@@ -529,255 +129,20 @@ esphome:
               { id(button_15_config), id(button_15), id(button_15_icon_label), id(button_15_text_label), id(button_15_sensor_container), id(button_15_sensor_label), id(button_15_unit_label) },
             };
 
-            std::string on_hex = id(button_on_color).state;
-            std::string off_hex = id(button_off_color).state;
-            std::string sensor_hex = id(sensor_card_color).state;
-            uint32_t on_val = 0, off_val = 0, sensor_val = 0;
-            bool has_on = on_hex.length() == 6;
-            bool has_off = off_hex.length() == 6;
-            bool has_sensor_color = sensor_hex.length() == 6;
-            if (has_on) on_val = strtoul(on_hex.c_str(), nullptr, 16);
-            if (has_off) off_val = strtoul(off_hex.c_str(), nullptr, 16);
-            if (has_sensor_color) sensor_val = strtoul(sensor_hex.c_str(), nullptr, 16);
+            bool has_on, has_off, has_sensor_color;
+            uint32_t on_val = parse_hex_color(id(button_on_color).state, has_on);
+            uint32_t off_val = parse_hex_color(id(button_off_color).state, has_off);
+            uint32_t sensor_val = parse_hex_color(id(sensor_card_color).state, has_sensor_color);
 
-            auto correct_color = [](uint32_t rgb) -> uint32_t {
-              uint8_t r = (rgb >> 16) & 0xFF;
-              uint8_t g = (uint8_t)(((rgb >> 8) & 0xFF) * 80 / 100);
-              uint8_t b = rgb & 0xFF;
-              return ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
-            };
             if (has_on) on_val = correct_color(on_val);
             if (has_off) off_val = correct_color(off_val);
             if (has_sensor_color) sensor_val = correct_color(sensor_val);
 
-            std::string order_str = id(button_order).state;
-            int positions[NUM_SLOTS] = {};
-            if (!order_str.empty()) {
-              size_t gpos = 0, start = 0;
-              while (start <= order_str.length() && gpos < (size_t)NUM_SLOTS) {
-                size_t comma = order_str.find(',', start);
-                if (comma == std::string::npos) comma = order_str.length();
-                if (comma > start) {
-                  std::string token = order_str.substr(start, comma - start);
-                  if (!token.empty() && (token.back() == 'd' || token.back() == 'w')) token.pop_back();
-                  int v = atoi(token.c_str());
-                  if (v >= 1 && v <= NUM_SLOTS) positions[gpos] = v;
-                }
-                gpos++;
-                start = comma + 1;
-              }
-            }
+            OrderResult parsed;
+            parse_order_string(id(button_order).state, NUM_SLOTS, parsed);
 
-            // --- Subpage creation ---
-            struct IconEntry { const char* name; const char* glyph; };
-            static const IconEntry icon_entries[] = {
-              // --- GENERATED:ICONS START ---
-              {"Account",                    "\U000F0004"},
-              {"Air Conditioner",            "\U000F001B"},
-              {"Air Filter",                 "\U000F0D43"},
-              {"Air Purifier",               "\U000F0D44"},
-              {"Alarm",                      "\U000F009E"},
-              {"Alarm Light",                "\U000F078F"},
-              {"Application",                "\U000F0614"},
-              {"Battery",                    "\U000F0079"},
-              {"Battery 10%",                "\U000F007A"},
-              {"Battery 20%",                "\U000F007B"},
-              {"Battery 30%",                "\U000F007C"},
-              {"Battery 40%",                "\U000F007D"},
-              {"Battery 50%",                "\U000F007E"},
-              {"Battery 60%",                "\U000F007F"},
-              {"Battery 70%",                "\U000F0080"},
-              {"Battery 80%",                "\U000F0081"},
-              {"Battery 90%",                "\U000F0082"},
-              {"Battery Alert",              "\U000F0083"},
-              {"Battery Charging",           "\U000F0084"},
-              {"Battery Charging 100",       "\U000F0085"},
-              {"Battery Charging 70",        "\U000F089E"},
-              {"Battery High",               "\U000F12A3"},
-              {"Battery Low",                "\U000F12A1"},
-              {"Battery Medium",             "\U000F12A2"},
-              {"Battery Off",                "\U000F125D"},
-              {"Battery Outline",            "\U000F008E"},
-              {"Battery Unknown",            "\U000F0091"},
-              {"Bed",                        "\U000F02E3"},
-              {"Bell",                       "\U000F009A"},
-              {"Blinds",                     "\U000F00AC"},
-              {"Blinds Horizontal",          "\U000F1A2B"},
-              {"Blinds Horizontal Closed",   "\U000F1A2C"},
-              {"Blinds Open",                "\U000F1011"},
-              {"Bluetooth",                  "\U000F00AF"},
-              {"Broom",                      "\U000F00E2"},
-              {"Camera",                     "\U000F0100"},
-              {"Car Electric",               "\U000F0B6C"},
-              {"Cast",                       "\U000F0118"},
-              {"CCTV",                       "\U000F07AE"},
-              {"Ceiling Fan",                "\U000F1797"},
-              {"Ceiling Light",              "\U000F0769"},
-              {"Chandelier",                 "\U000F1793"},
-              {"Clock",                      "\U000F0150"},
-              {"Coffee Maker",               "\U000F109F"},
-              {"Current AC",                 "\U000F1480"},
-              {"Current DC",                 "\U000F095C"},
-              {"Curtains",                   "\U000F1846"},
-              {"Curtains Closed",            "\U000F1847"},
-              {"Desk Lamp",                  "\U000F095F"},
-              {"Dishwasher",                 "\U000F0AAC"},
-              {"Dog",                        "\U000F0A43"},
-              {"Door",                       "\U000F081A"},
-              {"Door Open",                  "\U000F081C"},
-              {"Doorbell",                   "\U000F0869"},
-              {"Dryer",                      "\U000F0917"},
-              {"EV Charger",                 "\U000F05F1"},
-              {"Fan",                        "\U000F0210"},
-              {"Fire",                       "\U000F0238"},
-              {"Fireplace",                  "\U000F0E2E"},
-              {"Flash",                      "\U000F0241"},
-              {"Floor Lamp",                 "\U000F08DD"},
-              {"Fountain",                   "\U000F096B"},
-              {"Fridge",                     "\U000F0290"},
-              {"Gamepad",                    "\U000F0297"},
-              {"Garage",                     "\U000F0372"},
-              {"Garage Open",                "\U000F06DA"},
-              {"Gate",                       "\U000F0299"},
-              {"Gate Open",                  "\U000F116A"},
-              {"Gauge",                      "\U000F029A"},
-              {"Gauge Empty",                "\U000F0873"},
-              {"Gauge Full",                 "\U000F0874"},
-              {"Gauge Low",                  "\U000F0875"},
-              {"Grid Export",                "\U000F192C"},
-              {"Grid Import",                "\U000F192D"},
-              {"Grid Off",                   "\U000F19DD"},
-              {"Headphones",                 "\U000F02CB"},
-              {"Heater",                     "\U000F0438"},
-              {"Home",                       "\U000F02DC"},
-              {"Hot Tub",                    "\U000F0828"},
-              {"Humidifier",                 "\U000F1099"},
-              {"Humidity Alert",             "\U000F1509"},
-              {"Iron",                       "\U000F1824"},
-              {"Kettle",                     "\U000F05FA"},
-              {"Key",                        "\U000F030B"},
-              {"Lamp",                       "\U000F06B5"},
-              {"LAN",                        "\U000F0317"},
-              {"Lawnmower",                  "\U000F11F7"},
-              {"Leaf",                       "\U000F032A"},
-              {"LED Strip",                  "\U000F07D6"},
-              {"LED Strip Variant",          "\U000F1051"},
-              {"LED Strip Variant Off",      "\U000F1A4B"},
-              {"Light Switch",               "\U000F097E"},
-              {"Lightbulb",                  "\U000F0335"},
-              {"Lightbulb Group",            "\U000F1253"},
-              {"Lightbulb Group Outline",    "\U000F1254"},
-              {"Lightbulb Night",            "\U000F1A4C"},
-              {"Lightbulb Night Outline",    "\U000F1A4D"},
-              {"Lightbulb Off",              "\U000F0E4F"},
-              {"Lightbulb Outline",          "\U000F0336"},
-              {"Lightning Bolt",             "\U000F140B"},
-              {"Lock",                       "\U000F033E"},
-              {"Mailbox",                    "\U000F06EE"},
-              {"Message Video",              "\U000F036B"},
-              {"Meter Electric",             "\U000F1A57"},
-              {"Meter Gas",                  "\U000F1A59"},
-              {"Microwave",                  "\U000F0C99"},
-              {"Monitor",                    "\U000F0379"},
-              {"Motion Sensor",              "\U000F0D91"},
-              {"Movie Roll",                 "\U000F07DE"},
-              {"Music",                      "\U000F075A"},
-              {"Outdoor Lamp",               "\U000F1020"},
-              {"Oven",                       "\U000F04DE"},
-              {"Package",                    "\U000F03D6"},
-              {"Package Closed",             "\U000F03D7"},
-              {"Pool",                       "\U000F0606"},
-              {"Power",                      "\U000F0425"},
-              {"Power Plug",                 "\U000F0654"},
-              {"Printer",                    "\U000F042A"},
-              {"Printer 3D",                 "\U000F042B"},
-              {"Projector",                  "\U000F042E"},
-              {"Robot Vacuum",               "\U000F070D"},
-              {"Roller Shade",               "\U000F1A6B"},
-              {"Roller Shade Closed",        "\U000F1A6C"},
-              {"Router",                     "\U000F0469"},
-              {"Router Network",             "\U000F1087"},
-              {"Security",                   "\U000F068A"},
-              {"Shower",                     "\U000F09A1"},
-              {"Smoke Detector",             "\U000F0392"},
-              {"Snowflake",                  "\U000F0717"},
-              {"Snowflake Alert",            "\U000F0F29"},
-              {"Snowflake Thermometer",      "\U000F1A71"},
-              {"Sofa",                       "\U000F04B9"},
-              {"Solar Panel",                "\U000F0D9B"},
-              {"Solar Panel Large",          "\U000F0D9C"},
-              {"Solar Power",                "\U000F0A72"},
-              {"Solar Power Variant",        "\U000F1A73"},
-              {"Speaker",                    "\U000F04C3"},
-              {"Spotlight",                  "\U000F04C9"},
-              {"Sprinkler",                  "\U000F105F"},
-              {"String Lights",              "\U000F12BA"},
-              {"Sun",                        "\U000F05A8"},
-              {"Table",                      "\U000F05BC"},
-              {"Television",                 "\U000F0502"},
-              {"Thermometer",                "\U000F050F"},
-              {"Thermometer Alert",          "\U000F0E01"},
-              {"Thermometer High",           "\U000F10C2"},
-              {"Thermometer Low",            "\U000F10C3"},
-              {"Thermostat",                 "\U000F0393"},
-              {"Timer",                      "\U000F051B"},
-              {"Toilet",                     "\U000F09AB"},
-              {"Transmission Tower",         "\U000F0D3E"},
-              {"Trash Can",                  "\U000F0A79"},
-              {"Wall Outlet",                "\U000F0427"},
-              {"Washer",                     "\U000F072A"},
-              {"Water",                      "\U000F058C"},
-              {"Water Heater",               "\U000F0F92"},
-              {"Water Percent",              "\U000F058E"},
-              {"Weather Cloudy",             "\U000F0590"},
-              {"Weather Cloudy Alert",       "\U000F0F2F"},
-              {"Weather Dust",               "\U000F1B5A"},
-              {"Weather Fog",                "\U000F0591"},
-              {"Weather Hail",               "\U000F0592"},
-              {"Weather Hazy",               "\U000F0F30"},
-              {"Weather Hurricane",          "\U000F0898"},
-              {"Weather Lightning",          "\U000F0593"},
-              {"Weather Lightning Rainy",    "\U000F067E"},
-              {"Weather Night",              "\U000F0594"},
-              {"Weather Night Cloudy",       "\U000F0F31"},
-              {"Weather Partly Cloudy",      "\U000F0595"},
-              {"Weather Partly Lightning",   "\U000F0F32"},
-              {"Weather Partly Rainy",       "\U000F0F33"},
-              {"Weather Partly Snowy",       "\U000F0F34"},
-              {"Weather Partly Snowy Rainy", "\U000F0F35"},
-              {"Weather Pouring",            "\U000F0596"},
-              {"Weather Rainy",              "\U000F0597"},
-              {"Weather Snowy",              "\U000F0598"},
-              {"Weather Snowy Heavy",        "\U000F0F36"},
-              {"Weather Snowy Rainy",        "\U000F067F"},
-              {"Weather Sunny",              "\U000F0599"},
-              {"Weather Sunny Alert",        "\U000F0F37"},
-              {"Weather Sunny Off",          "\U000F14E4"},
-              {"Weather Sunset",             "\U000F059A"},
-              {"Weather Sunset Down",        "\U000F059B"},
-              {"Weather Sunset Up",          "\U000F059C"},
-              {"Weather Tornado",            "\U000F0F38"},
-              {"Weather Windy",              "\U000F059D"},
-              {"Weather Windy Variant",      "\U000F059E"},
-              {"Wind Power",                 "\U000F1A88"},
-              {"Wind Turbine",               "\U000F0DA5"},
-              {"Wind Turbine Alert",         "\U000F19AB"},
-              {"Wind Turbine Check",         "\U000F19AC"},
-              {"Window",                     "\U000F111C"},
-              // --- GENERATED:ICONS END ---
-            };
-            static constexpr size_t NUM_ICONS = sizeof(icon_entries) / sizeof(icon_entries[0]);
-
-            auto find_icon = [](const char* name) -> const char* {
-              for (size_t i = 0; i < NUM_ICONS; i++) {
-                if (strcmp(icon_entries[i].name, name) == 0) return icon_entries[i].glyph;
-              }
-              return "\U000F0493";
-            };
-
-            // HA state subscriptions for each visible button
             for (int p = 0; p < NUM_SLOTS; p++) {
-              int idx = positions[p];
+              int idx = parsed.positions[p];
               if (idx < 1 || idx > NUM_SLOTS) continue;
               auto &s = slots[idx - 1];
               std::string cfg = s.config->state;
@@ -786,31 +151,10 @@ esphome:
               if (btn_type == "sensor") {
                 std::string sensor_id = cfg_field(cfg, 4);
                 if (sensor_id.empty()) continue;
-                lv_obj_t *sensor_lbl = s.sensor_lbl;
-                api::global_api_server->subscribe_home_assistant_state(
-                  sensor_id, {},
-                  std::function<void(const std::string &)>([sensor_lbl](const std::string &state) {
-                    char *end;
-                    float val = strtof(state.c_str(), &end);
-                    if (end != state.c_str()) {
-                      char buf[16];
-                      snprintf(buf, sizeof(buf), "%.0f", val);
-                      lv_label_set_text(sensor_lbl, buf);
-                    } else {
-                      lv_label_set_text(sensor_lbl, state.c_str());
-                    }
-                  })
-                );
+                subscribe_sensor_value(s.sensor_lbl, sensor_id);
                 std::string custom_label = cfg_field(cfg, 1);
-                if (custom_label.empty()) {
-                  lv_obj_t *text_lbl = s.text_lbl;
-                  api::global_api_server->subscribe_home_assistant_state(
-                    sensor_id, std::string("friendly_name"),
-                    std::function<void(const std::string &)>([text_lbl](const std::string &name) {
-                      lv_label_set_text(text_lbl, name.c_str());
-                    })
-                  );
-                }
+                if (custom_label.empty())
+                  subscribe_friendly_name(s.text_lbl, sensor_id);
                 continue;
               }
 
@@ -822,89 +166,31 @@ esphome:
 
               std::string icon_on_name = cfg_field(cfg, 3);
               has_icon_on[idx - 1] = !icon_on_name.empty() && icon_on_name != "Auto";
-              if (has_icon_on[idx - 1]) {
+              if (has_icon_on[idx - 1])
                 icon_on_cp[idx - 1] = find_icon(icon_on_name.c_str());
-              }
 
               std::string icon_name = cfg_field(cfg, 2);
               const char* icon_cp = "\U000F0493";
               if (icon_name.empty() || icon_name == "Auto") {
-                std::string domain = entity_id.substr(0, entity_id.find('.'));
-                if      (domain == "light")         icon_cp = "\U000F0335";
-                else if (domain == "switch")        icon_cp = "\U000F0654";
-                else if (domain == "fan")           icon_cp = "\U000F0210";
-                else if (domain == "lock")          icon_cp = "\U000F033E";
-                else if (domain == "cover")         icon_cp = "\U000F1A2B";
-                else if (domain == "climate")       icon_cp = "\U000F001B";
-                else if (domain == "media_player")  icon_cp = "\U000F04C3";
-                else if (domain == "camera")        icon_cp = "\U000F0100";
-                else if (domain == "binary_sensor") icon_cp = "\U000F0D91";
+                icon_cp = domain_default_icon(entity_id.substr(0, entity_id.find('.')));
               } else {
                 icon_cp = find_icon(icon_name.c_str());
               }
               icon_off_cp[idx - 1] = icon_cp;
 
               std::string custom_label = cfg_field(cfg, 1);
-              if (custom_label.empty()) {
-                lv_obj_t *text_lbl = s.text_lbl;
-                api::global_api_server->subscribe_home_assistant_state(
-                  entity_id, std::string("friendly_name"),
-                  std::function<void(const std::string &)>([text_lbl](const std::string &name) {
-                    lv_label_set_text(text_lbl, name.c_str());
-                  })
-                );
-              }
+              if (custom_label.empty())
+                subscribe_friendly_name(s.text_lbl, entity_id);
 
-              lv_obj_t *btn_ptr = s.btn;
-              lv_obj_t *icon_lbl = s.icon_lbl;
-              lv_obj_t *sensor_ctr = s.sensor_container;
-              bool *slot_has_sensor = &has_sensor[idx - 1];
-              bool *slot_has_icon_on = &has_icon_on[idx - 1];
-              const char** slot_icon_off = &icon_off_cp[idx - 1];
-              const char** slot_icon_on = &icon_on_cp[idx - 1];
-              api::global_api_server->subscribe_home_assistant_state(
-                entity_id, {},
-                std::function<void(const std::string &)>([btn_ptr, icon_lbl, sensor_ctr, slot_has_sensor, slot_has_icon_on, slot_icon_off, slot_icon_on](const std::string &state) {
-                  bool is_on = state == "on" || state == "open" || state == "playing" ||
-                               state == "home" || state == "unlocked";
-                  if (is_on) {
-                    lv_obj_add_state(btn_ptr, LV_STATE_CHECKED);
-                  } else {
-                    lv_obj_clear_state(btn_ptr, LV_STATE_CHECKED);
-                  }
-                  if (*slot_has_icon_on) {
-                    lv_label_set_text(icon_lbl, is_on ? *slot_icon_on : *slot_icon_off);
-                  } else if (*slot_has_sensor) {
-                    if (is_on) {
-                      lv_obj_add_flag(icon_lbl, LV_OBJ_FLAG_HIDDEN);
-                      lv_obj_clear_flag(sensor_ctr, LV_OBJ_FLAG_HIDDEN);
-                    } else {
-                      lv_obj_clear_flag(icon_lbl, LV_OBJ_FLAG_HIDDEN);
-                      lv_obj_add_flag(sensor_ctr, LV_OBJ_FLAG_HIDDEN);
-                    }
-                  }
-                })
-              );
+              subscribe_toggle_state(s.btn, s.icon_lbl, s.sensor_container,
+                &has_sensor[idx - 1], &has_icon_on[idx - 1],
+                &icon_off_cp[idx - 1], &icon_on_cp[idx - 1], entity_id);
 
-              if (has_sensor[idx - 1]) {
-                lv_obj_t *sensor_lbl = s.sensor_lbl;
-                api::global_api_server->subscribe_home_assistant_state(
-                  sensor_id, {},
-                  std::function<void(const std::string &)>([sensor_lbl](const std::string &state) {
-                    char *end;
-                    float val = strtof(state.c_str(), &end);
-                    if (end != state.c_str()) {
-                      char buf[16];
-                      snprintf(buf, sizeof(buf), "%.0f", val);
-                      lv_label_set_text(sensor_lbl, buf);
-                    } else {
-                      lv_label_set_text(sensor_lbl, state.c_str());
-                    }
-                  })
-                );
-              }
+              if (has_sensor[idx - 1])
+                subscribe_sensor_value(s.sensor_lbl, sensor_id);
             }
 
+            // --- Subpage creation ---
             static lv_coord_t sp_col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
             static lv_coord_t sp_row_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
             const lv_font_t *sp_icon_fnt = lv_obj_get_style_text_font(slots[0].icon_lbl, LV_PART_MAIN);
@@ -951,71 +237,12 @@ esphome:
               std::string sp_cfg = sp_configs[si]->state + sp_ext_configs[si]->state;
               if (sp_cfg.empty()) continue;
 
-              std::vector<std::string> pipes;
-              { size_t ps = 0;
-                while (ps <= sp_cfg.length()) {
-                  size_t pe = sp_cfg.find('|', ps);
-                  if (pe == std::string::npos) pe = sp_cfg.length();
-                  pipes.push_back(sp_cfg.substr(ps, pe - ps));
-                  ps = pe + 1;
-                }
-              }
-              if (pipes.size() < 2) continue;
-              std::string sp_order_str = pipes[0];
-
-              struct SpBtn { std::string entity, label, icon; };
-              std::vector<SpBtn> sp_btns;
-              for (size_t pi = 1; pi < pipes.size(); pi++) {
-                std::vector<std::string> flds;
-                { size_t fs = 0;
-                  while (fs <= pipes[pi].length()) {
-                    size_t fe = pipes[pi].find(':', fs);
-                    if (fe == std::string::npos) fe = pipes[pi].length();
-                    flds.push_back(pipes[pi].substr(fs, fe - fs));
-                    fs = fe + 1;
-                  }
-                }
-                std::string e = flds.size() > 0 ? flds[0] : "";
-                std::string l = flds.size() > 1 ? flds[1] : "";
-                std::string ic = flds.size() > 2 ? flds[2] : "Auto";
-                if (ic.empty()) ic = "Auto";
-                sp_btns.push_back({e, l, ic});
-              }
+              auto sp_btns = parse_subpage_config(sp_cfg);
               if (sp_btns.empty()) continue;
+              std::string sp_order_str = get_subpage_order(sp_cfg);
 
-              int sp_pos[NUM_SLOTS] = {};
-              bool sp_dbl[NUM_SLOTS] = {};
-              bool sp_wide[NUM_SLOTS] = {};
-              int back_pos = 0;
-              bool back_dbl = false;
-              bool back_wide = false;
-              bool has_back_token = false;
-              if (!sp_order_str.empty()) {
-                size_t gp2 = 0, st2 = 0;
-                while (st2 <= sp_order_str.length() && gp2 < (size_t)(NUM_SLOTS)) {
-                  size_t cm = sp_order_str.find(',', st2);
-                  if (cm == std::string::npos) cm = sp_order_str.length();
-                  if (cm > st2) {
-                    std::string tk = sp_order_str.substr(st2, cm - st2);
-                    if (tk == "B" || tk == "Bd" || tk == "Bw" || tk == "Bb") {
-                      back_pos = gp2;
-                      back_dbl = (tk == "Bd" || tk == "Bb");
-                      back_wide = (tk == "Bw" || tk == "Bb");
-                      has_back_token = true;
-                    } else {
-                      bool d = !tk.empty() && tk.back() == 'd';
-                      bool w = !tk.empty() && tk.back() == 'w';
-                      bool bg = !tk.empty() && tk.back() == 'b';
-                      if (bg) { d = true; w = true; }
-                      if (d || w) tk.pop_back();
-                      int v = atoi(tk.c_str());
-                      if (v >= 1 && v <= (int)sp_btns.size()) { sp_pos[gp2] = v; sp_dbl[v - 1] = d; sp_wide[v - 1] = w; }
-                    }
-                  }
-                  gp2++;
-                  st2 = cm + 1;
-                }
-              }
+              SubpageOrder sp_ord;
+              parse_subpage_order(sp_order_str, NUM_SLOTS, sp_btns.size(), sp_ord);
 
               lv_obj_t *sub_scr = lv_obj_create(NULL);
               lv_obj_set_style_bg_color(sub_scr, lv_color_black(), LV_PART_MAIN);
@@ -1038,8 +265,8 @@ esphome:
               lv_obj_set_style_shadow_width(back_btn, 0, LV_PART_MAIN);
               if (has_off) lv_obj_set_style_bg_color(back_btn, lv_color_hex(off_val),
                 static_cast<lv_style_selector_t>(LV_PART_MAIN) | static_cast<lv_style_selector_t>(LV_STATE_DEFAULT));
-              lv_obj_set_grid_cell(back_btn, LV_GRID_ALIGN_STRETCH, back_pos % COLS, back_wide ? 2 : 1,
-                LV_GRID_ALIGN_STRETCH, back_pos / COLS, back_dbl ? 2 : 1);
+              lv_obj_set_grid_cell(back_btn, LV_GRID_ALIGN_STRETCH, sp_ord.back_pos % COLS, sp_ord.back_wide ? 2 : 1,
+                LV_GRID_ALIGN_STRETCH, sp_ord.back_pos / COLS, sp_ord.back_dbl ? 2 : 1);
               lv_obj_t *bi = lv_label_create(back_btn);
               lv_obj_set_style_text_font(bi, sp_icon_fnt, LV_PART_MAIN);
               lv_label_set_text(bi, "\U000F004D");
@@ -1054,13 +281,13 @@ esphome:
               }, LV_EVENT_CLICKED, main_scr);
 
               for (int gp = 0; gp < NUM_SLOTS; gp++) {
-                int bn = sp_pos[gp];
+                int bn = sp_ord.positions[gp];
                 if (bn < 1 || bn > (int)sp_btns.size()) continue;
                 auto &sb = sp_btns[bn - 1];
                 int col, row;
-                if (has_back_token) { col = gp % COLS; row = gp / COLS; }
+                if (sp_ord.has_back_token) { col = gp % COLS; row = gp / COLS; }
                 else { int op = gp + 1; col = op % COLS; row = op / COLS; }
-                int rs = sp_dbl[bn - 1] ? 2 : 1;
+                int rs = sp_ord.is_double[bn - 1] ? 2 : 1;
 
                 lv_obj_t *sb_btn = lv_btn_create(sub_scr);
                 lv_obj_set_style_radius(sb_btn, sp_radius, LV_PART_MAIN);
@@ -1072,23 +299,14 @@ esphome:
                   static_cast<lv_style_selector_t>(LV_PART_MAIN) | static_cast<lv_style_selector_t>(LV_STATE_DEFAULT));
                 if (has_on) lv_obj_set_style_bg_color(sb_btn, lv_color_hex(on_val),
                   static_cast<lv_style_selector_t>(LV_PART_MAIN) | static_cast<lv_style_selector_t>(LV_STATE_CHECKED));
-                int cs = sp_wide[bn - 1] ? 2 : 1;
+                int cs = sp_ord.is_wide[bn - 1] ? 2 : 1;
                 lv_obj_set_grid_cell(sb_btn, LV_GRID_ALIGN_STRETCH, col, cs, LV_GRID_ALIGN_STRETCH, row, rs);
 
                 lv_obj_t *sil = lv_label_create(sb_btn);
                 lv_obj_set_style_text_font(sil, sp_icon_fnt, LV_PART_MAIN);
                 const char *sic = find_icon(sb.icon.c_str());
                 if ((sb.icon.empty() || sb.icon == "Auto") && !sb.entity.empty()) {
-                  std::string dom = sb.entity.substr(0, sb.entity.find('.'));
-                  if      (dom == "light")         sic = "\U000F0335";
-                  else if (dom == "switch")        sic = "\U000F0654";
-                  else if (dom == "fan")           sic = "\U000F0210";
-                  else if (dom == "lock")          sic = "\U000F033E";
-                  else if (dom == "cover")         sic = "\U000F1A2B";
-                  else if (dom == "climate")       sic = "\U000F001B";
-                  else if (dom == "media_player")  sic = "\U000F04C3";
-                  else if (dom == "camera")        sic = "\U000F0100";
-                  else if (dom == "binary_sensor") sic = "\U000F0D91";
+                  sic = domain_default_icon(sb.entity.substr(0, sb.entity.find('.')));
                 }
                 lv_label_set_text(sil, sic);
                 lv_obj_align(sil, LV_ALIGN_TOP_LEFT, 0, 0);
@@ -1100,21 +318,14 @@ esphome:
                   if (!sb.label.empty()) {
                     lv_label_set_text(stl, sb.label.c_str());
                   } else {
-                    lv_obj_t *tl2 = stl;
-                    api::global_api_server->subscribe_home_assistant_state(
-                      sb.entity, std::string("friendly_name"),
-                      std::function<void(const std::string &)>([tl2](const std::string &name) {
-                        lv_label_set_text(tl2, name.c_str());
-                      })
-                    );
+                    subscribe_friendly_name(stl, sb.entity);
                   }
 
                   lv_obj_t *bp = sb_btn;
                   api::global_api_server->subscribe_home_assistant_state(
                     sb.entity, {},
                     std::function<void(const std::string &)>([bp](const std::string &state) {
-                      bool on = state == "on" || state == "open" || state == "playing" ||
-                                state == "home" || state == "unlocked";
+                      bool on = is_entity_on(state);
                       if (on) lv_obj_add_state(bp, LV_STATE_CHECKED);
                       else lv_obj_clear_state(bp, LV_STATE_CHECKED);
                     })
@@ -1131,8 +342,7 @@ esphome:
                     api::global_api_server->subscribe_home_assistant_state(
                       sb.entity, {},
                       std::function<void(const std::string &)>([parent_btn, parent_icon, parent_idx, child_was_on, has_alt_icon, off_glyph, on_glyph](const std::string &state) {
-                        bool is_on = state == "on" || state == "open" || state == "playing" ||
-                                     state == "home" || state == "unlocked";
+                        bool is_on = is_entity_on(state);
                         if (is_on && !*child_was_on) {
                           sp_on_count[parent_idx]++;
                           *child_was_on = true;
@@ -1154,16 +364,7 @@ esphome:
                   std::string *eid = new std::string(sb.entity);
                   lv_obj_add_event_cb(sb_btn, [](lv_event_t *e) {
                     std::string *en = (std::string *)lv_event_get_user_data(e);
-                    if (en && !en->empty()) {
-                      api::HomeassistantActionRequest req;
-                      req.service = decltype(req.service)("homeassistant.toggle");
-                      req.is_event = false;
-                      req.data.init(1);
-                      auto &kv = req.data.emplace_back();
-                      kv.key = decltype(kv.key)("entity_id");
-                      kv.value = decltype(kv.value)(en->c_str());
-                      api::global_api_server->send_homeassistant_action(req);
-                    }
+                    if (en && !en->empty()) send_toggle_action(*en);
                   }, LV_EVENT_CLICKED, eid);
                 } else {
                   lv_label_set_text(stl, sb.label.empty() ? "Configure" : sb.label.c_str());

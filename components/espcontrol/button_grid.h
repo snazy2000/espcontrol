@@ -1,0 +1,328 @@
+#pragma once
+#include <string>
+#include <cstdlib>
+#include <cstring>
+#include <cstdint>
+#include <vector>
+#include <functional>
+#include "icons.h"
+
+struct BtnSlot {
+  esphome::text::Text *config;
+  lv_obj_t *btn;
+  lv_obj_t *icon_lbl;
+  lv_obj_t *text_lbl;
+  lv_obj_t *sensor_container;
+  lv_obj_t *sensor_lbl;
+  lv_obj_t *unit_lbl;
+};
+
+inline std::string cfg_field(const std::string &cfg, int idx) {
+  size_t start = 0;
+  for (int i = 0; i < idx; i++) {
+    size_t pos = cfg.find(';', start);
+    if (pos == std::string::npos) return "";
+    start = pos + 1;
+  }
+  size_t end = cfg.find(';', start);
+  return (end == std::string::npos) ? cfg.substr(start) : cfg.substr(start, end - start);
+}
+
+inline uint32_t parse_hex_color(const std::string &hex, bool &valid) {
+  valid = hex.length() == 6;
+  if (!valid) return 0;
+  return strtoul(hex.c_str(), nullptr, 16);
+}
+
+inline uint32_t correct_color(uint32_t rgb) {
+  uint8_t r = (rgb >> 16) & 0xFF;
+  uint8_t g = (uint8_t)(((rgb >> 8) & 0xFF) * 80 / 100);
+  uint8_t b = rgb & 0xFF;
+  return ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
+}
+
+struct OrderResult {
+  int positions[25] = {};
+  bool is_double[25] = {};
+  bool is_wide[25] = {};
+};
+
+inline void parse_order_string(const std::string &order_str, int num_slots, OrderResult &result) {
+  memset(result.positions, 0, sizeof(result.positions));
+  memset(result.is_double, 0, sizeof(result.is_double));
+  memset(result.is_wide, 0, sizeof(result.is_wide));
+  if (order_str.empty()) return;
+  size_t gpos = 0, start = 0;
+  while (start <= order_str.length() && gpos < (size_t)num_slots) {
+    size_t comma = order_str.find(',', start);
+    if (comma == std::string::npos) comma = order_str.length();
+    if (comma > start) {
+      std::string token = order_str.substr(start, comma - start);
+      bool dbl = !token.empty() && token.back() == 'd';
+      bool wide = !token.empty() && token.back() == 'w';
+      bool big = !token.empty() && token.back() == 'b';
+      if (big) { dbl = true; wide = true; }
+      if (dbl || wide) token.pop_back();
+      int v = atoi(token.c_str());
+      if (v >= 1 && v <= num_slots) {
+        result.positions[gpos] = v;
+        result.is_double[v - 1] = dbl;
+        result.is_wide[v - 1] = wide;
+      }
+    }
+    gpos++;
+    start = comma + 1;
+  }
+}
+
+inline void clear_spanned_cells(const OrderResult &order, int num_slots, int cols, OrderResult &result) {
+  for (int p = 0; p < num_slots; p++) {
+    result.positions[p] = order.positions[p];
+    result.is_double[p] = order.is_double[p];
+    result.is_wide[p] = order.is_wide[p];
+  }
+  for (int p = 0; p < num_slots; p++) {
+    if (result.positions[p] <= 0) continue;
+    int idx = result.positions[p] - 1;
+    if (result.is_double[idx] && p + cols < num_slots) {
+      result.positions[p + cols] = 0;
+    }
+    if (result.is_wide[idx] && (p + 1) % cols != 0 && p + 1 < num_slots) {
+      result.positions[p + 1] = 0;
+    }
+    if (result.is_double[idx] && result.is_wide[idx] && (p + 1) % cols != 0 && p + cols + 1 < num_slots) {
+      result.positions[p + cols + 1] = 0;
+    }
+  }
+}
+
+inline void apply_button_colors(lv_obj_t *btn, bool has_on, uint32_t on_val,
+                                bool has_off, uint32_t off_val) {
+  if (has_on) {
+    lv_obj_set_style_bg_color(btn, lv_color_hex(on_val),
+      static_cast<lv_style_selector_t>(LV_PART_MAIN) | static_cast<lv_style_selector_t>(LV_STATE_CHECKED));
+  }
+  if (has_off) {
+    lv_obj_set_style_bg_color(btn, lv_color_hex(off_val),
+      static_cast<lv_style_selector_t>(LV_PART_MAIN) | static_cast<lv_style_selector_t>(LV_STATE_DEFAULT));
+  }
+}
+
+inline void setup_sensor_card(BtnSlot &s, const std::string &cfg,
+                              bool has_sensor_color, uint32_t sensor_val) {
+  if (has_sensor_color) {
+    lv_obj_set_style_bg_color(s.btn, lv_color_hex(sensor_val),
+      static_cast<lv_style_selector_t>(LV_PART_MAIN) | static_cast<lv_style_selector_t>(LV_STATE_DEFAULT));
+  }
+  lv_obj_clear_flag(s.btn, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_add_flag(s.icon_lbl, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_clear_flag(s.sensor_container, LV_OBJ_FLAG_HIDDEN);
+  std::string unit_str = cfg_field(cfg, 5);
+  if (!unit_str.empty()) {
+    lv_label_set_text(s.unit_lbl, unit_str.c_str());
+  }
+  std::string custom_label = cfg_field(cfg, 1);
+  if (!custom_label.empty()) {
+    lv_label_set_text(s.text_lbl, custom_label.c_str());
+  }
+}
+
+inline void setup_toggle_visual(BtnSlot &s, const std::string &cfg) {
+  std::string entity_id = cfg_field(cfg, 0);
+  if (!entity_id.empty()) {
+    std::string custom_label = cfg_field(cfg, 1);
+    if (!custom_label.empty()) {
+      lv_label_set_text(s.text_lbl, custom_label.c_str());
+    }
+    std::string icon_name = cfg_field(cfg, 2);
+    const char* icon_cp = "\U000F0493";
+    if (icon_name.empty() || icon_name == "Auto") {
+      std::string domain = entity_id.substr(0, entity_id.find('.'));
+      icon_cp = domain_default_icon(domain);
+    } else {
+      icon_cp = find_icon(icon_name.c_str());
+    }
+    lv_label_set_text(s.icon_lbl, icon_cp);
+
+    std::string sensor_id = cfg_field(cfg, 4);
+    if (!sensor_id.empty()) {
+      std::string unit_str = cfg_field(cfg, 5);
+      if (!unit_str.empty()) {
+        lv_label_set_text(s.unit_lbl, unit_str.c_str());
+      }
+    }
+  } else {
+    std::string custom_label = cfg_field(cfg, 1);
+    if (!custom_label.empty()) {
+      lv_label_set_text(s.text_lbl, custom_label.c_str());
+    }
+    std::string icon_name = cfg_field(cfg, 2);
+    if (!icon_name.empty() && icon_name != "Auto") {
+      lv_label_set_text(s.icon_lbl, find_icon(icon_name.c_str()));
+    } else if (cfg_field(cfg, 6) == "push") {
+      lv_label_set_text(s.icon_lbl, "\U000F0741");
+      static const lv_style_prop_t push_props[] = {LV_STYLE_BG_COLOR, LV_STYLE_PROP_INV};
+      static lv_style_transition_dsc_t push_trans;
+      static bool push_trans_inited = false;
+      if (!push_trans_inited) {
+        lv_style_transition_dsc_init(&push_trans, push_props, lv_anim_path_ease_out, 400, 0, NULL);
+        push_trans_inited = true;
+      }
+      lv_obj_set_style_transition(s.btn, &push_trans,
+        static_cast<lv_style_selector_t>(LV_PART_MAIN) | LV_STATE_DEFAULT);
+    }
+  }
+}
+
+inline void subscribe_sensor_value(lv_obj_t *sensor_lbl, const std::string &sensor_id) {
+  api::global_api_server->subscribe_home_assistant_state(
+    sensor_id, {},
+    std::function<void(const std::string &)>([sensor_lbl](const std::string &state) {
+      char *end;
+      float val = strtof(state.c_str(), &end);
+      if (end != state.c_str()) {
+        char buf[16];
+        snprintf(buf, sizeof(buf), "%.0f", val);
+        lv_label_set_text(sensor_lbl, buf);
+      } else {
+        lv_label_set_text(sensor_lbl, state.c_str());
+      }
+    })
+  );
+}
+
+inline void subscribe_friendly_name(lv_obj_t *text_lbl, const std::string &entity_id) {
+  api::global_api_server->subscribe_home_assistant_state(
+    entity_id, std::string("friendly_name"),
+    std::function<void(const std::string &)>([text_lbl](const std::string &name) {
+      lv_label_set_text(text_lbl, name.c_str());
+    })
+  );
+}
+
+inline void subscribe_toggle_state(lv_obj_t *btn_ptr, lv_obj_t *icon_lbl,
+                                   lv_obj_t *sensor_ctr,
+                                   bool *slot_has_sensor, bool *slot_has_icon_on,
+                                   const char **slot_icon_off, const char **slot_icon_on,
+                                   const std::string &entity_id) {
+  api::global_api_server->subscribe_home_assistant_state(
+    entity_id, {},
+    std::function<void(const std::string &)>(
+      [btn_ptr, icon_lbl, sensor_ctr, slot_has_sensor, slot_has_icon_on,
+       slot_icon_off, slot_icon_on](const std::string &state) {
+        bool on = is_entity_on(state);
+        if (on) lv_obj_add_state(btn_ptr, LV_STATE_CHECKED);
+        else lv_obj_clear_state(btn_ptr, LV_STATE_CHECKED);
+        if (*slot_has_icon_on) {
+          lv_label_set_text(icon_lbl, on ? *slot_icon_on : *slot_icon_off);
+        } else if (*slot_has_sensor) {
+          if (on) {
+            lv_obj_add_flag(icon_lbl, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_clear_flag(sensor_ctr, LV_OBJ_FLAG_HIDDEN);
+          } else {
+            lv_obj_clear_flag(icon_lbl, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_flag(sensor_ctr, LV_OBJ_FLAG_HIDDEN);
+          }
+        }
+      })
+  );
+}
+
+inline void send_toggle_action(const std::string &entity_id) {
+  api::HomeassistantActionRequest req;
+  req.service = decltype(req.service)("homeassistant.toggle");
+  req.is_event = false;
+  req.data.init(1);
+  auto &kv = req.data.emplace_back();
+  kv.key = decltype(kv.key)("entity_id");
+  kv.value = decltype(kv.value)(entity_id.c_str());
+  api::global_api_server->send_homeassistant_action(req);
+}
+
+struct SubpageBtn {
+  std::string entity;
+  std::string label;
+  std::string icon;
+};
+
+inline std::vector<SubpageBtn> parse_subpage_config(const std::string &sp_cfg) {
+  std::vector<SubpageBtn> btns;
+  if (sp_cfg.empty()) return btns;
+
+  std::vector<std::string> pipes;
+  size_t ps = 0;
+  while (ps <= sp_cfg.length()) {
+    size_t pe = sp_cfg.find('|', ps);
+    if (pe == std::string::npos) pe = sp_cfg.length();
+    pipes.push_back(sp_cfg.substr(ps, pe - ps));
+    ps = pe + 1;
+  }
+  if (pipes.size() < 2) return btns;
+
+  for (size_t pi = 1; pi < pipes.size(); pi++) {
+    std::vector<std::string> flds;
+    size_t fs = 0;
+    while (fs <= pipes[pi].length()) {
+      size_t fe = pipes[pi].find(':', fs);
+      if (fe == std::string::npos) fe = pipes[pi].length();
+      flds.push_back(pipes[pi].substr(fs, fe - fs));
+      fs = fe + 1;
+    }
+    std::string e = flds.size() > 0 ? flds[0] : "";
+    std::string l = flds.size() > 1 ? flds[1] : "";
+    std::string ic = flds.size() > 2 ? flds[2] : "Auto";
+    if (ic.empty()) ic = "Auto";
+    btns.push_back({e, l, ic});
+  }
+  return btns;
+}
+
+inline std::string get_subpage_order(const std::string &sp_cfg) {
+  if (sp_cfg.empty()) return "";
+  size_t pe = sp_cfg.find('|');
+  if (pe == std::string::npos) return sp_cfg;
+  return sp_cfg.substr(0, pe);
+}
+
+struct SubpageOrder {
+  int positions[25] = {};
+  bool is_double[25] = {};
+  bool is_wide[25] = {};
+  int back_pos = 0;
+  bool back_dbl = false;
+  bool back_wide = false;
+  bool has_back_token = false;
+};
+
+inline void parse_subpage_order(const std::string &order_str, int num_slots, int num_btns,
+                                SubpageOrder &result) {
+  if (order_str.empty()) return;
+  size_t gp2 = 0, st2 = 0;
+  while (st2 <= order_str.length() && gp2 < (size_t)num_slots) {
+    size_t cm = order_str.find(',', st2);
+    if (cm == std::string::npos) cm = order_str.length();
+    if (cm > st2) {
+      std::string tk = order_str.substr(st2, cm - st2);
+      if (tk == "B" || tk == "Bd" || tk == "Bw" || tk == "Bb") {
+        result.back_pos = gp2;
+        result.back_dbl = (tk == "Bd" || tk == "Bb");
+        result.back_wide = (tk == "Bw" || tk == "Bb");
+        result.has_back_token = true;
+      } else {
+        bool d = !tk.empty() && tk.back() == 'd';
+        bool w = !tk.empty() && tk.back() == 'w';
+        bool bg = !tk.empty() && tk.back() == 'b';
+        if (bg) { d = true; w = true; }
+        if (d || w) tk.pop_back();
+        int v = atoi(tk.c_str());
+        if (v >= 1 && v <= num_btns) {
+          result.positions[gp2] = v;
+          result.is_double[v - 1] = d;
+          result.is_wide[v - 1] = w;
+        }
+      }
+    }
+    gp2++;
+    st2 = cm + 1;
+  }
+}

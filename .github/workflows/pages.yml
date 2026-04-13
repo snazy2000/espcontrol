@@ -24,6 +24,7 @@ concurrency:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  DEVICE_SLUGS: "guition-esp32-p4-jc1060p470 guition-esp32-p4-jc4880p443 guition-esp32-s3-4848s040"
 
 jobs:
   deploy-docs:
@@ -52,7 +53,6 @@ jobs:
       - name: Download firmware from latest release
         env:
           GH_TOKEN: ${{ github.token }}
-          DEVICE_SLUGS: "guition-esp32-p4-jc1060p470 guition-esp32-p4-jc4880p443 guition-esp32-s3-4848s040"
         run: |
           for SLUG in $DEVICE_SLUGS; do
             mkdir -p "docs/.vitepress/dist/firmware/${SLUG}"
@@ -74,7 +74,6 @@ jobs:
       - name: Download firmware from latest pre-release
         env:
           GH_TOKEN: ${{ github.token }}
-          DEVICE_SLUGS: "guition-esp32-p4-jc1060p470 guition-esp32-p4-jc4880p443 guition-esp32-s3-4848s040"
         run: |
           BETA_TAG=$(gh release list --limit 20 --json tagName,isPrerelease \
             -q '[.[] | select(.isPrerelease)] | .[0].tagName // empty')
@@ -95,8 +94,6 @@ jobs:
           fi
 
       - name: Verify firmware assets
-        env:
-          DEVICE_SLUGS: "guition-esp32-p4-jc1060p470 guition-esp32-p4-jc4880p443 guition-esp32-s3-4848s040"
         run: |
           for SLUG in $DEVICE_SLUGS; do
             MANIFEST="docs/.vitepress/dist/firmware/${SLUG}/manifest.json"

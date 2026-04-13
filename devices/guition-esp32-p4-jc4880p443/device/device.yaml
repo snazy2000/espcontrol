@@ -179,3 +179,12 @@ display:
   - platform: mipi_dsi
     id: my_display
     model: JC4880P443
+
+# ---------------------------------------------------------------------------
+# LVGL base (display binding, must be before any page definitions)
+# ---------------------------------------------------------------------------
+lvgl:
+  buffer_size: 100%
+  displays: my_display
+  byte_order: little_endian
+  touchscreens: my_touchscreen

@@ -1,19 +1,19 @@
 # =============================================================================
-# SCREEN: BUTTON SETUP
+# SCREEN: WIFI SETUP
 # =============================================================================
-# Shown when WiFi is connected but no button entity is configured.
-# Directs the user to the device web UI to configure their buttons.
+# Captive portal instructions shown when WiFi is disconnected.
 # =============================================================================
 
 lvgl:
   pages:
-    - id: button_setup_page
+    - id: wifi_setup_page
       bg_color: 0x000000
       scrollable: false
+      pad_all: 0
       widgets:
         - obj:
-            width: 480
-            height: 800
+            width: $screen_width
+            height: $screen_height
             bg_opa: 0%
             border_width: 0
             pad_all: 0
@@ -29,7 +29,7 @@ lvgl:
             widgets:
               - obj:
                   align: center
-                  width: 440
+                  width: $content_width
                   height: SIZE_CONTENT
                   bg_opa: 0%
                   border_width: 0
@@ -45,25 +45,19 @@ lvgl:
                   widgets:
                     - label:
                         text_font: icon_font_setup
-                        text: $icon_cog
+                        text: $icon_wifi
                         text_color: 0xFFFFFF
                         text_align: center
                     - label:
-                        text: "Setup"
+                        text: "WiFi Setup"
                         text_font: setup_title_font
                         text_color: 0xFFFFFF
-                        width: 440
+                        width: $content_width
                         text_align: center
                     - label:
-                        text: "Open your browser and\nconfigure your display"
+                        id: wifi_setup_instructions
+                        text: "Connect to the WiFi hotspot\nto configure your network"
                         text_font: setup_body_font
                         text_color: 0x888888
-                        width: 440
-                        text_align: center
-                    - label:
-                        id: setup_ip_label
-                        text: "http://..."
-                        text_font: setup_title_font
-                        text_color: 0xFFFFFF
-                        width: 440
+                        width: $content_width
                         text_align: center

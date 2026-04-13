@@ -1,19 +1,20 @@
 # =============================================================================
-# SCREEN: WIFI SETUP
+# SCREEN: HOME ASSISTANT ACTIONS
 # =============================================================================
-# Captive portal instructions shown when WiFi is disconnected.
+# Shown after the API client connects. Reminds the user to allow the device
+# to perform Home Assistant actions. The user taps Done to continue.
 # =============================================================================
 
 lvgl:
   pages:
-    - id: wifi_setup_page
+    - id: ha_actions_page
       bg_color: 0x000000
       scrollable: false
       pad_all: 0
       widgets:
         - obj:
-            width: 1024
-            height: 600
+            width: $screen_width
+            height: $screen_height
             bg_opa: 0%
             border_width: 0
             pad_all: 0
@@ -29,7 +30,7 @@ lvgl:
             widgets:
               - obj:
                   align: center
-                  width: 550
+                  width: $content_width
                   height: SIZE_CONTENT
                   bg_opa: 0%
                   border_width: 0
@@ -45,19 +46,39 @@ lvgl:
                   widgets:
                     - label:
                         text_font: icon_font_setup
-                        text: $icon_wifi
+                        text: $icon_home_assistant
                         text_color: 0xFFFFFF
                         text_align: center
                     - label:
-                        text: "WiFi Setup"
+                        text: "Home Assistant"
                         text_font: setup_title_font
                         text_color: 0xFFFFFF
-                        width: 550
+                        width: $content_width
                         text_align: center
                     - label:
-                        id: wifi_setup_instructions
-                        text: "Connect to the WiFi hotspot\nto configure your network"
+                        text: "Allow this device to perform\nHome Assistant actions"
                         text_font: setup_body_font
                         text_color: 0x888888
-                        width: 550
+                        width: $content_width
                         text_align: center
+                    - label:
+                        text: "See the install guide for help"
+                        text_font: setup_body_font
+                        text_color: 0x555555
+                        width: $content_width
+                        text_align: center
+                    - button:
+                        width: 200
+                        height: 56
+                        bg_color: 0x333333
+                        radius: 12
+                        shadow_width: 0
+                        on_click:
+                          then:
+                            - script.execute: navigate_after_api
+                        widgets:
+                          - label:
+                              align: center
+                              text: "Done"
+                              text_font: setup_body_font
+                              text_color: 0xFFFFFF

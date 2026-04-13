@@ -7,4 +7,5 @@ CONFIG_SCHEMA = cv.Schema({})
 
 
 async def to_code(config):
-    pass
+    cg.add_global(cg.RawExpression('#include "icons.h"'))
+    cg.add_global(cg.RawExpression('#include "button_grid.h"'))

@@ -9,6 +9,14 @@
 substitutions:
   device_slug: "guition-esp32-p4-jc1060p470"
   firmware_manifest_slug: "guition-esp32-p4-jc1060p470"
+  screen_width: "1024"
+  screen_height: "600"
+  content_width: "550"
+  icon_font: icon_font_lg
+  label_font: label_font_lg
+  unit_font: label_font_lg
+  padding: 16px
+  radius: 10px
 
 packages:
   # ---------------------------------------------------------------------------
@@ -18,8 +26,7 @@ packages:
   fonts:           !include ../../common/assets/fonts.yaml
   icons:           !include ../../common/assets/icons.yaml
   fonts_device:    !include device/fonts.yaml
-  lvgl_base:       !include device/lvgl_base.yaml
-  button_theme:    !include theme/button.yaml
+  button_theme:    !include ../../common/theme/button.yaml
   # ---------------------------------------------------------------------------
   # Configuration (text/select/number components for web UI)
   # ---------------------------------------------------------------------------
@@ -45,7 +52,7 @@ packages:
   # ---------------------------------------------------------------------------
   # Addons
   # ---------------------------------------------------------------------------
-  connectivity:    !include addon/connectivity.yaml
+  connectivity:    !include ../../common/addon/connectivity.yaml
   time_sync:       !include ../../common/addon/time.yaml
   backlight:       !include ../../common/addon/backlight.yaml
   bl_schedule:     !include ../../common/addon/backlight_schedule.yaml
@@ -55,11 +62,11 @@ packages:
   # ---------------------------------------------------------------------------
   # Screens (loading must be first page for LVGL startup)
   # ---------------------------------------------------------------------------
-  screen_loading:  !include device/screen_loading.yaml
-  screen_wifi:     !include device/screen_wifi_setup.yaml
-  screen_ha:       !include device/screen_ha_setup.yaml
-  screen_ha_act:   !include device/screen_ha_actions.yaml
-  screen_setup:    !include device/screen_button_setup.yaml
+  screen_loading:  !include ../../common/device/screen_loading.yaml
+  screen_wifi:     !include ../../common/device/screen_wifi_setup.yaml
+  screen_ha:       !include ../../common/device/screen_ha_setup.yaml
+  screen_ha_act:   !include ../../common/device/screen_ha_actions.yaml
+  screen_setup:    !include ../../common/device/screen_button_setup.yaml
   # ---------------------------------------------------------------------------
   # Main page and dynamic sensor subscriptions (after setup screens)
   # ---------------------------------------------------------------------------

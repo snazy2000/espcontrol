@@ -2474,6 +2474,7 @@
 
     if (isMulti) {
       var bulkSlots = c.selected.slice();
+      addCtxItem("clipboard-outline", "Copy " + bulkSlots.length + " Buttons", function () { copyButtons(bulkSlots); });
       addCtxItem("content-cut", "Cut " + bulkSlots.length + " Buttons", function () { cutButtons(bulkSlots); });
       addCtxItem("delete", "Delete " + bulkSlots.length + " Buttons", function () { deleteButtons(bulkSlots); }, true);
     } else {
@@ -2556,6 +2557,7 @@
         if (c.isSub) { duplicateSubpageButton(slot); } else { duplicateButton(slot); }
       });
 
+      addCtxItem("clipboard-outline", "Copy", function () { copySlot(slot); });
       addCtxItem("content-cut", "Cut", function () { cutSlot(slot); });
       addCtxDivider();
       addCtxItem("delete", "Delete", function () { deleteSlot(slot); }, true);
@@ -2657,7 +2659,7 @@
 
   // ── Cut / Paste ────────────────────────────────────────────────────────
 
-  function cutSlot(slot) {
+  function buildClipboardEntry(slot) {
     var c = ctx();
     var src = c.buttons[slot - 1];
     var entry = {
@@ -2669,26 +2671,26 @@
     if (!c.isSub && src.type === "subpage" && state.subpages[slot]) {
       entry.subpageConfig = serializeSubpageConfig(state.subpages[slot]);
     }
-    state.clipboard = { buttons: [entry] };
+    return entry;
+  }
+
+  function copySlot(slot) {
+    state.clipboard = { buttons: [buildClipboardEntry(slot)] };
+  }
+
+  function copyButtons(slots) {
+    var entries = [];
+    slots.forEach(function (slot) { entries.push(buildClipboardEntry(slot)); });
+    state.clipboard = { buttons: entries };
+  }
+
+  function cutSlot(slot) {
+    copySlot(slot);
     deleteSlot(slot);
   }
 
   function cutButtons(slots) {
-    var c = ctx();
-    var entries = [];
-    slots.forEach(function (slot) {
-      var src = c.buttons[slot - 1];
-      var entry = {
-        entity: src.entity, label: src.label, icon: src.icon,
-        icon_on: src.icon_on, sensor: src.sensor, unit: src.unit,
-        type: c.isSub ? "" : (src.type || ""), subpageConfig: null, size: c.sizes[slot] || 1,
-      };
-      if (!c.isSub && src.type === "subpage" && state.subpages[slot]) {
-        entry.subpageConfig = serializeSubpageConfig(state.subpages[slot]);
-      }
-      entries.push(entry);
-    });
-    state.clipboard = { buttons: entries };
+    copyButtons(slots);
     deleteButtons(slots);
   }
 

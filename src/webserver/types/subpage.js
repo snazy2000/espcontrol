@@ -20,14 +20,12 @@ registerButtonType("subpage", {
 
     var hasIconOn = b.icon_on && b.icon_on !== "Auto";
 
-    var iconOnWrap = condField();
-    if (displayStateEnabled) iconOnWrap.classList.add("sp-visible");
-
     var iconOnToggle = helpers.toggleRow("Change Icon When On", helpers.idPrefix + "iconon-toggle", hasIconOn);
-    iconOnWrap.appendChild(iconOnToggle.row);
+    iconOnToggle.row.style.display = displayStateEnabled ? "" : "none";
+    panel.appendChild(iconOnToggle.row);
 
     var iconOnCond = condField();
-    if (hasIconOn) iconOnCond.classList.add("sp-visible");
+    if (displayStateEnabled && hasIconOn) iconOnCond.classList.add("sp-visible");
 
     var iconOnSection = document.createElement("div");
     iconOnSection.className = "sp-field";
@@ -50,8 +48,7 @@ registerButtonType("subpage", {
       renderPreview();
     });
 
-    iconOnWrap.appendChild(iconOnCond);
-    panel.appendChild(iconOnWrap);
+    panel.appendChild(iconOnCond);
 
     iconOnToggle.input.addEventListener("change", function () {
       if (this.checked) {
@@ -72,11 +69,11 @@ registerButtonType("subpage", {
       if (this.checked) {
         b.sensor = "indicator";
         helpers.saveField("sensor", "indicator");
-        iconOnWrap.classList.add("sp-visible");
+        iconOnToggle.row.style.display = "";
       } else {
         b.sensor = "";
         helpers.saveField("sensor", "");
-        iconOnWrap.classList.remove("sp-visible");
+        iconOnToggle.row.style.display = "none";
         if (iconOnToggle.input.checked) {
           iconOnToggle.input.checked = false;
           b.icon_on = "Auto";

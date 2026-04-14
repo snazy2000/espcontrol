@@ -270,45 +270,51 @@ struct LightSliderCtx {
 };
 
 inline lv_obj_t *setup_light_slider(lv_obj_t *btn, uint32_t on_color) {
+  lv_coord_t btn_radius = lv_obj_get_style_radius(btn, LV_PART_MAIN);
+  lv_coord_t btn_pad = lv_obj_get_style_pad_top(btn, LV_PART_MAIN);
+
   lv_obj_t *slider = lv_slider_create(btn);
   lv_slider_set_range(slider, 1, 100);
   lv_slider_set_value(slider, 50, LV_ANIM_OFF);
-  lv_obj_set_width(slider, 56);
-  lv_obj_set_height(slider, lv_pct(100));
-  lv_obj_align(slider, LV_ALIGN_RIGHT_MID, 0, 0);
+  lv_obj_set_size(slider, lv_pct(100), lv_pct(100));
+  lv_obj_align(slider, LV_ALIGN_CENTER, 0, 0);
+  lv_obj_set_style_margin_all(slider, -btn_pad,
+    static_cast<lv_style_selector_t>(LV_PART_MAIN));
 
-  lv_obj_set_style_bg_color(slider, lv_color_hex(0x555555),
+  lv_obj_set_style_bg_opa(slider, LV_OPA_TRANSP,
     static_cast<lv_style_selector_t>(LV_PART_MAIN));
-  lv_obj_set_style_radius(slider, 8,
-    static_cast<lv_style_selector_t>(LV_PART_MAIN));
-  lv_obj_set_style_bg_opa(slider, LV_OPA_COVER,
+  lv_obj_set_style_radius(slider, btn_radius,
     static_cast<lv_style_selector_t>(LV_PART_MAIN));
 
   lv_obj_set_style_bg_color(slider, lv_color_hex(on_color),
     static_cast<lv_style_selector_t>(LV_PART_INDICATOR));
-  lv_obj_set_style_radius(slider, 8,
+  lv_obj_set_style_bg_opa(slider, LV_OPA_COVER,
+    static_cast<lv_style_selector_t>(LV_PART_INDICATOR));
+  lv_obj_set_style_radius(slider, btn_radius,
     static_cast<lv_style_selector_t>(LV_PART_INDICATOR));
 
   lv_obj_set_style_bg_color(slider, lv_color_white(),
     static_cast<lv_style_selector_t>(LV_PART_KNOB));
-  lv_obj_set_style_radius(slider, 3,
+  lv_obj_set_style_bg_opa(slider, LV_OPA_COVER,
     static_cast<lv_style_selector_t>(LV_PART_KNOB));
-  lv_obj_set_style_pad_left(slider, 4,
+  lv_obj_set_style_radius(slider, 2,
     static_cast<lv_style_selector_t>(LV_PART_KNOB));
-  lv_obj_set_style_pad_right(slider, 4,
+  lv_obj_set_style_pad_left(slider, 8,
     static_cast<lv_style_selector_t>(LV_PART_KNOB));
-  lv_obj_set_style_pad_top(slider, -4,
+  lv_obj_set_style_pad_right(slider, 8,
     static_cast<lv_style_selector_t>(LV_PART_KNOB));
-  lv_obj_set_style_pad_bottom(slider, -4,
+  lv_obj_set_style_pad_top(slider, -5,
+    static_cast<lv_style_selector_t>(LV_PART_KNOB));
+  lv_obj_set_style_pad_bottom(slider, -5,
     static_cast<lv_style_selector_t>(LV_PART_KNOB));
 
-  lv_obj_add_flag(slider, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_move_to_index(slider, 0);
+
   return slider;
 }
 
 inline void setup_light_visual(BtnSlot &s, const std::string &cfg, uint32_t on_color) {
   setup_toggle_visual(s, cfg);
-  lv_obj_set_width(s.text_lbl, lv_pct(60));
 
   lv_obj_t *slider = setup_light_slider(s.btn, on_color);
   lv_obj_set_user_data(s.sensor_container, (void *)slider);
@@ -330,22 +336,6 @@ inline void setup_light_visual(BtnSlot &s, const std::string &cfg, uint32_t on_c
 inline void subscribe_light_state(lv_obj_t *btn_ptr, lv_obj_t *icon_lbl,
                                   lv_obj_t *slider,
                                   const std::string &entity_id) {
-  esphome::api::global_api_server->subscribe_home_assistant_state(
-    entity_id, {},
-    std::function<void(const std::string &)>(
-      [btn_ptr, icon_lbl, slider](const std::string &state) {
-        bool on = is_entity_on(state);
-        if (on) {
-          lv_obj_add_state(btn_ptr, LV_STATE_CHECKED);
-          lv_obj_add_flag(icon_lbl, LV_OBJ_FLAG_HIDDEN);
-          lv_obj_clear_flag(slider, LV_OBJ_FLAG_HIDDEN);
-        } else {
-          lv_obj_clear_state(btn_ptr, LV_STATE_CHECKED);
-          lv_obj_clear_flag(icon_lbl, LV_OBJ_FLAG_HIDDEN);
-          lv_obj_add_flag(slider, LV_OBJ_FLAG_HIDDEN);
-        }
-      })
-  );
   esphome::api::global_api_server->subscribe_home_assistant_state(
     entity_id, std::string("brightness"),
     std::function<void(const std::string &)>(

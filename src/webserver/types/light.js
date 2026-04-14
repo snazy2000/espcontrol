@@ -35,7 +35,7 @@ registerButtonType("light", {
           '<span class="sp-slider-knob"></span>' +
         '</span></span>',
       labelHtml:
-        '<span class="sp-btn-label" style="max-width:75%">' + helpers.escHtml(label) + '</span>',
+        '<span class="sp-btn-label">' + helpers.escHtml(label) + '</span>',
     };
   },
 });

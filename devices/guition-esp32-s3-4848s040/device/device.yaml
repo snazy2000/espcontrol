@@ -32,10 +32,11 @@ espcontrol:
 # ESPHome core (device name from substitutions)
 # ---------------------------------------------------------------------------
 # ESP32-S3 with octal PSRAM and MIPI RGB display fails to reinitialize
-# peripherals after a software reset (USB flash or OTA). A brief deep
-# sleep forces a full hardware reset on wake, equivalent to a power cycle.
-# The on_boot handler catches USB-triggered resets; the OTA on_end hook
-# catches wireless updates.
+# peripherals after a software reset. A brief deep sleep forces a full
+# hardware reset on wake, equivalent to a power cycle. The on_boot
+# handler catches USB-triggered and software-triggered resets (the
+# latter fired by the "Apply Configuration" restart button); the OTA
+# on_end hook catches wireless updates.
 # ---------------------------------------------------------------------------
 esphome:
   name: ${name}
@@ -47,7 +48,8 @@ esphome:
     - priority: 800
       then:
         - lambda: |-
-            if (esp_reset_reason() == ESP_RST_USB) {
+            auto reason = esp_reset_reason();
+            if (reason == ESP_RST_USB || reason == ESP_RST_SW) {
               esp_sleep_enable_timer_wakeup(100000);
               esp_deep_sleep_start();
             }

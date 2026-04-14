@@ -594,7 +594,7 @@
     ".sp-temp{color:#fff;font-size:var(--topbar-fs);white-space:nowrap;opacity:0;transition:opacity .3s}" +
     ".sp-temp.sp-visible{opacity:1}" +
     ".sp-clock{position:absolute;left:50%;transform:translateX(-50%);" +
-    "color:#fff;font-size:var(--topbar-fs);white-space:nowrap}" +
+    "color:#fff;font-size:var(--clock-fs,var(--topbar-fs));white-space:nowrap}" +
     ".sp-main{position:absolute;top:var(--grid-top);left:var(--grid-left);right:var(--grid-right);bottom:var(--grid-bottom);" +
     "display:grid;grid-template-columns:var(--grid-cols);grid-template-rows:var(--grid-rows);gap:var(--grid-gap);overflow:hidden}" +
 
@@ -1369,6 +1369,7 @@
     r.setProperty("--topbar-h", CFG.topbar.height + "cqw");
     r.setProperty("--topbar-pad", CFG.topbar.padding);
     r.setProperty("--topbar-fs", CFG.topbar.fontSize + "cqw");
+    if (CFG.topbar.clockFontSize) r.setProperty("--clock-fs", CFG.topbar.clockFontSize + "cqw");
     r.setProperty("--grid-top", CFG.grid.top + "cqw");
     r.setProperty("--grid-left", CFG.grid.left + "cqw");
     r.setProperty("--grid-right", CFG.grid.right + "cqw");

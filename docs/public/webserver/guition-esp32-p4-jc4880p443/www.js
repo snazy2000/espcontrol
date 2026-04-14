@@ -9,7 +9,7 @@
 (function () {
   // __DEVICE_CONFIG_START__
   var DEVICE_ID = "guition-esp32-p4-jc4880p443";
-  var CFG = {"slots":6,"cols":2,"rows":3,"dragMode":"displace","dragAnimation":true,"screen":{"width":"44%","aspect":"480/800"},"topbar":{"height":6.45,"padding":"0.59cqw","fontSize":3.92},"grid":{"top":8.58,"left":0.74,"right":0.74,"bottom":0.74,"gap":2.07,"fr":"1fr"},"btn":{"radius":1.18,"padding":2.73,"iconSize":14,"labelSize":5.5,"labelLines":2,"labelLinesDouble":3},"emptyCell":{"radius":1.18},"sensorBadge":{"top":1.52,"right":1.52,"fontSize":3.22},"subpageBadge":{"bottom":1.52,"right":1.52,"fontSize":4.03},"backBtn":{"radius":1.18,"padding":2.73,"iconSize":14,"labelSize":5.5,"labelLines":2,"labelLinesDouble":3}};
+  var CFG = {"slots":6,"cols":2,"rows":3,"dragMode":"displace","dragAnimation":true,"screen":{"width":"44%","aspect":"480/800"},"topbar":{"height":6.45,"padding":"0.59cqw","fontSize":4.5,"clockFontSize":6},"grid":{"top":8.58,"left":1.5,"right":1.5,"bottom":1.5,"gap":2.07,"fr":"1fr"},"btn":{"radius":1.18,"padding":2.73,"iconSize":14,"labelSize":5.5,"labelLines":2,"labelLinesDouble":3},"emptyCell":{"radius":1.18},"sensorBadge":{"top":1.52,"right":1.52,"fontSize":3.22},"subpageBadge":{"bottom":1.52,"right":1.52,"fontSize":4.03},"backBtn":{"radius":1.18,"padding":2.73,"iconSize":14,"labelSize":5.5,"labelLines":2,"labelLinesDouble":3}};
   // __DEVICE_CONFIG_END__
   var NUM_SLOTS = CFG.slots;
   var GRID_COLS = CFG.cols;
@@ -594,7 +594,7 @@
     ".sp-temp{color:#fff;font-size:var(--topbar-fs);white-space:nowrap;opacity:0;transition:opacity .3s}" +
     ".sp-temp.sp-visible{opacity:1}" +
     ".sp-clock{position:absolute;left:50%;transform:translateX(-50%);" +
-    "color:#fff;font-size:var(--topbar-fs);white-space:nowrap}" +
+    "color:#fff;font-size:var(--clock-fs,var(--topbar-fs));white-space:nowrap}" +
     ".sp-main{position:absolute;top:var(--grid-top);left:var(--grid-left);right:var(--grid-right);bottom:var(--grid-bottom);" +
     "display:grid;grid-template-columns:var(--grid-cols);grid-template-rows:var(--grid-rows);gap:var(--grid-gap);overflow:hidden}" +
 
@@ -1369,6 +1369,7 @@
     r.setProperty("--topbar-h", CFG.topbar.height + "cqw");
     r.setProperty("--topbar-pad", CFG.topbar.padding);
     r.setProperty("--topbar-fs", CFG.topbar.fontSize + "cqw");
+    if (CFG.topbar.clockFontSize) r.setProperty("--clock-fs", CFG.topbar.clockFontSize + "cqw");
     r.setProperty("--grid-top", CFG.grid.top + "cqw");
     r.setProperty("--grid-left", CFG.grid.left + "cqw");
     r.setProperty("--grid-right", CFG.grid.right + "cqw");

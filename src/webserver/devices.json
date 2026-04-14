@@ -21,7 +21,7 @@
     "dragMode": "displace",
     "dragAnimation": true,
     "screen": { "width": "44%", "aspect": "480/800" },
-    "topbar": { "height": 6.45, "padding": "0.59cqw", "fontSize": 4.5 },
+    "topbar": { "height": 6.45, "padding": "0.59cqw", "fontSize": 4.5, "clockFontSize": 6 },
     "grid": { "top": 8.58, "left": 1.5, "right": 1.5, "bottom": 1.5, "gap": 2.07, "fr": "1fr" },
     "btn": { "radius": 1.18, "padding": 2.73, "iconSize": 14, "labelSize": 5.5, "labelLines": 2, "labelLinesDouble": 3 },
     "emptyCell": { "radius": 1.18 },

@@ -384,13 +384,14 @@ esphome:
                   lctx->entity_id = sb.entity;
                   lctx->fill = sp_fill;
                   lctx->horizontal = sp_sl_horiz;
+                  lctx->radius = sp_radius;
                   lv_obj_set_user_data(sl, (void *)lctx);
                   lv_obj_add_event_cb(sl, [](lv_event_t *e) {
                     lv_obj_t *s = lv_event_get_target(e);
                     SliderCtx *c = (SliderCtx *)lv_obj_get_user_data(s);
                     if (!c) return;
                     int val = lv_slider_get_value(s);
-                    slider_update_fill(c->fill, lv_obj_get_parent(s), val, c->horizontal);
+                    slider_update_fill(c->fill, lv_obj_get_parent(s), val, c->horizontal, c->radius);
                   }, LV_EVENT_VALUE_CHANGED, nullptr);
                   lv_obj_add_event_cb(sl, [](lv_event_t *e) {
                     lv_obj_t *s = lv_event_get_target(e);

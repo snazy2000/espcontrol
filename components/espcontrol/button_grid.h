@@ -275,11 +275,13 @@ struct SliderCtx {
   std::string entity_id;
   lv_obj_t *fill;
   bool horizontal;
+  lv_coord_t radius;
 };
 
-inline void slider_update_fill(lv_obj_t *fill, lv_obj_t *btn, int pct, bool horizontal) {
+inline void slider_update_fill(lv_obj_t *fill, lv_obj_t *btn, int pct, bool horizontal, lv_coord_t r) {
   lv_coord_t bw = lv_obj_get_width(btn);
   lv_coord_t bh = lv_obj_get_height(btn);
+  lv_obj_set_style_radius(fill, r, LV_PART_MAIN);
   if (horizontal) {
     lv_coord_t w = (lv_coord_t)((int32_t)bw * pct / 100);
     lv_obj_set_size(fill, w, bh);
@@ -294,15 +296,12 @@ inline void slider_update_fill(lv_obj_t *fill, lv_obj_t *btn, int pct, bool hori
 inline lv_obj_t *setup_slider_widget(lv_obj_t *btn, uint32_t on_color, bool horizontal) {
   lv_obj_set_style_pad_all(btn, 0,
     static_cast<lv_style_selector_t>(LV_PART_MAIN));
-  lv_obj_set_style_clip_corner(btn, true,
-    static_cast<lv_style_selector_t>(LV_PART_MAIN));
   lv_obj_clear_flag(btn, LV_OBJ_FLAG_CLICKABLE);
 
   lv_obj_t *fill = lv_obj_create(btn);
   lv_obj_set_size(fill, 0, 0);
   lv_obj_set_style_bg_color(fill, lv_color_hex(on_color), LV_PART_MAIN);
   lv_obj_set_style_bg_opa(fill, LV_OPA_COVER, LV_PART_MAIN);
-  lv_obj_set_style_radius(fill, 0, LV_PART_MAIN);
   lv_obj_set_style_border_width(fill, 0, LV_PART_MAIN);
   lv_obj_set_style_pad_all(fill, 0, LV_PART_MAIN);
   lv_obj_clear_flag(fill, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
@@ -357,6 +356,7 @@ inline void setup_slider_visual(BtnSlot &s, const std::string &cfg, uint32_t on_
   ctx->entity_id = cfg_field(cfg, 0);
   ctx->fill = fill;
   ctx->horizontal = horizontal;
+  ctx->radius = lv_obj_get_style_radius(s.btn, LV_PART_MAIN);
   lv_obj_set_user_data(slider, (void *)ctx);
 
   lv_obj_add_event_cb(slider, [](lv_event_t *e) {
@@ -364,7 +364,7 @@ inline void setup_slider_visual(BtnSlot &s, const std::string &cfg, uint32_t on_
     SliderCtx *c = (SliderCtx *)lv_obj_get_user_data(sl);
     if (!c) return;
     int val = lv_slider_get_value(sl);
-    slider_update_fill(c->fill, lv_obj_get_parent(sl), val, c->horizontal);
+    slider_update_fill(c->fill, lv_obj_get_parent(sl), val, c->horizontal, c->radius);
   }, LV_EVENT_VALUE_CHANGED, nullptr);
 
   lv_obj_add_event_cb(slider, [](lv_event_t *e) {
@@ -385,14 +385,15 @@ inline void subscribe_slider_state(lv_obj_t *btn_ptr, lv_obj_t *icon_lbl,
   SliderCtx *sctx = (SliderCtx *)lv_obj_get_user_data(slider);
   lv_obj_t *fill = sctx ? sctx->fill : nullptr;
   bool horiz = sctx ? sctx->horizontal : false;
+  lv_coord_t rad = sctx ? sctx->radius : 0;
   esphome::api::global_api_server->subscribe_home_assistant_state(
     entity_id, {},
     std::function<void(const std::string &)>(
-      [slider, btn_ptr, fill, horiz, icon_lbl, has_icon_on, icon_off, icon_on](const std::string &state) {
+      [slider, btn_ptr, fill, horiz, rad, icon_lbl, has_icon_on, icon_off, icon_on](const std::string &state) {
         bool on = is_entity_on(state);
         if (!on) {
           lv_slider_set_value(slider, 0, LV_ANIM_OFF);
-          if (fill) slider_update_fill(fill, btn_ptr, 0, horiz);
+          if (fill) slider_update_fill(fill, btn_ptr, 0, horiz, rad);
         }
         if (has_icon_on) {
           lv_label_set_text(icon_lbl, on ? icon_on : icon_off);
@@ -402,7 +403,7 @@ inline void subscribe_slider_state(lv_obj_t *btn_ptr, lv_obj_t *icon_lbl,
   esphome::api::global_api_server->subscribe_home_assistant_state(
     entity_id, std::string("brightness"),
     std::function<void(const std::string &)>(
-      [slider, btn_ptr, fill, horiz](const std::string &val) {
+      [slider, btn_ptr, fill, horiz, rad](const std::string &val) {
         char *end;
         float bri = strtof(val.c_str(), &end);
         if (end != val.c_str()) {
@@ -410,7 +411,7 @@ inline void subscribe_slider_state(lv_obj_t *btn_ptr, lv_obj_t *icon_lbl,
           if (pct < 1) pct = 1;
           if (pct > 100) pct = 100;
           lv_slider_set_value(slider, pct, LV_ANIM_OFF);
-          if (fill) slider_update_fill(fill, btn_ptr, pct, horiz);
+          if (fill) slider_update_fill(fill, btn_ptr, pct, horiz, rad);
         }
       })
   );

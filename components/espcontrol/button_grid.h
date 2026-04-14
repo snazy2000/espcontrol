@@ -291,9 +291,9 @@ inline lv_obj_t *setup_slider_widget(lv_obj_t *btn, uint32_t on_color, bool hori
   lv_coord_t sw = lv_obj_get_width(slider);
   lv_coord_t sh = lv_obj_get_height(slider);
   if (horizontal && sh >= sw) {
-    lv_obj_set_height(slider, sw - 1);
+    lv_obj_set_height(slider, sh - 1);
   } else if (!horizontal && sw >= sh) {
-    lv_obj_set_width(slider, sh - 1);
+    lv_obj_set_height(slider, sw + 1);
   }
 
   lv_obj_set_style_bg_opa(slider, LV_OPA_TRANSP,

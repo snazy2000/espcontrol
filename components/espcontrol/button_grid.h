@@ -292,9 +292,7 @@ inline lv_obj_t *setup_slider_widget(lv_obj_t *btn, uint32_t on_color, bool hori
   }
   lv_obj_align(slider, LV_ALIGN_CENTER, 0, 0);
 
-  lv_obj_set_style_bg_color(slider, lv_color_hex(on_color),
-    static_cast<lv_style_selector_t>(LV_PART_MAIN));
-  lv_obj_set_style_bg_opa(slider, (lv_opa_t)(255 * 50 / 100),
+  lv_obj_set_style_bg_opa(slider, LV_OPA_TRANSP,
     static_cast<lv_style_selector_t>(LV_PART_MAIN));
   lv_obj_set_style_radius(slider, btn_radius,
     static_cast<lv_style_selector_t>(LV_PART_MAIN));

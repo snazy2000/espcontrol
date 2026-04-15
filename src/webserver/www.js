@@ -1319,7 +1319,10 @@
     ssBody.appendChild(segment);
 
     var timerPanel = document.createElement("div");
-    timerPanel.appendChild(fieldLabel("Timeout"));
+
+    var timeoutField = document.createElement("div");
+    timeoutField.className = "sp-field";
+    timeoutField.appendChild(fieldLabel("Timeout"));
     var timeoutSelect = document.createElement("select");
     timeoutSelect.className = "sp-select";
     timeoutSelect.id = "sp-set-ss-timeout";
@@ -1342,9 +1345,12 @@
     timeoutSelect.addEventListener("change", function () {
       postNumber("Screensaver Timeout", this.value);
     });
-    timerPanel.appendChild(timeoutSelect);
+    timeoutField.appendChild(timeoutSelect);
+    timerPanel.appendChild(timeoutField);
 
-    timerPanel.appendChild(fieldLabel("Then"));
+    var clockField = document.createElement("div");
+    clockField.className = "sp-field";
+    clockField.appendChild(fieldLabel("Then"));
     var clockSelect = document.createElement("select");
     clockSelect.className = "sp-select";
     clockSelect.id = "sp-set-clock-mode";
@@ -1362,7 +1368,8 @@
       postSwitch("Screen Saver: Clock", state.clockScreensaverOn);
       clockBrightnessField.style.display = state.clockScreensaverOn ? "" : "none";
     });
-    timerPanel.appendChild(clockSelect);
+    clockField.appendChild(clockSelect);
+    timerPanel.appendChild(clockField);
     els.setClockSelect = clockSelect;
 
     var clockBrightnessField = document.createElement("div");

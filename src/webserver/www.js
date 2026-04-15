@@ -1191,7 +1191,9 @@
     }
     tzSelect.value = state.timezone;
     tzSelect.addEventListener("change", function () {
+      state.timezone = this.value;
       postSelect("Screen: Timezone", this.value);
+      updateClock();
     });
     tzField.appendChild(tzSelect);
     clockBody.appendChild(tzField);
@@ -3276,11 +3278,23 @@
 
   // ── Clock (minute-aligned) ─────────────────────────────────────────────
 
+  function parseTzOffset(tz) {
+    var match = tz.match(/GMT([+-]?\d+(?::\d+)?)\)?$/);
+    if (!match) return 0;
+    var parts = match[1].split(":");
+    var hours = parseFloat(parts[0]);
+    var mins = parts.length > 1 ? parseFloat(parts[1]) : 0;
+    return hours * 60 + (hours < 0 ? -mins : mins);
+  }
+
   function updateClock() {
     if (!els.clock) return;
     var now = new Date();
-    var h = now.getHours();
-    var m = String(now.getMinutes()).padStart(2, "0");
+    var offsetMin = parseTzOffset(state.timezone);
+    var utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+    var tzDate = new Date(utcMs + offsetMin * 60000);
+    var h = tzDate.getHours();
+    var m = String(tzDate.getMinutes()).padStart(2, "0");
     if (state.clockFormat === "12h") {
       var suffix = h >= 12 ? " PM" : " AM";
       h = h % 12;
@@ -3412,6 +3426,7 @@
           }
         }
         if (els.setTimezone) els.setTimezone.value = state.timezone;
+        updateClock();
       },
       "select-screen__clock_format": function (val, d) {
         state.clockFormat = d.value || val || state.clockFormat;

@@ -425,7 +425,7 @@
 
     ".sp-banner{padding:12px var(--gap);font-size:.8rem;font-weight:500;text-align:center;display:none}" +
     ".sp-banner.sp-error{display:block;background:rgba(244,63,94,.16);color:#f66f81;border-bottom:1px solid rgba(244,63,94,.25)}" +
-    ".sp-banner.sp-offline{display:block;background:var(--accent-soft);color:var(--accent-hover);border-bottom:1px solid rgba(100,108,255,.25)}" +
+    ".sp-banner.sp-offline{display:block;background:var(--accent);color:#fff;border-bottom:none}" +
     ".sp-banner.sp-success{display:block;background:rgba(16,185,129,.16);color:#3dd68c;border-bottom:1px solid rgba(16,185,129,.25)}" +
     ".sp-banner.sp-warning{display:block;background:rgba(234,179,8,.16);color:#f9b44e;border-bottom:1px solid rgba(234,179,8,.25)}" +
 

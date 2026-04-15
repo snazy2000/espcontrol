@@ -128,6 +128,8 @@ script:
             lv_obj_set_pos(id(clock_label), cx + ox - w/2, cy + oy - h/2);
           }
       - lvgl.widget.show: clock_screensaver
+      - lvgl.widget.hide: display_time
+      - lvgl.widget.hide: temperatures
       - light.turn_on:
           id: display_backlight
           brightness: !lambda 'return id(clock_brightness).state / 100.0f;'
@@ -139,6 +141,14 @@ script:
     then:
       - lambda: 'id(is_clock_showing) = false;'
       - lvgl.widget.hide: clock_screensaver
+      - lvgl.widget.show: display_time
+      - if:
+          condition:
+            or:
+              - switch.is_on: indoor_temp_enable
+              - switch.is_on: outdoor_temp_enable
+          then:
+            - lvgl.widget.show: temperatures
 
 # -----------------------------------------------------------------------------
 # Clock screensaver drift update (repositions label for burn-in prevention)

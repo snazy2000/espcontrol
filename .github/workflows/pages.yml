@@ -24,7 +24,6 @@ concurrency:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  DEVICE_SLUGS: "guition-esp32-p4-jc1060p470 guition-esp32-p4-jc4880p443 guition-esp32-s3-4848s040"
 
 jobs:
   build-docs:
@@ -67,6 +66,14 @@ jobs:
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: src/webserver/devices.json
+          sparse-checkout-cone-mode: false
+
+      - name: Set device slugs
+        run: echo "DEVICE_SLUGS=$(jq -r 'keys | join(" ")' src/webserver/devices.json)" >> $GITHUB_ENV
+
       - name: Download firmware from latest release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -114,12 +121,15 @@ jobs:
 
       - name: Verify firmware assets
         run: |
+          MISSING=false
           for SLUG in $DEVICE_SLUGS; do
             MANIFEST="firmware/${SLUG}/manifest.json"
             if [ ! -f "$MANIFEST" ]; then
-              echo "::warning::No firmware manifest found for ${SLUG} — install page will be non-functional"
+              echo "::error::No firmware manifest found for ${SLUG} — install page will be non-functional"
+              MISSING=true
             fi
           done
+          if [ "$MISSING" = true ]; then exit 1; fi
 
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v7

@@ -1047,6 +1047,7 @@
   function buildHeader(parent) {
     var header = document.createElement("div");
     header.className = "sp-header";
+    header.setAttribute("role", "tablist");
 
     var tabs = [
       { id: "screen", label: "Screen" },
@@ -1057,6 +1058,8 @@
     tabs.forEach(function (t) {
       var tab = document.createElement("div");
       tab.className = "sp-tab";
+      tab.setAttribute("role", "tab");
+      tab.setAttribute("aria-selected", "false");
       tab.textContent = t.label;
       tab.addEventListener("click", function () { switchTab(t.id); });
       header.appendChild(tab);
@@ -1086,6 +1089,8 @@
     els.temp = wrap.querySelector(".sp-temp");
     els.clock = wrap.querySelector(".sp-clock");
     els.previewMain = wrap.querySelector(".sp-main");
+    els.previewMain.setAttribute("role", "grid");
+    els.previewMain.setAttribute("aria-label", "Button grid");
 
     var hint = document.createElement("div");
     hint.className = "sp-hint";
@@ -1246,11 +1251,9 @@
     var timerBtn = document.createElement("button");
     timerBtn.textContent = "Timer";
     timerBtn.type = "button";
-    timerBtn.tabIndex = -1;
     var sensorBtn = document.createElement("button");
     sensorBtn.textContent = "Sensor";
     sensorBtn.type = "button";
-    sensorBtn.tabIndex = -1;
     segment.appendChild(timerBtn);
     segment.appendChild(sensorBtn);
     ssBody.appendChild(segment);
@@ -1623,6 +1626,7 @@
     state.activeTab = tab;
     ["screen", "settings", "logs"].forEach(function (t) {
       els["tab_" + t].className = "sp-tab" + (tab === t ? " active" : "");
+      els["tab_" + t].setAttribute("aria-selected", tab === t ? "true" : "false");
     });
     els.screenPage.className = "sp-page" + (tab === "screen" ? " active" : "");
     els.settingsPage.className = "sp-page" + (tab === "settings" ? " active" : "");
@@ -1871,12 +1875,10 @@
       seg.className = "sp-segment";
       var btnIcon = document.createElement("button");
       btnIcon.type = "button";
-      btnIcon.tabIndex = -1;
       btnIcon.textContent = "Replace Icon";
       if (whenOnMode === "icon") btnIcon.classList.add("active");
       var btnSensor = document.createElement("button");
       btnSensor.type = "button";
-      btnSensor.tabIndex = -1;
       btnSensor.textContent = "Sensor Data";
       if (whenOnMode === "sensor") btnSensor.classList.add("active");
       seg.appendChild(btnIcon);

@@ -2,4 +2,6 @@ node_modules/
 docs/.vitepress/cache/
 docs/.vitepress/dist/
 .esphome/
+__pycache__/
+builds/.esphome/
 secrets.yaml

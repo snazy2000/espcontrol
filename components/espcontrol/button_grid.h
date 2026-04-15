@@ -835,6 +835,12 @@ inline void grid_phase2(
   static const char* icon_off_cp[25] = {};
   static const char* icon_on_cp[25] = {};
 
+  static bool sp_child_was_on[25 * 25] = {};
+  static std::string sp_entity_ids[25 * 25];
+  static std::string sp_push_labels[25];
+  static int sp_alloc_idx = 0;
+  sp_alloc_idx = 0;
+
   bool has_on, has_off, has_sensor_color;
   uint32_t on_val = parse_hex_color(on_hex, has_on);
   uint32_t off_val = parse_hex_color(off_hex, has_off);
@@ -1065,7 +1071,7 @@ inline void grid_phase2(
         } else {
           lv_label_set_text(stl, "Push");
         }
-        std::string *lbl = new std::string(sb.label.empty() ? "Push" : sb.label);
+        sp_push_labels[si] = sb.label.empty() ? "Push" : sb.label;
         lv_obj_add_event_cb(sb_btn, [](lv_event_t *e) {
           std::string *label = (std::string *)lv_event_get_user_data(e);
           esphome::api::HomeassistantActionRequest req;
@@ -1076,7 +1082,7 @@ inline void grid_phase2(
           kv.key = decltype(kv.key)("label");
           kv.value = decltype(kv.value)(label->c_str());
           esphome::api::global_api_server->send_homeassistant_action(req);
-        }, LV_EVENT_CLICKED, lbl);
+        }, LV_EVENT_CLICKED, &sp_push_labels[si]);
 
       } else if ((sb.type == "slider" || sb.type == "cover") && !sb.entity.empty()) {
         lv_obj_t *sl = setup_subpage_slider(sb_btn, sil, stl, sb, has_on ? on_val : DEFAULT_SLIDER_COLOR, sp_radius);
@@ -1085,7 +1091,9 @@ inline void grid_phase2(
           lv_obj_t *parent_btn = slots[si].btn;
           lv_obj_t *parent_icon = slots[si].icon_lbl;
           int parent_idx = si;
-          bool *child_was_on = new bool(false);
+          int cwi = sp_alloc_idx++;
+          sp_child_was_on[cwi] = false;
+          bool *child_was_on = &sp_child_was_on[cwi];
           bool has_alt_icon = sp_has_icon_on;
           const char* off_glyph = sp_icon_off_glyph;
           const char* on_glyph = sp_icon_on_glyph;
@@ -1132,7 +1140,9 @@ inline void grid_phase2(
           lv_obj_t *parent_btn = slots[si].btn;
           lv_obj_t *parent_icon = slots[si].icon_lbl;
           int parent_idx = si;
-          bool *child_was_on = new bool(false);
+          int cwi = sp_alloc_idx++;
+          sp_child_was_on[cwi] = false;
+          bool *child_was_on = &sp_child_was_on[cwi];
           bool has_alt_icon = sp_has_icon_on;
           const char* off_glyph = sp_icon_off_glyph;
           const char* on_glyph = sp_icon_on_glyph;
@@ -1158,11 +1168,12 @@ inline void grid_phase2(
           );
         }
 
-        std::string *eid = new std::string(sb.entity);
+        int eid_idx = sp_alloc_idx++;
+        sp_entity_ids[eid_idx] = sb.entity;
         lv_obj_add_event_cb(sb_btn, [](lv_event_t *e) {
           std::string *en = (std::string *)lv_event_get_user_data(e);
           if (en && !en->empty()) send_toggle_action(*en);
-        }, LV_EVENT_CLICKED, eid);
+        }, LV_EVENT_CLICKED, &sp_entity_ids[eid_idx]);
       } else {
         lv_label_set_text(stl, sb.label.empty() ? "Configure" : sb.label.c_str());
       }

@@ -1,0 +1,47 @@
+# =============================================================================
+# CORE INFRASTRUCTURE - Shared API, logging, web server, and restart button
+# =============================================================================
+# Included by each device's device.yaml via packages. Contains config that is
+# identical across all hardware targets.
+# =============================================================================
+
+api:
+  reboot_timeout: 0s
+  homeassistant_states: true
+  homeassistant_services: true
+
+logger:
+  logs:
+    light: WARN
+
+http_request:
+  id: http_req
+  timeout: 10s
+
+web_server:
+  port: 80
+  version: 3
+  include_internal: true
+  js_url: https://jtenniswood.github.io/espcontrol/webserver/${device_slug}/www.js
+  sorting_groups:
+    - id: sg_button
+      name: "Button Configuration"
+      sorting_weight: 10
+    - id: sg_display
+      name: "Display Configuration"
+      sorting_weight: 20
+    - id: sg_brightness
+      name: "Brightness"
+      sorting_weight: 25
+    - id: sg_screensaver
+      name: "Screensaver"
+      sorting_weight: 30
+    - id: sg_firmware
+      name: "Firmware"
+      sorting_weight: 40
+
+button:
+  - platform: restart
+    name: "Apply Configuration"
+    icon: mdi:restart
+    entity_category: config

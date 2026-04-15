@@ -12,6 +12,8 @@ Usage:
 """
 import json
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -232,6 +234,20 @@ def replace_config(source_text, slug, cfg):
     return source_text[: m.start(2)] + build_config_block(slug, cfg) + source_text[m.start(3) :]
 
 
+def _minify_js(path):
+    """Minify a JS file in-place using esbuild if available."""
+    npx = shutil.which("npx")
+    if not npx:
+        return
+    result = subprocess.run(
+        [npx, "esbuild", str(path), "--minify",
+         f"--outfile={path}", "--allow-overwrite"],
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        print(f"  warning: esbuild minification failed for {path.name}")
+
+
 def build_www(check_only=False):
     """Build per-device www.js from the single source template."""
     devices = load_json(DEVICES_JSON)
@@ -253,6 +269,7 @@ def build_www(check_only=False):
         if not check_only:
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(generated)
+            _minify_js(output_path)
             print(f"  updated docs/public/webserver/{slug}/www.js")
 
     if check_only and dirty:

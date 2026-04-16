@@ -7,8 +7,8 @@
 //   Logs    - Real-time device log viewer via SSE
 //
 // Per-device config (grid size, styling) is injected between __DEVICE_CONFIG__
-// markers by scripts/build.py. Button type plugins (switch, sensor, slider,
-// cover, push, subpage) are injected between __BUTTON_TYPES__ markers.
+// markers by scripts/build.py. Button type plugins (switch, sensor, weather,
+// slider, cover, push, subpage) are injected between __BUTTON_TYPES__ markers.
 // Icon data is generated between GENERATED:ICONS / GENERATED:DOMAIN_ICONS.
 // =============================================================================
 
@@ -132,6 +132,7 @@
       key: key,
       label: key || "Toggle",
       allowInSubpage: false,
+      hideLabel: false,
       labelPlaceholder: null,
       onSelect: null,
       renderSettings: null,
@@ -1777,7 +1778,7 @@
         var b = c.buttons[bIdx];
         var iconName = resolveIcon(b);
         var label = b.label || b.entity || "Configure";
-        var color = (b.type === "sensor") ? state.sensorColor : state.offColor;
+        var color = (b.type === "sensor" || b.type === "weather") ? state.sensorColor : state.offColor;
         var previewTypeDef = BUTTON_TYPES[b.type || ""] || null;
         if (previewTypeDef && c.isSub && !previewTypeDef.allowInSubpage) previewTypeDef = null;
         var typePreview = previewTypeDef && previewTypeDef.renderPreview
@@ -1930,15 +1931,16 @@
       panel.appendChild(tf);
     }
 
-    // Label
-    var lf = document.createElement("div");
-    lf.className = "sp-field";
-    lf.appendChild(fieldLabel("Label", idPrefix + "label"));
-    var labelPlaceholder = (typeDef && typeDef.labelPlaceholder) || "e.g. Kitchen";
-    var labelInp = textInput(idPrefix + "label", b.label, labelPlaceholder);
-    lf.appendChild(labelInp);
-    panel.appendChild(lf);
-    bindField(labelInp, "label", true);
+    if (!typeDef || !typeDef.hideLabel) {
+      var lf = document.createElement("div");
+      lf.className = "sp-field";
+      lf.appendChild(fieldLabel("Label", idPrefix + "label"));
+      var labelPlaceholder = (typeDef && typeDef.labelPlaceholder) || "e.g. Kitchen";
+      var labelInp = textInput(idPrefix + "label", b.label, labelPlaceholder);
+      lf.appendChild(labelInp);
+      panel.appendChild(lf);
+      bindField(labelInp, "label", true);
+    }
 
     var typeHelpers = {
       makeIconPicker: makeIconPicker,

@@ -7,8 +7,8 @@
 //   Logs    - Real-time device log viewer via SSE
 //
 // Per-device config (grid size, styling) is injected between __DEVICE_CONFIG__
-// markers by scripts/build.py. Button type plugins (switch, sensor, slider,
-// cover, push, subpage) are injected between __BUTTON_TYPES__ markers.
+// markers by scripts/build.py. Button type plugins (switch, sensor, weather,
+// slider, cover, push, subpage) are injected between __BUTTON_TYPES__ markers.
 // Icon data is generated between GENERATED:ICONS / GENERATED:DOMAIN_ICONS.
 // =============================================================================
 
@@ -184,6 +184,7 @@
       key: key,
       label: key || "Toggle",
       allowInSubpage: false,
+      hideLabel: false,
       labelPlaceholder: null,
       onSelect: null,
       renderSettings: null,
@@ -567,6 +568,38 @@
         labelHtml:
           '<span class="sp-btn-label-row"><span class="sp-btn-label">' + helpers.escHtml(label) + '</span>' +
           '<span class="sp-type-badge mdi mdi-toggle-switch-variant-off"></span></span>',
+      };
+    },
+  });
+  // --- type: weather ---
+  // Read-only weather card: displays a HA weather condition as icon + label.
+  registerButtonType("weather", {
+    label: "Weather",
+    allowInSubpage: true,
+    hideLabel: true,
+    onSelect: function (b) {
+      b.label = "";
+      b.icon = "Auto";
+      b.icon_on = "Auto";
+      b.sensor = "";
+      b.unit = "";
+      b.precision = "";
+    },
+    renderSettings: function (panel, b, slot, helpers) {
+      var ef = document.createElement("div");
+      ef.className = "sp-field";
+      ef.appendChild(helpers.fieldLabel("Weather Entity", helpers.idPrefix + "entity"));
+      var entityInp = helpers.textInput(helpers.idPrefix + "entity", b.entity, "e.g. weather.forecast_home");
+      ef.appendChild(entityInp);
+      panel.appendChild(ef);
+      helpers.bindField(entityInp, "entity", true);
+    },
+    renderPreview: function (b, helpers) {
+      return {
+        iconHtml: '<span class="sp-btn-icon mdi mdi-weather-cloudy"></span>',
+        labelHtml:
+          '<span class="sp-btn-label-row"><span class="sp-btn-label">Cloudy</span>' +
+          '<span class="sp-type-badge mdi mdi-weather-cloudy"></span></span>',
       };
     },
   });
@@ -2207,7 +2240,7 @@
         var b = c.buttons[bIdx];
         var iconName = resolveIcon(b);
         var label = b.label || b.entity || "Configure";
-        var color = (b.type === "sensor") ? state.sensorColor : state.offColor;
+        var color = (b.type === "sensor" || b.type === "weather") ? state.sensorColor : state.offColor;
         var previewTypeDef = BUTTON_TYPES[b.type || ""] || null;
         if (previewTypeDef && c.isSub && !previewTypeDef.allowInSubpage) previewTypeDef = null;
         var typePreview = previewTypeDef && previewTypeDef.renderPreview
@@ -2360,15 +2393,16 @@
       panel.appendChild(tf);
     }
 
-    // Label
-    var lf = document.createElement("div");
-    lf.className = "sp-field";
-    lf.appendChild(fieldLabel("Label", idPrefix + "label"));
-    var labelPlaceholder = (typeDef && typeDef.labelPlaceholder) || "e.g. Kitchen";
-    var labelInp = textInput(idPrefix + "label", b.label, labelPlaceholder);
-    lf.appendChild(labelInp);
-    panel.appendChild(lf);
-    bindField(labelInp, "label", true);
+    if (!typeDef || !typeDef.hideLabel) {
+      var lf = document.createElement("div");
+      lf.className = "sp-field";
+      lf.appendChild(fieldLabel("Label", idPrefix + "label"));
+      var labelPlaceholder = (typeDef && typeDef.labelPlaceholder) || "e.g. Kitchen";
+      var labelInp = textInput(idPrefix + "label", b.label, labelPlaceholder);
+      lf.appendChild(labelInp);
+      panel.appendChild(lf);
+      bindField(labelInp, "label", true);
+    }
 
     var typeHelpers = {
       makeIconPicker: makeIconPicker,

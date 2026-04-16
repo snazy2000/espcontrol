@@ -83,6 +83,54 @@ inline bool parse_complete_float(const std::string &s, float &out) {
   return *end == '\0';
 }
 
+inline const char* weather_icon_for_state(const std::string &state) {
+  if (state == "sunny") return find_icon("Weather Sunny");
+  if (state == "clear-night") return find_icon("Weather Night");
+  if (state == "partlycloudy") return find_icon("Weather Partly Cloudy");
+  if (state == "cloudy") return find_icon("Weather Cloudy");
+  if (state == "fog") return find_icon("Weather Fog");
+  if (state == "hail") return find_icon("Weather Hail");
+  if (state == "lightning") return find_icon("Weather Lightning");
+  if (state == "lightning-rainy") return find_icon("Weather Lightning Rainy");
+  if (state == "pouring") return find_icon("Weather Pouring");
+  if (state == "rainy") return find_icon("Weather Rainy");
+  if (state == "snowy") return find_icon("Weather Snowy");
+  if (state == "snowy-rainy") return find_icon("Weather Snowy Rainy");
+  if (state == "windy") return find_icon("Weather Windy");
+  if (state == "windy-variant") return find_icon("Weather Windy Variant");
+  if (state == "unavailable" || state.empty()) return find_icon("Weather Sunny Off");
+  return find_icon("Weather Cloudy Alert");
+}
+
+inline std::string weather_label_for_state(const std::string &state) {
+  if (state == "sunny") return "Sunny";
+  if (state == "clear-night") return "Clear night";
+  if (state == "partlycloudy") return "Partly cloudy";
+  if (state == "cloudy") return "Cloudy";
+  if (state == "fog") return "Fog";
+  if (state == "hail") return "Hail";
+  if (state == "lightning") return "Lightning";
+  if (state == "lightning-rainy") return "Lightning and rain";
+  if (state == "pouring") return "Pouring";
+  if (state == "rainy") return "Rainy";
+  if (state == "snowy") return "Snowy";
+  if (state == "snowy-rainy") return "Snowy and rain";
+  if (state == "windy") return "Windy";
+  if (state == "windy-variant") return "Windy and cloudy";
+  if (state == "exceptional") return "Exceptional";
+  if (state == "unknown") return "Unknown";
+  if (state == "unavailable" || state.empty()) return "Unavailable";
+
+  std::string label = state;
+  for (size_t i = 0; i < label.length(); i++) {
+    if (label[i] == '-' || label[i] == '_') label[i] = ' ';
+  }
+  if (!label.empty()) {
+    label[0] = static_cast<char>(toupper(static_cast<unsigned char>(label[0])));
+  }
+  return label;
+}
+
 // Parse a 6-char hex color string (no # prefix) into a uint32_t RGB value
 inline uint32_t parse_hex_color(const std::string &hex, bool &valid) {
   valid = hex.length() == 6;
@@ -193,6 +241,16 @@ inline void setup_sensor_card(BtnSlot &s, const ParsedCfg &p,
   }
 }
 
+inline void setup_weather_card(BtnSlot &s, bool has_sensor_color, uint32_t sensor_val) {
+  if (has_sensor_color) {
+    lv_obj_set_style_bg_color(s.btn, lv_color_hex(sensor_val),
+      static_cast<lv_style_selector_t>(LV_PART_MAIN) | static_cast<lv_style_selector_t>(LV_STATE_DEFAULT));
+  }
+  lv_obj_clear_flag(s.btn, LV_OBJ_FLAG_CLICKABLE);
+  lv_label_set_text(s.icon_lbl, find_icon("Weather Cloudy"));
+  lv_label_set_text(s.text_lbl, "Weather");
+}
+
 // Set icon and label on a toggle/push button based on its config
 inline void setup_toggle_visual(BtnSlot &s, const ParsedCfg &p) {
   if (!p.entity.empty()) {
@@ -251,6 +309,16 @@ inline void subscribe_sensor_value(lv_obj_t *sensor_lbl, const std::string &sens
       } else {
         lv_label_set_text(sensor_lbl, state.c_str());
       }
+    })
+  );
+}
+
+inline void subscribe_weather_state(lv_obj_t *icon_lbl, lv_obj_t *text_lbl, const std::string &entity_id) {
+  esphome::api::global_api_server->subscribe_home_assistant_state(
+    entity_id, {},
+    std::function<void(const std::string &)>([icon_lbl, text_lbl](const std::string &state) {
+      lv_label_set_text(icon_lbl, weather_icon_for_state(state));
+      lv_label_set_text(text_lbl, weather_label_for_state(state).c_str());
     })
   );
 }
@@ -823,6 +891,10 @@ inline void grid_phase1(
       setup_sensor_card(s, p, has_sensor_color, sensor_val);
       continue;
     }
+    if (p.type == "weather") {
+      setup_weather_card(s, has_sensor_color, sensor_val);
+      continue;
+    }
     if (p.type == "slider" || p.type == "cover") {
       setup_slider_visual(s, p, has_on ? on_val : DEFAULT_SLIDER_COLOR);
     } else {
@@ -883,6 +955,11 @@ inline void grid_phase2(
       subscribe_sensor_value(s.sensor_lbl, p.sensor, parse_precision(p.precision));
       if (p.label.empty())
         subscribe_friendly_name(s.text_lbl, p.sensor);
+      continue;
+    }
+    if (p.type == "weather") {
+      if (!p.entity.empty())
+        subscribe_weather_state(s.icon_lbl, s.text_lbl, p.entity);
       continue;
     }
 
@@ -1094,6 +1171,16 @@ inline void grid_phase2(
         } else {
           subscribe_friendly_name(stl, sb.sensor);
         }
+
+      } else if (sb.type == "weather") {
+        if (has_sensor_color)
+          lv_obj_set_style_bg_color(sb_btn, lv_color_hex(sensor_val),
+            static_cast<lv_style_selector_t>(LV_PART_MAIN) | static_cast<lv_style_selector_t>(LV_STATE_DEFAULT));
+        lv_obj_clear_flag(sb_btn, LV_OBJ_FLAG_CLICKABLE);
+        lv_label_set_text(sil, find_icon("Weather Cloudy"));
+        lv_label_set_text(stl, "Weather");
+        if (!sb.entity.empty())
+          subscribe_weather_state(sil, stl, sb.entity);
 
       } else if (sb.type == "push") {
         if (!sb.label.empty()) {

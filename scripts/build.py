@@ -11,12 +11,8 @@ Usage:
     python scripts/build.py icons --check # check icons only
 """
 import json
-import os
 import re
-import shutil
-import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -189,10 +185,12 @@ TYPES_END = "__BUTTON_TYPES_END__"
 
 
 def build_config_block(slug, cfg):
-    cfg_json = json.dumps(cfg, separators=(",", ":"))
+    cfg_lines = json.dumps(cfg, indent=2).splitlines()
+    cfg_body = "\n".join("  " + line for line in cfg_lines[1:])
     return (
         f'  var DEVICE_ID = "{slug}";\n'
-        f"  var CFG = {cfg_json};\n"
+        f"  var CFG = {cfg_lines[0]}\n"
+        f"{cfg_body};\n"
     )
 
 
@@ -236,34 +234,6 @@ def replace_config(source_text, slug, cfg):
     return source_text[: m.start(2)] + build_config_block(slug, cfg) + source_text[m.start(3) :]
 
 
-def _minify_js(path):
-    """Minify a JS file in-place using esbuild if available."""
-    npx = shutil.which("npx")
-    if not npx:
-        return False
-    env = os.environ.copy()
-    env.setdefault("npm_config_cache", str(Path(tempfile.gettempdir()) / "espcontrol-npm-cache"))
-    result = subprocess.run(
-        [npx, "esbuild", str(path), "--minify",
-         f"--outfile={path}", "--allow-overwrite"],
-        capture_output=True, text=True, env=env,
-    )
-    if result.returncode != 0:
-        print(f"  warning: esbuild minification failed for {path.name}")
-        return False
-    return True
-
-
-def _minified_www_text(generated):
-    """Return generated web UI text after the same minification used for outputs."""
-    with tempfile.TemporaryDirectory() as td:
-        tmp = Path(td) / "www.js"
-        tmp.write_text(generated)
-        if _minify_js(tmp):
-            return tmp.read_text()
-    return generated
-
-
 def build_www(check_only=False):
     """Build per-device www.js from the single source template."""
     devices = load_json(DEVICES_JSON)
@@ -277,8 +247,7 @@ def build_www(check_only=False):
 
         if output_path.exists():
             current = output_path.read_text()
-            expected = _minified_www_text(generated)
-            if current == expected:
+            if current == generated:
                 continue
 
         dirty.append(slug)
@@ -286,7 +255,6 @@ def build_www(check_only=False):
         if not check_only:
             output_path.parent.mkdir(parents=True, exist_ok=True)
             output_path.write_text(generated)
-            _minify_js(output_path)
             print(f"  updated docs/public/webserver/{slug}/www.js")
 
     if check_only and dirty:

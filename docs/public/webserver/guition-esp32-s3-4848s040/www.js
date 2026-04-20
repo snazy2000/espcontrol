@@ -36,7 +36,8 @@
         "90",
         "180",
         "270"
-      ]
+      ],
+      "screenRotationDisplayOffset": 180
     },
     "screen": {
       "width": "55%",

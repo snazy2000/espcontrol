@@ -1464,10 +1464,16 @@
   // ── POST queue ─────────────────────────────────────────────────────────
 
   var _postQueue = Promise.resolve();
+  var _screensaverActionMissingWarned = false;
 
-  function post(url) {
+  function post(url, opts) {
+    opts = opts || {};
     _postQueue = _postQueue.then(function () {
       return fetch(url, { method: "POST" }).then(function (r) {
+        if (r.status === 404 && opts.ignore404) {
+          if (opts.on404) opts.on404();
+          return r;
+        }
         if (!r.ok) showBanner("Request failed: " + r.status, "error");
         return r;
       }).catch(function () {
@@ -1479,6 +1485,18 @@
 
   function postText(name, value) {
     post("/text/" + encodeURIComponent(name) + "/set?value=" + encodeURIComponent(value));
+  }
+
+  function postScreensaverAction(value) {
+    post("/text/" + encodeURIComponent("Screensaver Action") + "/set?value=" + encodeURIComponent(value), {
+      ignore404: true,
+      on404: function () {
+        if (value === "dim" && !_screensaverActionMissingWarned) {
+          _screensaverActionMissingWarned = true;
+          showBanner("Display Dimmed needs updated firmware before it can take effect.", "warning");
+        }
+      },
+    });
   }
 
   function saveButtonConfig(slot) {
@@ -2307,7 +2325,7 @@
       state.screensaverAction = normalizeScreensaverAction(this.value);
       state._screensaverActionReceived = true;
       state.clockScreensaverOn = state.screensaverAction === "clock";
-      postText("Screensaver Action", state.screensaverAction);
+      postScreensaverAction(state.screensaverAction);
       postSwitch("Screen Saver: Clock", state.clockScreensaverOn);
       syncScreensaverActionControls();
     });
@@ -4716,7 +4734,7 @@
             s.clock_screensaver != null ? !!s.clock_screensaver : true
           );
           postText("Screensaver Mode", importedScreensaverMode);
-          postText("Screensaver Action", importedScreensaverAction);
+          postScreensaverAction(importedScreensaverAction);
           postText("Presence Sensor Entity", s.presence_sensor_entity || "");
           postSwitch("Screen Saver: Clock", importedScreensaverAction === "clock");
           postNumber("Screen Saver: Clock Brightness", s.clock_brightness != null ? s.clock_brightness : 35);

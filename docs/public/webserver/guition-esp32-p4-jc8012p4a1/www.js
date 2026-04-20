@@ -56,8 +56,8 @@
     "btn": {
       "radius": 0.86,
       "padding": 1.41,
-      "iconSize": 4.55,
-      "labelSize": 2.03,
+      "iconSize": 4.1,
+      "labelSize": 1.88,
       "labelLines": 2,
       "labelLinesDouble": 3
     },
@@ -72,13 +72,13 @@
     "subpageBadge": {
       "bottom": 0.86,
       "right": 0.86,
-      "fontSize": 1.72
+      "fontSize": 1.56
     },
     "backBtn": {
       "radius": 0.86,
       "padding": 1.41,
-      "iconSize": 4.55,
-      "labelSize": 2.03,
+      "iconSize": 4.1,
+      "labelSize": 1.88,
       "labelLines": 2,
       "labelLinesDouble": 3
     }

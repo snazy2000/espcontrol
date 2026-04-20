@@ -17,14 +17,14 @@ font:
   # Main page: button icons
   - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'
     id: icon_font_lt
-    size: 60
+    size: 54
     bpp: 4
     glyphs: !include ../../../common/assets/icon_glyphs.yaml
 
-  # Button labels (26px)
+  # Button labels (24px)
   - file: "gfonts://Roboto"
     id: label_font_lt
-    size: 26
+    size: 24
     bpp: 4
     glyphs: !include ../../../common/assets/text_glyphs.yaml
 

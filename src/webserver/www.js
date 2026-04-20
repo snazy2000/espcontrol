@@ -231,6 +231,18 @@
     ".sp-empty-cell.sp-drop-placeholder{border-color:rgba(92,156,245,.5)}" : "") +
 
     ".sp-hint{text-align:center;font-size:.7rem;color:var(--text3);padding:8px 0 12px}" +
+    ".sp-selection-bar{display:none;align-items:center;justify-content:center;gap:8px;" +
+    "padding:0 var(--gap) 12px;color:var(--text);font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}" +
+    ".sp-selection-bar.sp-visible{display:flex}" +
+    ".sp-selection-label{font-size:.8rem;color:var(--text2);margin-right:4px}" +
+    ".sp-selection-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;" +
+    "border:1px solid var(--border);border-radius:var(--action-r);background:var(--surface2);" +
+    "color:var(--text);padding:8px 12px;font-size:.8rem;font-weight:500;cursor:pointer;" +
+    "font-family:inherit;transition:all .2s;min-height:34px}" +
+    ".sp-selection-btn:hover{background:var(--border);border-color:#4a4d54}" +
+    ".sp-selection-btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}" +
+    ".sp-selection-btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}" +
+    ".sp-selection-btn .mdi{font-size:16px;line-height:1}" +
 
     ".sp-config{padding:var(--gap) var(--gap) var(--gap)}" +
 
@@ -1466,9 +1478,14 @@
 
     var hint = document.createElement("div");
     hint.className = "sp-hint";
-    hint.textContent = "tap to configure \u2022 shift/ctrl+tap to multi-select \u2022 right click to manage";
+    hint.textContent = "tap to select \u2022 shift/ctrl+tap to multi-select \u2022 right click to manage";
     els.previewHint = hint;
     page.appendChild(hint);
+
+    var selectionBar = document.createElement("div");
+    selectionBar.className = "sp-selection-bar";
+    els.selectionBar = selectionBar;
+    page.appendChild(selectionBar);
 
     var overlay = document.createElement("div");
     overlay.className = "sp-settings-overlay";
@@ -2191,13 +2208,14 @@
     if (c.selected.length > 1) {
       els.previewHint.textContent = c.selected.length + " buttons selected \u2022 right click to copy, cut, or delete";
     } else {
-      els.previewHint.textContent = "tap to configure \u2022 shift/ctrl+tap to multi-select \u2022 right click to manage";
+      els.previewHint.textContent = "tap to select \u2022 shift/ctrl+tap to multi-select \u2022 right click to manage";
     }
   }
 
   function closeSettings() {
     hideSettingsOverlay();
     _settingsDeferred = false;
+    state.settingsDraft = null;
     ctx().setSelected([]);
     renderPreview();
   }
@@ -2222,9 +2240,49 @@
     var slot = c.selected[0];
     var bIdx = slot - 1;
     if (bIdx < 0 || bIdx >= c.buttons.length) return;
-    var b = c.buttons[bIdx];
-    var boundFieldSaveTimer = null;
-    var boundFieldDirty = false;
+    var liveButton = c.buttons[bIdx];
+    var draftKey = (c.isSub ? "sub:" + state.editingSubpage : "main") + ":" + slot;
+
+    function cloneButtonConfig(src) {
+      return {
+        entity: src.entity || "",
+        label: src.label || "",
+        icon: src.icon || "Auto",
+        icon_on: src.icon_on || "Auto",
+        sensor: src.sensor || "",
+        unit: src.unit || "",
+        type: src.type || "",
+        precision: src.precision || "",
+        _whenOnActive: src._whenOnActive,
+        _whenOnMode: src._whenOnMode,
+      };
+    }
+
+    function copyButtonConfig(target, src) {
+      target.entity = src.entity || "";
+      target.label = src.label || "";
+      target.icon = src.icon || "Auto";
+      target.icon_on = src.icon_on || "Auto";
+      target.sensor = src.sensor || "";
+      target.unit = src.unit || "";
+      target.type = src.type || "";
+      target.precision = src.precision || "";
+      target._whenOnActive = src._whenOnActive;
+      target._whenOnMode = src._whenOnMode;
+      normalizeButtonConfig(target);
+    }
+
+    if (!state.settingsDraft || state.settingsDraft.key !== draftKey) {
+      state.settingsDraft = {
+        key: draftKey,
+        slot: slot,
+        homeSlot: state.editingSubpage,
+        isSub: c.isSub,
+        dirty: false,
+        button: cloneButtonConfig(liveButton),
+      };
+    }
+    var b = state.settingsDraft.button;
 
     var title = document.createElement("div");
     title.className = "sp-section-title";
@@ -2236,63 +2294,42 @@
 
     var idPrefix = c.isSub ? "sp-sp-inp-" : "sp-inp-";
 
+    function markDraftDirty() {
+      if (state.settingsDraft && state.settingsDraft.key === draftKey) {
+        state.settingsDraft.dirty = true;
+      }
+    }
+
     function saveField(field, val) {
-      flushBoundFieldSave();
+      markDraftDirty();
+    }
+
+    function applySettingsDraft() {
+      if (!state.settingsDraft || state.settingsDraft.key !== draftKey) return;
+      copyButtonConfig(liveButton, state.settingsDraft.button);
+      state.settingsDraft = null;
       if (c.isSub) {
         saveSubpageConfig(state.editingSubpage);
       } else {
         saveButtonConfig(slot);
       }
-    }
-
-    function flushBoundFieldSave() {
-      if (boundFieldSaveTimer) {
-        clearTimeout(boundFieldSaveTimer);
-        boundFieldSaveTimer = null;
-      }
-      if (!boundFieldDirty) return;
-      boundFieldDirty = false;
-      if (c.isSub) {
-        saveSubpageConfig(state.editingSubpage);
-      } else {
-        saveButtonConfig(slot);
-      }
-    }
-
-    function queueBoundFieldSave(delay) {
-      boundFieldDirty = true;
-      if (boundFieldSaveTimer) clearTimeout(boundFieldSaveTimer);
-      boundFieldSaveTimer = setTimeout(flushBoundFieldSave, delay);
+      renderPreview();
     }
 
     function bindField(input, field, rerender) {
-      var lastSaved = input.value;
       function syncValue() {
+        if (b[field] === input.value) return;
         b[field] = input.value;
-      }
-      function persistValue() {
-        syncValue();
-        if (input.value === lastSaved) return;
-        lastSaved = input.value;
-        queueBoundFieldSave(500);
-        if (rerender) renderPreview();
+        markDraftDirty();
       }
       input.addEventListener("input", function () {
         syncValue();
-        if (input.value !== lastSaved) queueBoundFieldSave(900);
-        if (rerender) renderPreview();
       });
-      input.addEventListener("change", persistValue);
-      input.addEventListener("blur", persistValue);
+      input.addEventListener("change", syncValue);
+      input.addEventListener("blur", syncValue);
       input.addEventListener("keydown", function (e) {
         if (e.key === "Enter") {
           syncValue();
-          if (input.value !== lastSaved) {
-            lastSaved = input.value;
-            boundFieldDirty = true;
-          }
-          flushBoundFieldSave();
-          persistValue();
           this.blur();
         }
       });
@@ -2556,7 +2593,10 @@
     var delBtn = document.createElement("button");
     delBtn.className = "sp-action-btn sp-delete-btn";
     delBtn.innerHTML = '<span class="mdi mdi-trash-can-outline"></span>';
-    delBtn.addEventListener("click", function () { deleteSlot(slot); });
+    delBtn.addEventListener("click", function () {
+      state.settingsDraft = null;
+      deleteSlot(slot);
+    });
     saveRow.appendChild(delBtn);
     saveRow.classList.add("sp-has-delete");
 
@@ -2568,7 +2608,7 @@
     saveBtn.className = "sp-action-btn sp-save-btn";
     saveBtn.textContent = "Save";
     saveBtn.addEventListener("click", function () {
-      flushBoundFieldSave();
+      applySettingsDraft();
       closeSettings();
     });
     rightGroup.appendChild(saveBtn);

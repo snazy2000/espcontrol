@@ -1116,6 +1116,7 @@
     editingSubpage: null,
     subpageSelectedSlots: [],
     subpageLastClicked: -1,
+    settingsDraft: null,
     clipboard: null,
   };
 
@@ -1240,6 +1241,7 @@
         els.fwCheckBtn.textContent = state.firmwareChecking ? "Checking\u2026" : "Check for Update";
       }
     }
+    renderSelectionBar(c);
   }
 
   function setFirmwareUpdateInfo(d) {
@@ -2755,14 +2757,73 @@
     }
   }
 
+  function renderSelectionBar(c) {
+    if (!els.selectionBar) return;
+    c = c || ctx();
+    els.selectionBar.innerHTML = "";
+    if (!c.selected.length) {
+      els.selectionBar.className = "sp-selection-bar";
+      return;
+    }
+
+    els.selectionBar.className = "sp-selection-bar sp-visible";
+
+    var label = document.createElement("span");
+    label.className = "sp-selection-label";
+    label.textContent = c.selected.length === 1 ? "1 card selected" : c.selected.length + " cards selected";
+    els.selectionBar.appendChild(label);
+
+    if (c.selected.length === 1) {
+      var editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "sp-selection-btn sp-selection-btn-primary";
+      editBtn.innerHTML = '<span class="mdi mdi-pencil"></span>Edit';
+      editBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        openSelectedCardSettings();
+      });
+      els.selectionBar.appendChild(editBtn);
+    }
+
+    var menuBtn = document.createElement("button");
+    menuBtn.type = "button";
+    menuBtn.className = "sp-selection-btn";
+    menuBtn.setAttribute("aria-label", "Card actions");
+    menuBtn.innerHTML = '<span class="mdi mdi-dots-horizontal"></span>';
+    menuBtn.addEventListener("mousedown", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      showSelectionMenu(e);
+    });
+    els.selectionBar.appendChild(menuBtn);
+  }
+
   function closeSettings() {
     hideSettingsOverlay();
     _settingsDeferred = false;
+    state.settingsDraft = null;
     ctx().setSelected([]);
     renderPreview();
   }
 
-  function renderButtonSettings() {
+  function openSelectedCardSettings() {
+    var c = ctx();
+    if (c.selected.length !== 1) return;
+    renderButtonSettings(true);
+  }
+
+  function openCardSettings(slot) {
+    var c = ctx();
+    if (slot > 0 && c.selected.indexOf(slot) === -1) {
+      c.setSelected([slot]);
+      c.setLastClicked(slot);
+      renderPreview();
+    }
+    renderButtonSettings(true);
+  }
+
+  function renderButtonSettings(forceOpen) {
     var container = els.buttonSettings;
     container.innerHTML = "";
     var c = ctx();
@@ -2777,14 +2838,59 @@
       return;
     }
 
+    if (!forceOpen && !isSettingsOpen()) {
+      hideSettingsOverlay();
+      return;
+    }
+
     if (els.settingsOverlay) els.settingsOverlay.classList.add("sp-visible");
 
     var slot = c.selected[0];
     var bIdx = slot - 1;
     if (bIdx < 0 || bIdx >= c.buttons.length) return;
-    var b = c.buttons[bIdx];
-    var boundFieldSaveTimer = null;
-    var boundFieldDirty = false;
+    var liveButton = c.buttons[bIdx];
+    var draftKey = (c.isSub ? "sub:" + state.editingSubpage : "main") + ":" + slot;
+
+    function cloneButtonConfig(src) {
+      return {
+        entity: src.entity || "",
+        label: src.label || "",
+        icon: src.icon || "Auto",
+        icon_on: src.icon_on || "Auto",
+        sensor: src.sensor || "",
+        unit: src.unit || "",
+        type: src.type || "",
+        precision: src.precision || "",
+        _whenOnActive: src._whenOnActive,
+        _whenOnMode: src._whenOnMode,
+      };
+    }
+
+    function copyButtonConfig(target, src) {
+      target.entity = src.entity || "";
+      target.label = src.label || "";
+      target.icon = src.icon || "Auto";
+      target.icon_on = src.icon_on || "Auto";
+      target.sensor = src.sensor || "";
+      target.unit = src.unit || "";
+      target.type = src.type || "";
+      target.precision = src.precision || "";
+      target._whenOnActive = src._whenOnActive;
+      target._whenOnMode = src._whenOnMode;
+      normalizeButtonConfig(target);
+    }
+
+    if (!state.settingsDraft || state.settingsDraft.key !== draftKey) {
+      state.settingsDraft = {
+        key: draftKey,
+        slot: slot,
+        homeSlot: state.editingSubpage,
+        isSub: c.isSub,
+        dirty: false,
+        button: cloneButtonConfig(liveButton),
+      };
+    }
+    var b = state.settingsDraft.button;
 
     var title = document.createElement("div");
     title.className = "sp-section-title";
@@ -2796,63 +2902,42 @@
 
     var idPrefix = c.isSub ? "sp-sp-inp-" : "sp-inp-";
 
+    function markDraftDirty() {
+      if (state.settingsDraft && state.settingsDraft.key === draftKey) {
+        state.settingsDraft.dirty = true;
+      }
+    }
+
     function saveField(field, val) {
-      flushBoundFieldSave();
+      markDraftDirty();
+    }
+
+    function applySettingsDraft() {
+      if (!state.settingsDraft || state.settingsDraft.key !== draftKey) return;
+      copyButtonConfig(liveButton, state.settingsDraft.button);
+      state.settingsDraft = null;
       if (c.isSub) {
         saveSubpageConfig(state.editingSubpage);
       } else {
         saveButtonConfig(slot);
       }
-    }
-
-    function flushBoundFieldSave() {
-      if (boundFieldSaveTimer) {
-        clearTimeout(boundFieldSaveTimer);
-        boundFieldSaveTimer = null;
-      }
-      if (!boundFieldDirty) return;
-      boundFieldDirty = false;
-      if (c.isSub) {
-        saveSubpageConfig(state.editingSubpage);
-      } else {
-        saveButtonConfig(slot);
-      }
-    }
-
-    function queueBoundFieldSave(delay) {
-      boundFieldDirty = true;
-      if (boundFieldSaveTimer) clearTimeout(boundFieldSaveTimer);
-      boundFieldSaveTimer = setTimeout(flushBoundFieldSave, delay);
+      renderPreview();
     }
 
     function bindField(input, field, rerender) {
-      var lastSaved = input.value;
       function syncValue() {
+        if (b[field] === input.value) return;
         b[field] = input.value;
-      }
-      function persistValue() {
-        syncValue();
-        if (input.value === lastSaved) return;
-        lastSaved = input.value;
-        queueBoundFieldSave(500);
-        if (rerender) renderPreview();
+        markDraftDirty();
       }
       input.addEventListener("input", function () {
         syncValue();
-        if (input.value !== lastSaved) queueBoundFieldSave(900);
-        if (rerender) renderPreview();
       });
-      input.addEventListener("change", persistValue);
-      input.addEventListener("blur", persistValue);
+      input.addEventListener("change", syncValue);
+      input.addEventListener("blur", syncValue);
       input.addEventListener("keydown", function (e) {
         if (e.key === "Enter") {
           syncValue();
-          if (input.value !== lastSaved) {
-            lastSaved = input.value;
-            boundFieldDirty = true;
-          }
-          flushBoundFieldSave();
-          persistValue();
           this.blur();
         }
       });
@@ -3116,7 +3201,10 @@
     var delBtn = document.createElement("button");
     delBtn.className = "sp-action-btn sp-delete-btn";
     delBtn.innerHTML = '<span class="mdi mdi-trash-can-outline"></span>';
-    delBtn.addEventListener("click", function () { deleteSlot(slot); });
+    delBtn.addEventListener("click", function () {
+      state.settingsDraft = null;
+      deleteSlot(slot);
+    });
     saveRow.appendChild(delBtn);
     saveRow.classList.add("sp-has-delete");
 
@@ -3128,7 +3216,7 @@
     saveBtn.className = "sp-action-btn sp-save-btn";
     saveBtn.textContent = "Save";
     saveBtn.addEventListener("click", function () {
-      flushBoundFieldSave();
+      applySettingsDraft();
       closeSettings();
     });
     rightGroup.appendChild(saveBtn);
@@ -3373,6 +3461,78 @@
     } else {
       state.grid = grid;
     }
+  }
+
+  function canPlaceSlotAt(grid, pos, size, maxSlots) {
+    if (pos < 0 || pos >= maxSlots || grid[pos] !== 0) return false;
+    if (size === 2 || size === 4) {
+      var below = pos + GRID_COLS;
+      if (below >= maxSlots || grid[below] !== 0) return false;
+    }
+    if (size === 3 || size === 4) {
+      var right = pos + 1;
+      if (right >= maxSlots || right % GRID_COLS === 0 || grid[right] !== 0) return false;
+    }
+    if (size === 4) {
+      var diag = pos + GRID_COLS + 1;
+      if (diag >= maxSlots || grid[diag] !== 0) return false;
+    }
+    return true;
+  }
+
+  function findPlacementCell(grid, start, size, maxSlots) {
+    for (var i = 0; i < maxSlots; i++) {
+      var candidate = (start + i) % maxSlots;
+      if (canPlaceSlotAt(grid, candidate, size, maxSlots)) return candidate;
+    }
+    return -1;
+  }
+
+  function placeSlotAt(grid, slot, pos, size) {
+    grid[pos] = slot;
+    if (size === 2 || size === 4) grid[pos + GRID_COLS] = -1;
+    if (size === 3 || size === 4) grid[pos + 1] = -1;
+    if (size === 4) grid[pos + GRID_COLS + 1] = -1;
+  }
+
+  function moveSelectedToCell(fromPos, toPos) {
+    var c = ctx();
+    toPos = resolveSpanPos(toPos);
+    if (toPos < 0 || toPos >= c.maxSlots) return false;
+
+    var movingSlot = c.grid[fromPos];
+    if (c.selected.length <= 1 || c.selected.indexOf(movingSlot) === -1) return false;
+
+    var movingSlots = c.selected.slice();
+    var grid = c.grid.slice();
+    clearSpans(grid, c.maxSlots);
+
+    for (var i = 0; i < movingSlots.length; i++) {
+      var currentPos = grid.indexOf(movingSlots[i]);
+      if (currentPos !== -1) grid[currentPos] = 0;
+    }
+
+    var cursor = toPos;
+    for (var j = 0; j < movingSlots.length; j++) {
+      var slot = movingSlots[j];
+      var targetSize = c.sizes[slot] || 1;
+      var place = findPlacementCell(grid, cursor, targetSize, c.maxSlots);
+      if (place < 0 && targetSize !== 1) {
+        targetSize = 1;
+        place = findPlacementCell(grid, cursor, targetSize, c.maxSlots);
+      }
+      if (place < 0) continue;
+      if (targetSize === 1) delete c.sizes[slot]; else c.sizes[slot] = targetSize;
+      placeSlotAt(grid, slot, place, targetSize);
+      cursor = (place + 1) % c.maxSlots;
+    }
+
+    if (c.isSub) {
+      getSubpage(state.editingSubpage).grid = grid;
+    } else {
+      state.grid = grid;
+    }
+    return true;
   }
 
   function clearPlaceholder() {

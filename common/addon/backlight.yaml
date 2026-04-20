@@ -136,7 +136,7 @@ script:
                 else:
                   - script.execute: hide_clock_view
                   # Let LVGL redraw after snow pause before restoring backlight.
-                  - delay: 200ms
+                  - delay: 500ms
                   - globals.set:
                       id: display_asleep
                       value: 'false'

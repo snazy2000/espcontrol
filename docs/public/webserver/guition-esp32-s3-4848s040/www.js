@@ -905,6 +905,7 @@
     ".sp-toggle input:checked+.sp-toggle-track:before{transform:translateX(20px)}" +
 
     ".sp-segment{display:flex;border-radius:var(--action-r);overflow:hidden;border:1px solid var(--border);margin-bottom:14px}" +
+    ".sp-screensaver-mode{margin-bottom:26px}" +
     ".sp-segment button{flex:1;padding:8px 0;background:var(--surface2);color:var(--text2);" +
     "border:none;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .25s;font-family:inherit}" +
     ".sp-segment button:hover{color:var(--text)}" +
@@ -2253,7 +2254,7 @@
 
     ssBody.appendChild(fieldLabel("Mode"));
     var segment = document.createElement("div");
-    segment.className = "sp-segment";
+    segment.className = "sp-segment sp-screensaver-mode";
     var disabledBtn = document.createElement("button");
     disabledBtn.textContent = "Disabled";
     disabledBtn.type = "button";

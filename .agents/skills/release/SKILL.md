@@ -136,7 +136,7 @@ gh workflow run release.yml --ref "$TAG"
 ```
 
 Warn the user before using this fallback because workflow-dispatched runs
-produce artifacts but do not upload firmware files to the GitHub release.
+produce an artifact but do not upload firmware files to the GitHub release.
 
 ### 5. Verify Outputs
 
@@ -151,18 +151,12 @@ gh release view "$TAG" \
 Expected release assets:
 
 ```text
-guition-esp32-p4-jc1060p470.factory.bin
-guition-esp32-p4-jc1060p470.ota.bin
-guition-esp32-p4-jc1060p470.manifest.json
-guition-esp32-p4-jc8012p4a1.factory.bin
-guition-esp32-p4-jc8012p4a1.ota.bin
-guition-esp32-p4-jc8012p4a1.manifest.json
-guition-esp32-p4-jc4880p443.factory.bin
-guition-esp32-p4-jc4880p443.ota.bin
-guition-esp32-p4-jc4880p443.manifest.json
-guition-esp32-s3-4848s040.factory.bin
-guition-esp32-s3-4848s040.ota.bin
-guition-esp32-s3-4848s040.manifest.json
+immich-frame.factory.bin
+immich-frame.ota.bin
+immich-frame-7inch.factory.bin
+immich-frame-7inch.ota.bin
+manifest.json
+manifest-7inch.json
 ```
 
 The `Deploy Docs` workflow is configured to run after a successful
@@ -170,7 +164,7 @@ The `Deploy Docs` workflow is configured to run after a successful
 availability:
 
 ```bash
-gh run list --workflow pages.yml --event workflow_run --limit 5
+gh run list --workflow docs.yml --event workflow_run --limit 5
 ```
 
 ## Report Back

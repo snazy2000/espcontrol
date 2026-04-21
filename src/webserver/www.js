@@ -1864,6 +1864,11 @@
     els.setSensorClockBrightnessField = sensorClockControls.brightnessField;
     syncClockScreensaverControls();
 
+    var ssBadge = document.createElement("span");
+    ssBadge.setAttribute("aria-label", "Screensaver on");
+    ssBadge.innerHTML = '<span class="sp-card-badge-dot"></span><span>ON</span>';
+    els.setScreensaverBadge = ssBadge;
+
     function setSsMode(mode) {
       ssMode = mode;
       disabledBtn.className = mode === "disabled" ? "active" : "";
@@ -1871,6 +1876,9 @@
       sensorBtn.className = mode === "sensor" ? "active" : "";
       timerPanel.style.display = mode === "timer" ? "" : "none";
       sensorPanel.style.display = mode === "sensor" ? "" : "none";
+      if (els.setScreensaverBadge) {
+        els.setScreensaverBadge.className = "sp-card-badge" + (mode === "disabled" ? " sp-hidden" : "");
+      }
     }
     disabledBtn.addEventListener("click", function () {
       setSsMode("disabled");
@@ -1890,7 +1898,7 @@
     els.setSsMode = setSsMode;
     setSsMode(ssMode);
 
-    config.insertBefore(makeCollapsibleCard("Screensaver", ssBody, true), scheduleCard);
+    config.insertBefore(makeCollapsibleCard("Screensaver", ssBody, true, ssBadge), scheduleCard);
 
     var idleBody = document.createElement("div");
     idleBody.appendChild(fieldLabel("Return to home after"));

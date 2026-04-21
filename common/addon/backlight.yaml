@@ -189,6 +189,13 @@ script:
           }
       - if:
           condition:
+            lambda: 'return id(manual_wake_ms) != 0;'
+          then:
+            - script.execute: screen_schedule_wake_timeout_check
+          else:
+            - script.stop: screen_schedule_wake_timeout_check
+      - if:
+          condition:
             lambda: 'return id(display_asleep);'
           then:
             - script.stop: screensaver_idle_check

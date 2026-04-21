@@ -116,6 +116,28 @@ number:
         - script.execute: screen_schedule_check
 
   - platform: template
+    name: "Screen: Schedule Wake Timeout"
+    id: schedule_wake_timeout
+    min_value: 10
+    max_value: 3600
+    step: 10
+    initial_value: 60
+    optimistic: true
+    restore_value: true
+    unit_of_measurement: s
+    entity_category: config
+    icon: "mdi:timer-outline"
+    web_server:
+      sorting_group_id: sg_brightness
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: 'return id(manual_wake_ms) != 0;'
+            then:
+              - script.execute: screen_schedule_wake_timeout_check
+
+  - platform: template
     name: "Screen: Daytime Brightness"
     id: brightness_day
     min_value: 10
@@ -164,6 +186,7 @@ script:
     then:
       - script.stop: screensaver_idle_check
       - script.stop: home_screen_idle_check
+      - script.stop: screen_schedule_wake_timeout_check
       - globals.set:
           id: display_asleep
           value: 'true'
@@ -187,6 +210,7 @@ script:
   - id: screen_schedule_wake
     mode: restart
     then:
+      - script.stop: screen_schedule_wake_timeout_check
       - globals.set:
           id: screen_schedule_asleep
           value: 'false'
@@ -245,11 +269,65 @@ script:
 
           if (id(manual_wake_ms) != 0) {
             uint32_t elapsed = (uint32_t) (millis() - id(manual_wake_ms));
-            if (elapsed < 120000UL) return;
+            float timeout_s = id(schedule_wake_timeout).state;
+            if (std::isnan(timeout_s) || timeout_s <= 0) timeout_s = 60;
+            if (timeout_s < 10) timeout_s = 10;
+            if (timeout_s > 3600) timeout_s = 3600;
+            uint32_t timeout_ms = (uint32_t) (timeout_s * 1000.0f);
+            if (elapsed < timeout_ms) return;
             id(manual_wake_ms) = 0;
           }
 
           if (!id(screen_schedule_asleep)) {
+            id(screen_schedule_sleep).execute();
+          }
+
+  # ---------------------------------------------------------------------------
+  # Put the screen back to sleep after a temporary off-hours wake
+  # ---------------------------------------------------------------------------
+  - id: screen_schedule_wake_timeout_check
+    mode: restart
+    then:
+      - delay: !lambda |-
+          float timeout_s = id(schedule_wake_timeout).state;
+          if (std::isnan(timeout_s) || timeout_s <= 0) timeout_s = 60;
+          if (timeout_s < 10) timeout_s = 10;
+          if (timeout_s > 3600) timeout_s = 3600;
+          return (int) (timeout_s * 1000.0f);
+      - lambda: |-
+          if (!id(schedule_enabled).state || id(manual_wake_ms) == 0 ||
+              id(backlight_manual_off)) {
+            return;
+          }
+
+          auto now = id(ha_time).now();
+          if (!now.is_valid()) return;
+
+          int on_hour = (int) id(schedule_on_hour).state;
+          int off_hour = (int) id(schedule_off_hour).state;
+          if (on_hour < 0) on_hour = 0;
+          if (on_hour > 23) on_hour = 23;
+          if (off_hour < 0) off_hour = 0;
+          if (off_hour > 23) off_hour = 23;
+          bool in_window = true;
+          if (on_hour < off_hour) {
+            in_window = now.hour >= on_hour && now.hour < off_hour;
+          } else if (on_hour > off_hour) {
+            in_window = now.hour >= on_hour || now.hour < off_hour;
+          }
+          if (in_window) {
+            id(manual_wake_ms) = 0;
+            return;
+          }
+
+          float timeout_s = id(schedule_wake_timeout).state;
+          if (std::isnan(timeout_s) || timeout_s <= 0) timeout_s = 60;
+          if (timeout_s < 10) timeout_s = 10;
+          if (timeout_s > 3600) timeout_s = 3600;
+          uint32_t timeout_ms = (uint32_t) (timeout_s * 1000.0f);
+          uint32_t elapsed = (uint32_t) (millis() - id(manual_wake_ms));
+          if (elapsed >= timeout_ms && !id(screen_schedule_asleep)) {
+            id(manual_wake_ms) = 0;
             id(screen_schedule_sleep).execute();
           }
 

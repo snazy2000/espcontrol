@@ -559,6 +559,7 @@
     scheduleEnabled: false,
     scheduleOnHour: 6,
     scheduleOffHour: 23,
+    scheduleWakeTimeout: 60,
     timezone: "UTC (GMT+0)",
     timezoneOptions: [],
     clockFormat: "24h",
@@ -626,6 +627,43 @@
     return n;
   }
 
+  function normalizeScheduleWakeTimeout(value) {
+    var n = parseFloat(value);
+    if (!isFinite(n) || n <= 0) return 60;
+    if (n < 10) return 10;
+    if (n > 3600) return 3600;
+    return Math.round(n);
+  }
+
+  function formatDuration(seconds) {
+    seconds = normalizeScheduleWakeTimeout(seconds);
+    if (seconds < 60) return seconds + " second" + (seconds === 1 ? "" : "s");
+    if (seconds % 60 === 0) {
+      var minutes = seconds / 60;
+      return minutes + " minute" + (minutes === 1 ? "" : "s");
+    }
+    return seconds + " seconds";
+  }
+
+  function setSelectValue(select, value, label) {
+    if (!select) return;
+    value = String(value);
+    var found = false;
+    for (var i = 0; i < select.options.length; i++) {
+      if (select.options[i].value === value) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      var o = document.createElement("option");
+      o.value = value;
+      o.textContent = label || value;
+      select.appendChild(o);
+    }
+    select.value = value;
+  }
+
   function formatHour(hour) {
     hour = normalizeHour(hour, 0);
     var suffix = hour < 12 ? "AM" : "PM";
@@ -637,9 +675,11 @@
   function syncScreenScheduleUi() {
     state.scheduleOnHour = normalizeHour(state.scheduleOnHour, 6);
     state.scheduleOffHour = normalizeHour(state.scheduleOffHour, 23);
+    state.scheduleWakeTimeout = normalizeScheduleWakeTimeout(state.scheduleWakeTimeout);
     if (els.setScheduleToggle) els.setScheduleToggle.checked = !!state.scheduleEnabled;
     if (els.setScheduleOnHour) els.setScheduleOnHour.value = String(state.scheduleOnHour);
     if (els.setScheduleOffHour) els.setScheduleOffHour.value = String(state.scheduleOffHour);
+    setSelectValue(els.setScheduleWakeTimeout, state.scheduleWakeTimeout, formatDuration(state.scheduleWakeTimeout));
     if (els.setScheduleTimes) {
       els.setScheduleTimes.className = "sp-schedule-times" + (state.scheduleEnabled ? "" : " sp-hidden");
     }
@@ -1055,6 +1095,8 @@
 
   var SCREEN_SCHEDULE_UNAVAILABLE =
     "Screen schedule is not available on this firmware. Update the device firmware, then reload this page.";
+  var SCREEN_SCHEDULE_WAKE_TIMEOUT_UNAVAILABLE =
+    "The schedule wake timeout setting is not available on this firmware. Update the device firmware, then reload this page.";
 
   function postScreenScheduleEnabled(on) {
     postSwitchWithObjectId("Screen: Schedule Enabled", "screen__schedule_enabled", on, SCREEN_SCHEDULE_UNAVAILABLE);
@@ -1066,6 +1108,10 @@
 
   function postScreenScheduleOffHour(value) {
     postNumberWithObjectId("Screen: Schedule Off Hour", "screen__schedule_off_hour", value, SCREEN_SCHEDULE_UNAVAILABLE);
+  }
+
+  function postScreenScheduleWakeTimeout(value) {
+    postNumberWithObjectId("Screen: Schedule Wake Timeout", "screen__schedule_wake_timeout", value, SCREEN_SCHEDULE_WAKE_TIMEOUT_UNAVAILABLE);
   }
 
   function getJsonQuietly(path, callback) {
@@ -1698,6 +1744,37 @@
     });
     scheduleTimes.appendChild(offHour.wrap);
     els.setScheduleOffHour = offHour.select;
+
+    var wakeTimeoutField = document.createElement("div");
+    wakeTimeoutField.className = "sp-field";
+    wakeTimeoutField.appendChild(fieldLabel("When Woken, Idle time before screen off", "sp-set-schedule-wake-timeout"));
+    var wakeTimeoutSelect = document.createElement("select");
+    wakeTimeoutSelect.className = "sp-select";
+    wakeTimeoutSelect.id = "sp-set-schedule-wake-timeout";
+    var wakeTimeoutOptions = [
+      { label: "10 seconds", value: 10 },
+      { label: "30 seconds", value: 30 },
+      { label: "1 minute", value: 60 },
+      { label: "2 minutes", value: 120 },
+      { label: "5 minutes", value: 300 },
+      { label: "10 minutes", value: 600 },
+      { label: "30 minutes", value: 1800 },
+      { label: "1 hour", value: 3600 },
+    ];
+    wakeTimeoutOptions.forEach(function (opt) {
+      var o = document.createElement("option");
+      o.value = opt.value;
+      o.textContent = opt.label;
+      wakeTimeoutSelect.appendChild(o);
+    });
+    wakeTimeoutSelect.addEventListener("change", function () {
+      state.scheduleWakeTimeout = normalizeScheduleWakeTimeout(this.value);
+      postScreenScheduleWakeTimeout(state.scheduleWakeTimeout);
+      syncScreenScheduleUi();
+    });
+    wakeTimeoutField.appendChild(wakeTimeoutSelect);
+    scheduleTimes.appendChild(wakeTimeoutField);
+    els.setScheduleWakeTimeout = wakeTimeoutSelect;
 
     scheduleBody.appendChild(scheduleTimes);
     els.setScheduleTimes = scheduleTimes;
@@ -4186,6 +4263,7 @@
         schedule_enabled: !!state.scheduleEnabled,
         schedule_on_hour: normalizeHour(state.scheduleOnHour, 6),
         schedule_off_hour: normalizeHour(state.scheduleOffHour, 23),
+        schedule_wake_timeout: normalizeScheduleWakeTimeout(state.scheduleWakeTimeout),
       },
     };
 
@@ -4436,11 +4514,13 @@
           state.scheduleEnabled = !!screenSettings.schedule_enabled;
           state.scheduleOnHour = normalizeHour(screenSettings.schedule_on_hour, 6);
           state.scheduleOffHour = normalizeHour(screenSettings.schedule_off_hour, 23);
+          state.scheduleWakeTimeout = normalizeScheduleWakeTimeout(screenSettings.schedule_wake_timeout);
 
           postNumber("Screen: Daytime Brightness", state.brightnessDayVal);
           postNumber("Screen: Nighttime Brightness", state.brightnessNightVal);
           postScreenScheduleOnHour(state.scheduleOnHour);
           postScreenScheduleOffHour(state.scheduleOffHour);
+          postScreenScheduleWakeTimeout(state.scheduleWakeTimeout);
           postScreenScheduleEnabled(state.scheduleEnabled);
 
           if (els.setDayBrightness) {
@@ -4629,6 +4709,10 @@
       },
       "number-screen__schedule_off_hour": function (val) {
         state.scheduleOffHour = normalizeHour(val, 23);
+        syncScreenScheduleUi();
+      },
+      "number-screen__schedule_wake_timeout": function (val) {
+        state.scheduleWakeTimeout = normalizeScheduleWakeTimeout(val);
         syncScreenScheduleUi();
       },
       "select-screen__timezone": function (val, d) {

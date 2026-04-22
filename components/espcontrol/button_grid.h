@@ -415,16 +415,72 @@ inline std::string garage_state_label(const std::string &state) {
   return sentence_cap_text(state);
 }
 
-inline bool garage_label_mode(const std::string &sensor) {
-  return sensor == "label";
-}
-
 inline bool garage_state_is_active(const std::string &state) {
   return state == "open" || state == "opening" || state == "closing";
 }
 
 inline bool garage_state_uses_open_icon(const std::string &state) {
   return state == "open" || state == "opening";
+}
+
+// Reusable label helper: show a changed status briefly, then return to steady text.
+static const uint32_t STATUS_LABEL_STABLE_MS = 10000;
+
+struct TransientStatusLabel {
+  lv_obj_t *label = nullptr;
+  std::string steady_text;
+  std::string last_status_text;
+  bool has_status = false;
+  bool showing_status = false;
+  lv_timer_t *revert_timer = nullptr;
+};
+
+inline void transient_status_label_revert_cb(lv_timer_t *timer) {
+  TransientStatusLabel *ctx = static_cast<TransientStatusLabel *>(timer->user_data);
+  if (!ctx) return;
+  ctx->showing_status = false;
+  if (ctx->label) lv_label_set_text(ctx->label, ctx->steady_text.c_str());
+  lv_timer_pause(timer);
+}
+
+inline TransientStatusLabel *create_transient_status_label(
+    lv_obj_t *label, const std::string &steady_text,
+    uint32_t stable_ms = STATUS_LABEL_STABLE_MS) {
+  // Intentionally leaked -- lives for the lifetime of the display.
+  TransientStatusLabel *ctx = new TransientStatusLabel();
+  ctx->label = label;
+  ctx->steady_text = steady_text;
+  if (ctx->label) lv_label_set_text(ctx->label, ctx->steady_text.c_str());
+  ctx->revert_timer = lv_timer_create(transient_status_label_revert_cb, stable_ms, ctx);
+  if (ctx->revert_timer) lv_timer_pause(ctx->revert_timer);
+  return ctx;
+}
+
+inline void transient_status_label_set_steady(TransientStatusLabel *ctx,
+                                              const std::string &steady_text) {
+  if (!ctx) return;
+  ctx->steady_text = steady_text;
+  if (!ctx->showing_status && ctx->label) {
+    lv_label_set_text(ctx->label, ctx->steady_text.c_str());
+  }
+}
+
+inline void transient_status_label_show_if_changed(TransientStatusLabel *ctx,
+                                                   const std::string &status_text) {
+  if (!ctx) return;
+  if (!ctx->has_status) {
+    ctx->last_status_text = status_text;
+    ctx->has_status = true;
+    return;
+  }
+  if (ctx->last_status_text == status_text) return;
+  ctx->last_status_text = status_text;
+  ctx->showing_status = true;
+  if (ctx->label) lv_label_set_text(ctx->label, status_text.c_str());
+  if (ctx->revert_timer) {
+    lv_timer_reset(ctx->revert_timer);
+    lv_timer_resume(ctx->revert_timer);
+  }
 }
 
 // Parse a 6-char hex color string (no # prefix) into a uint32_t RGB value
@@ -722,11 +778,7 @@ inline void setup_weather_card(BtnSlot &s, bool has_sensor_color, uint32_t senso
 
 inline void setup_garage_card(BtnSlot &s, const ParsedCfg &p) {
   lv_label_set_text(s.icon_lbl, garage_closed_icon(p.icon));
-  if (garage_label_mode(p.sensor)) {
-    lv_label_set_text(s.text_lbl, p.label.empty() ? "Garage Door" : p.label.c_str());
-  } else {
-    lv_label_set_text(s.text_lbl, "--");
-  }
+  lv_label_set_text(s.text_lbl, p.label.empty() ? "Garage Door" : p.label.c_str());
 }
 
 inline void apply_push_button_transition(lv_obj_t *btn) {
@@ -845,26 +897,34 @@ inline void subscribe_weather_state(lv_obj_t *icon_lbl, lv_obj_t *text_lbl, cons
   );
 }
 
-inline void subscribe_garage_state(lv_obj_t *btn_ptr, lv_obj_t *icon_lbl, lv_obj_t *text_lbl,
+inline void subscribe_garage_state(lv_obj_t *btn_ptr, lv_obj_t *icon_lbl,
+                                   TransientStatusLabel *status_label,
                                    const char *closed_icon, const char *open_icon,
-                                   const std::string &entity_id, bool show_state_label) {
+                                   const std::string &entity_id) {
   esphome::api::global_api_server->subscribe_home_assistant_state(
     entity_id, {},
     std::function<void(const std::string &)>(
-      [btn_ptr, icon_lbl, text_lbl, closed_icon, open_icon, show_state_label](const std::string &state) {
+      [btn_ptr, icon_lbl, status_label, closed_icon, open_icon](const std::string &state) {
         bool active = garage_state_is_active(state);
         if (active) lv_obj_add_state(btn_ptr, LV_STATE_CHECKED);
         else lv_obj_clear_state(btn_ptr, LV_STATE_CHECKED);
         lv_label_set_text(icon_lbl, garage_state_uses_open_icon(state) ? open_icon : closed_icon);
-        if (show_state_label) {
-          std::string label = garage_state_label(state);
-          lv_label_set_text(text_lbl, label.c_str());
-        }
+        transient_status_label_show_if_changed(status_label, garage_state_label(state));
       })
   );
 }
 
 // Subscribe to an entity's friendly_name attribute and use it as the button label
+inline void subscribe_friendly_name(TransientStatusLabel *status_label,
+                                    const std::string &entity_id) {
+  esphome::api::global_api_server->subscribe_home_assistant_state(
+    entity_id, std::string("friendly_name"),
+    std::function<void(const std::string &)>([status_label](const std::string &name) {
+      transient_status_label_set_steady(status_label, name);
+    })
+  );
+}
+
 inline void subscribe_friendly_name(lv_obj_t *text_lbl, const std::string &entity_id) {
   esphome::api::global_api_server->subscribe_home_assistant_state(
     entity_id, std::string("friendly_name"),
@@ -1680,11 +1740,12 @@ inline void grid_phase2(
     }
     if (p.type == "garage") {
       if (!p.entity.empty()) {
-        bool label_mode = garage_label_mode(p.sensor);
-        subscribe_garage_state(s.btn, s.icon_lbl, s.text_lbl,
-          garage_closed_icon(p.icon), garage_open_icon(p.icon_on), p.entity, !label_mode);
-        if (label_mode && p.label.empty())
-          subscribe_friendly_name(s.text_lbl, p.entity);
+        TransientStatusLabel *status_label = create_transient_status_label(
+          s.text_lbl, p.label.empty() ? "Garage Door" : p.label);
+        subscribe_garage_state(s.btn, s.icon_lbl, status_label,
+          garage_closed_icon(p.icon), garage_open_icon(p.icon_on), p.entity);
+        if (p.label.empty())
+          subscribe_friendly_name(status_label, p.entity);
       }
       continue;
     }
@@ -1965,17 +2026,14 @@ inline void grid_phase2(
 
       } else if (sb.type == "garage") {
         lv_label_set_text(sil, garage_closed_icon(sb.icon));
-        bool label_mode = garage_label_mode(sb.sensor);
-        if (label_mode) {
-          lv_label_set_text(stl, sb.label.empty() ? "Garage Door" : sb.label.c_str());
-        } else {
-          lv_label_set_text(stl, "--");
-        }
+        lv_label_set_text(stl, sb.label.empty() ? "Garage Door" : sb.label.c_str());
         if (!sb.entity.empty()) {
-          subscribe_garage_state(sb_btn, sil, stl,
-            garage_closed_icon(sb.icon), garage_open_icon(sb.icon_on), sb.entity, !label_mode);
-          if (label_mode && sb.label.empty())
-            subscribe_friendly_name(stl, sb.entity);
+          TransientStatusLabel *status_label = create_transient_status_label(
+            stl, sb.label.empty() ? "Garage Door" : sb.label);
+          subscribe_garage_state(sb_btn, sil, status_label,
+            garage_closed_icon(sb.icon), garage_open_icon(sb.icon_on), sb.entity);
+          if (sb.label.empty())
+            subscribe_friendly_name(status_label, sb.entity);
 
           if (sp_indicator) {
             lv_obj_t *parent_btn = slots[si].btn;

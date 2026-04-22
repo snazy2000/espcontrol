@@ -189,7 +189,7 @@ assertButtonRoundTrip(hooks, "garage label button", {
   label: "Garage Door",
   icon: "Garage",
   icon_on: "Garage Open",
-  sensor: "label",
+  sensor: "",
   unit: "",
   type: "garage",
   precision: "",
@@ -271,10 +271,10 @@ assert.deepStrictEqual(subpageShape(hooks.parseSubpageConfig("~1,B|R,cover.garag
   ],
 }, "compact garage subpage parse");
 
-assert.deepStrictEqual(subpageShape(hooks.parseSubpageConfig("~1,B|R,cover.garage,Garage%20Door,Garage,Garage%20Open,label")), {
+assert.deepStrictEqual(subpageShape(hooks.parseSubpageConfig("~1,B|R,cover.garage,Garage%20Door,Garage,Garage%20Open")), {
   order: ["1", "B"],
   buttons: [
-    buttonShape({ entity: "cover.garage", label: "Garage Door", icon: "Garage", icon_on: "Garage Open", sensor: "label", type: "garage" }),
+    buttonShape({ entity: "cover.garage", label: "Garage Door", icon: "Garage", icon_on: "Garage Open", type: "garage" }),
   ],
 }, "compact garage label subpage parse");
 

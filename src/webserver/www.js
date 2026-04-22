@@ -774,10 +774,8 @@
     if (els.setScheduleToggle) els.setScheduleToggle.checked = !!state.scheduleEnabled;
     if (els.setScheduleOnHour) els.setScheduleOnHour.value = String(state.scheduleOnHour);
     if (els.setScheduleOffHour) els.setScheduleOffHour.value = String(state.scheduleOffHour);
-    if (els.setScheduleModeBtns) {
-      for (var mode in els.setScheduleModeBtns) {
-        els.setScheduleModeBtns[mode].classList.toggle("active", mode === state.scheduleMode);
-      }
+    if (els.setScheduleMode) {
+      setSelectValue(els.setScheduleMode, state.scheduleMode, scheduleModeOption(state.scheduleMode));
     }
     setSelectValue(els.setScheduleWakeTimeout, state.scheduleWakeTimeout, formatDuration(state.scheduleWakeTimeout));
     if (els.setScheduleWakeBrightness) {
@@ -2026,29 +2024,27 @@
     var scheduleModeField = document.createElement("div");
     scheduleModeField.className = "sp-field";
     scheduleModeField.appendChild(fieldLabel("At Off Time", "sp-set-schedule-mode"));
-    var scheduleModeTabs = document.createElement("div");
-    scheduleModeTabs.className = "sp-segment";
-    scheduleModeTabs.id = "sp-set-schedule-mode";
-    var scheduleModeButtons = {};
+    var scheduleModeSelect = document.createElement("select");
+    scheduleModeSelect.className = "sp-select";
+    scheduleModeSelect.id = "sp-set-schedule-mode";
     [
       { value: "screen_off", label: "Screen off" },
       { value: "always_on", label: "Always On" },
       { value: "clock", label: "Clock" },
     ].forEach(function (opt) {
-      var btn = document.createElement("button");
-      btn.type = "button";
-      btn.textContent = opt.label;
-      btn.addEventListener("click", function () {
-        state.scheduleMode = opt.value;
-        postScreenScheduleMode(state.scheduleMode);
-        syncScreenScheduleUi();
-      });
-      scheduleModeButtons[opt.value] = btn;
-      scheduleModeTabs.appendChild(btn);
+      var option = document.createElement("option");
+      option.value = opt.value;
+      option.textContent = opt.label;
+      scheduleModeSelect.appendChild(option);
     });
-    scheduleModeField.appendChild(scheduleModeTabs);
+    scheduleModeSelect.addEventListener("change", function () {
+      state.scheduleMode = normalizeScheduleMode(this.value);
+      postScreenScheduleMode(state.scheduleMode);
+      syncScreenScheduleUi();
+    });
+    scheduleModeField.appendChild(scheduleModeSelect);
     scheduleTimes.appendChild(scheduleModeField);
-    els.setScheduleModeBtns = scheduleModeButtons;
+    els.setScheduleMode = scheduleModeSelect;
 
     var offScreenOptions = condField();
     var wakeTimeoutField = document.createElement("div");

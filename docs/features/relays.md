@@ -42,14 +42,19 @@ Use the switch version when the relay should represent an ongoing on/off state. 
 
 ## Using Relays on the Touchscreen
 
-The relay entities are exposed to Home Assistant, so you can also add them back onto the Espcontrol touchscreen as button cards:
+Relay controls on the touchscreen still work through Home Assistant. The panel does not call the relay hardware locally when you tap a screen button. Instead, it sends a Home Assistant action for the entity you configured, and Home Assistant sends that command back to the Espcontrol device.
+
+That means Home Assistant actions must be set up, and Home Assistant must be connected, for touchscreen relay controls to work.
+
+The relay entities are exposed to Home Assistant, so you can add them onto the Espcontrol touchscreen using the normal entity setup:
 
 1. Open the Espcontrol setup page in your browser.
 2. Choose an empty button slot.
-3. Set the button entity to a relay switch entity, such as `switch.kitchen_panel_relay_1`, or a relay push button entity, such as `button.kitchen_panel_relay_1_push`.
-4. Save the button configuration.
+3. Leave the type as **Switch** for the normal entity-control setup.
+4. Set the entity to a relay switch entity, such as `switch.kitchen_panel_relay_1`, or a relay push button entity, such as `button.kitchen_panel_relay_1_push`.
+5. Save the button configuration.
 
-Tapping a relay switch entity will toggle the relay through Home Assistant. Tapping a relay push button entity will briefly pulse the relay instead.
+Tapping a relay switch entity asks Home Assistant to toggle the relay. Tapping a relay push button entity asks Home Assistant to press that entity, which briefly pulses the relay instead.
 
 The push button entities are useful when the relay is wired in parallel with existing momentary wall switches, for example when it is driving a dimmer or lighting controller that expects a short button press rather than a permanent on/off output.
 

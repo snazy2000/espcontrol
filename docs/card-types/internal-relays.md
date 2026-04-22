@@ -16,17 +16,20 @@ This card type appears on devices that define built-in relays, such as the 4848S
 2. Set a **Label**.
 3. Choose the **Internal Relay** to control.
 4. Choose a **Mode**.
-5. Choose an **Icon**.
+5. Choose the icon fields for that mode.
 
 ## Modes
 
 **Switch** mode behaves like a normal switch card. Tapping it turns the selected relay on or off, and the card shows the current relay state.
 
+Switch mode shows two icon fields:
+
+- **On Icon** defaults to **Lightbulb**.
+- **Off Icon** defaults to **Lightbulb Outline**.
+
 **Push Button** mode behaves like a trigger card. Tapping it pulses the selected relay for 200 ms, then turns it off again.
 
-## When Entity On
-
-In Switch mode, **When Entity On** can swap the card icon while the relay is on. Push Button mode does not have an on state, so that option is hidden.
+Push Button mode shows one **Icon** field, because it does not have a separate on/off state.
 
 ## When to Use It
 

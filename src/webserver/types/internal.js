@@ -4,7 +4,20 @@ function internalRelayOptions() {
 }
 
 function internalRelayDefaultIcon(mode) {
-  return mode === "push" ? "Gesture Tap" : "Power Plug";
+  return mode === "push" ? "Gesture Tap" : "Lightbulb Outline";
+}
+
+function internalRelayDefaultOnIcon() {
+  return "Lightbulb";
+}
+
+function internalRelayUsesDefaultIcon(mode, icon) {
+  if (!icon || icon === "Auto" || icon === internalRelayDefaultIcon(mode)) return true;
+  return mode === "switch" && icon === "Power Plug";
+}
+
+function internalRelayUsesDefaultOnIcon(icon) {
+  return !icon || icon === "Auto" || icon === internalRelayDefaultOnIcon() || icon === "Power";
 }
 
 function internalRelayMode(b) {
@@ -40,14 +53,17 @@ registerButtonType("internal", {
     b.sensor = "";
     b.unit = "";
     b.precision = "";
-    b.icon = "Power Plug";
-    b.icon_on = "Auto";
+    b.icon = internalRelayDefaultIcon("switch");
+    b.icon_on = internalRelayDefaultOnIcon();
   },
   renderSettings: function (panel, b, slot, helpers) {
     ensureInternalRelaySelection(b);
     var relays = internalRelayOptions();
     var mode = internalRelayMode(b);
-    if (!b.icon || b.icon === "Auto") b.icon = internalRelayDefaultIcon(mode);
+    if (internalRelayUsesDefaultIcon(mode, b.icon)) b.icon = internalRelayDefaultIcon(mode);
+    if (mode === "switch" && internalRelayUsesDefaultOnIcon(b.icon_on)) {
+      b.icon_on = internalRelayDefaultOnIcon();
+    }
 
     var rf = document.createElement("div");
     rf.className = "sp-field";
@@ -93,94 +109,97 @@ registerButtonType("internal", {
     mf.appendChild(modeSeg);
     panel.appendChild(mf);
 
-    var iconField = helpers.makeIconPicker(
-      helpers.idPrefix + "icon-picker", helpers.idPrefix + "icon",
-      b.icon || internalRelayDefaultIcon(mode), function (opt) {
-        b.icon = opt;
-        helpers.saveField("icon", opt);
+    function makeLabeledIconPicker(label, inputSuffix, pickerSuffix, value, onSelect) {
+      var section = document.createElement("div");
+      section.className = "sp-field";
+      section.appendChild(helpers.fieldLabel(label, helpers.idPrefix + inputSuffix));
+      var picker = document.createElement("div");
+      picker.className = "sp-icon-picker";
+      picker.id = helpers.idPrefix + pickerSuffix;
+      picker.innerHTML =
+        '<span class="sp-icon-picker-preview mdi mdi-' + iconSlug(value) + '"></span>' +
+        '<input class="sp-icon-picker-input" id="' + helpers.idPrefix + inputSuffix + '" type="text" ' +
+        'placeholder="Search icons\u2026" value="' + escAttr(value) + '" autocomplete="off">' +
+        '<div class="sp-icon-dropdown"></div>';
+      section.appendChild(picker);
+      initIconPicker(picker, value, onSelect);
+      return { section: section, picker: picker };
+    }
+
+    function syncPicker(picker, value) {
+      var preview = picker.querySelector(".sp-icon-picker-preview");
+      if (preview) preview.className = "sp-icon-picker-preview mdi mdi-" + iconSlug(value);
+      var input = picker.querySelector(".sp-icon-picker-input");
+      if (input) input.value = value;
+    }
+
+    var switchIconCond = condField();
+    var pushIconCond = condField();
+    panel.appendChild(switchIconCond);
+    panel.appendChild(pushIconCond);
+
+    var onIcon = makeLabeledIconPicker(
+      "On Icon", "icon-on", "icon-on-picker",
+      b.icon_on || internalRelayDefaultOnIcon(), function (opt) {
+        b.icon_on = opt;
+        helpers.saveField("icon_on", opt);
       }
     );
-    panel.appendChild(iconField);
+    var offIcon = makeLabeledIconPicker(
+      "Off Icon", "icon-off", "icon-off-picker",
+      b.icon || internalRelayDefaultIcon("switch"), function (opt) {
+        syncIcon(opt);
+      }
+    );
+    var pushIcon = makeLabeledIconPicker(
+      "Icon", "icon", "icon-picker",
+      b.icon || internalRelayDefaultIcon("push"), function (opt) {
+        syncIcon(opt);
+      }
+    );
+    switchIconCond.appendChild(onIcon.section);
+    switchIconCond.appendChild(offIcon.section);
+    pushIconCond.appendChild(pushIcon.section);
 
     function syncIcon(value) {
       b.icon = value;
       helpers.saveField("icon", value);
-      var preview = iconField.querySelector(".sp-icon-picker-preview");
-      if (preview) preview.className = "sp-icon-picker-preview mdi mdi-" + iconSlug(value);
-      var input = iconField.querySelector(".sp-icon-picker-input");
-      if (input) input.value = value;
+      syncPicker(offIcon.picker, value);
+      syncPicker(pushIcon.picker, value);
     }
 
-    var hasIconOn = b.icon_on && b.icon_on !== "Auto";
-    var whenOnToggle = helpers.toggleRow("When Entity On", helpers.idPrefix + "whenon-toggle", hasIconOn);
-    panel.appendChild(whenOnToggle.row);
-
-    var iconOnCond = condField();
-    if (mode === "switch" && hasIconOn) iconOnCond.classList.add("sp-visible");
-
-    var iconOnSection = document.createElement("div");
-    iconOnSection.className = "sp-field";
-    iconOnSection.appendChild(helpers.fieldLabel("Icon When On", helpers.idPrefix + "icon-on"));
-    var iconOnVal = hasIconOn ? b.icon_on : "Auto";
-    var iconOnPicker = document.createElement("div");
-    iconOnPicker.className = "sp-icon-picker";
-    iconOnPicker.id = helpers.idPrefix + "icon-on-picker";
-    iconOnPicker.innerHTML =
-      '<span class="sp-icon-picker-preview mdi mdi-' + iconSlug(iconOnVal) + '"></span>' +
-      '<input class="sp-icon-picker-input" id="' + helpers.idPrefix + 'icon-on" type="text" ' +
-      'placeholder="Search icons\u2026" value="' + escAttr(iconOnVal) + '" autocomplete="off">' +
-      '<div class="sp-icon-dropdown"></div>';
-    iconOnSection.appendChild(iconOnPicker);
-    iconOnCond.appendChild(iconOnSection);
-    initIconPicker(iconOnPicker, iconOnVal, function (opt) {
-      b.icon_on = opt;
-      helpers.saveField("icon_on", opt);
-    });
-    panel.appendChild(iconOnCond);
+    function syncOnIcon(value) {
+      b.icon_on = value;
+      helpers.saveField("icon_on", value);
+      syncPicker(onIcon.picker, value);
+    }
 
     function syncModeUi() {
       switchBtn.classList.toggle("active", mode === "switch");
       pushBtn.classList.toggle("active", mode === "push");
-      whenOnToggle.row.style.display = mode === "switch" ? "" : "none";
-      iconOnCond.classList.toggle("sp-visible", mode === "switch" && whenOnToggle.input.checked);
+      switchIconCond.classList.toggle("sp-visible", mode === "switch");
+      pushIconCond.classList.toggle("sp-visible", mode === "push");
     }
 
     function setMode(nextMode) {
       if (mode === nextMode) return;
-      var oldDefault = internalRelayDefaultIcon(mode);
+      var wasDefaultIcon = internalRelayUsesDefaultIcon(mode, b.icon);
       mode = nextMode;
       b.sensor = mode === "push" ? "push" : "";
       helpers.saveField("sensor", b.sensor);
-      if (!b.icon || b.icon === "Auto" || b.icon === oldDefault) {
+      if (wasDefaultIcon) {
         syncIcon(internalRelayDefaultIcon(mode));
       }
       if (mode === "push") {
-        b.icon_on = "Auto";
-        helpers.saveField("icon_on", "Auto");
-        whenOnToggle.input.checked = false;
-        var ionPreview = iconOnPicker.querySelector(".sp-icon-picker-preview");
-        if (ionPreview) ionPreview.className = "sp-icon-picker-preview mdi mdi-cog";
-        var ionInput = iconOnPicker.querySelector(".sp-icon-picker-input");
-        if (ionInput) ionInput.value = "Auto";
+        syncOnIcon("Auto");
+      } else if (!b.icon_on || b.icon_on === "Auto") {
+        syncOnIcon(internalRelayDefaultOnIcon());
       }
       syncModeUi();
     }
 
     switchBtn.addEventListener("click", function () { setMode("switch"); });
     pushBtn.addEventListener("click", function () { setMode("push"); });
-    whenOnToggle.input.addEventListener("change", function () {
-      if (this.checked) {
-        iconOnCond.classList.add("sp-visible");
-      } else {
-        b.icon_on = "Auto";
-        helpers.saveField("icon_on", "Auto");
-        iconOnCond.classList.remove("sp-visible");
-        var ionPreview = iconOnPicker.querySelector(".sp-icon-picker-preview");
-        if (ionPreview) ionPreview.className = "sp-icon-picker-preview mdi mdi-cog";
-        var ionInput = iconOnPicker.querySelector(".sp-icon-picker-input");
-        if (ionInput) ionInput.value = "Auto";
-      }
-    });
     syncModeUi();
   },
   renderPreview: function (b, helpers) {

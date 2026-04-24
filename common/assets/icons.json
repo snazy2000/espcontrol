@@ -610,6 +610,11 @@
       "mdi": "meter-gas"
     },
     {
+      "name": "Microsoft Xbox",
+      "codepoint": "F05B9",
+      "mdi": "microsoft-xbox"
+    },
+    {
       "name": "Microwave",
       "codepoint": "F0C99",
       "mdi": "microwave"

@@ -219,6 +219,7 @@ const ICON_GROUPS = {
   'Gamepad': 'Media & Entertainment',
   'Headphones': 'Media & Entertainment',
   'Message Video': 'Media & Entertainment',
+  'Microsoft Xbox': 'Media & Entertainment',
   'Monitor': 'Media & Entertainment',
   'Movie Roll': 'Media & Entertainment',
   'Music': 'Media & Entertainment',

@@ -135,6 +135,7 @@ static const IconEntry ICON_ENTRIES[] = {
     {"Message Video",              "\U000F036B"},
     {"Meter Electric",             "\U000F1A57"},
     {"Meter Gas",                  "\U000F1A59"},
+    {"Microsoft Xbox",             "\U000F05B9"},
     {"Microwave",                  "\U000F0C99"},
     {"Monitor",                    "\U000F0379"},
     {"Motion Sensor",              "\U000F0D91"},

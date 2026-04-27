@@ -164,7 +164,6 @@ switch:
     icon: mdi:electric-switch
     pin:
       number: GPIO40
-      inverted: true
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       then:
@@ -179,7 +178,6 @@ switch:
     icon: mdi:electric-switch
     pin:
       number: GPIO2
-      inverted: true
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       then:
@@ -194,7 +192,6 @@ switch:
     icon: mdi:electric-switch
     pin:
       number: GPIO1
-      inverted: true
     restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       then:

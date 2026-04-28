@@ -70,7 +70,7 @@ registerButtonType("", {
     uf.className = "sp-field";
     uf.appendChild(helpers.fieldLabel("Unit", helpers.idPrefix + "unit"));
     var unitInp = helpers.textInput(helpers.idPrefix + "unit", b.unit, "e.g. %");
-    unitInp.className = "sp-input sp-input--narrow";
+    unitInp.className = "sp-input";
     uf.appendChild(unitInp);
     numericSection.appendChild(uf);
     helpers.bindField(unitInp, "unit", false);
@@ -78,26 +78,22 @@ registerButtonType("", {
     var pf = document.createElement("div");
     pf.className = "sp-field";
     pf.appendChild(helpers.fieldLabel("Unit Precision", helpers.idPrefix + "precision"));
-    var precSeg = document.createElement("div");
-    precSeg.className = "sp-segment";
+    var precisionSelect = document.createElement("select");
+    precisionSelect.className = "sp-select";
+    precisionSelect.id = helpers.idPrefix + "precision";
     var precOpts = [["0", "10"], ["1", "10.2"], ["2", "10.21"]];
     for (var pi = 0; pi < precOpts.length; pi++) {
-      (function (val, label) {
-        var btn = document.createElement("button");
-        btn.type = "button";
-        btn.textContent = label;
-        if (sensorMode === "numeric" && (b.precision || "0") === val) btn.classList.add("active");
-        btn.addEventListener("click", function () {
-          b.precision = val === "0" ? "" : val;
-          helpers.saveField("precision", b.precision);
-          var btns = precSeg.querySelectorAll("button");
-          for (var j = 0; j < btns.length; j++) btns[j].classList.remove("active");
-          btn.classList.add("active");
-        });
-        precSeg.appendChild(btn);
-      })(precOpts[pi][0], precOpts[pi][1]);
+      var opt = document.createElement("option");
+      opt.value = precOpts[pi][0];
+      opt.textContent = precOpts[pi][1];
+      precisionSelect.appendChild(opt);
     }
-    pf.appendChild(precSeg);
+    precisionSelect.value = sensorMode === "numeric" ? (b.precision || "0") : "0";
+    precisionSelect.addEventListener("change", function () {
+      b.precision = this.value === "0" ? "" : this.value;
+      helpers.saveField("precision", b.precision);
+    });
+    pf.appendChild(precisionSelect);
     numericSection.appendChild(pf);
     sensorSection.appendChild(numericSection);
 
@@ -118,8 +114,7 @@ registerButtonType("", {
       } else {
         b.precision = "";
         helpers.saveField("precision", "");
-        var pbs = precSeg.querySelectorAll("button");
-        for (var j = 0; j < pbs.length; j++) pbs[j].classList.toggle("active", j === 0);
+        precisionSelect.value = "0";
       }
     }
 

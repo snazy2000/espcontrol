@@ -16,6 +16,15 @@ esphome:
           id(homeassistant_time).set_timezone(posix);
       - script.execute: ntp_servers_apply
 
+# Ask Home Assistant for time as soon as the native API connects. This makes
+# the HA time source a practical fallback when public NTP is unavailable.
+api:
+  on_client_connected:
+    - lambda: |-
+        id(homeassistant_time).update();
+    - delay: 1s
+    - script.execute: time_update
+
 # ---------------------------------------------------------------------------
 # Timezone selector (drives sunrise/sunset calculation via sun_calc.h)
 # ---------------------------------------------------------------------------
@@ -305,6 +314,7 @@ time:
   - platform: homeassistant
     id: homeassistant_time
     timezone: "UTC0"
+    update_interval: 1min
     on_time_sync:
       - script.execute: time_update
       - script.execute: backlight_recalc_sunrise_sunset
@@ -365,11 +375,13 @@ script:
             update_timezone_cards(true, now.timestamp,
                                   id(timezone_select).current_option(), use_12h);
           } else if (!calendar_date_valid()) {
+            id(homeassistant_time).update();
             id(screen_date_sensor).publish_state("");
             update_calendar_cards(false, 0, 0);
             update_calendar_cards_time(false, 0, 0, 0, 0, false);
             update_timezone_cards(false, 0, id(timezone_select).current_option(), use_12h);
           } else {
+            id(homeassistant_time).update();
             update_calendar_cards_time(false, 0, 0, 0, 0, false);
             update_timezone_cards(false, 0, id(timezone_select).current_option(), use_12h);
           }

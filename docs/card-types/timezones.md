@@ -1,19 +1,19 @@
 ---
-title: Timezone
+title: World Clock
 description:
   How to show the current time for another city on your Espcontrol panel.
 ---
 
-# Timezone
+# World Clock
 
-A timezone card shows the current local time for a selected city. The large value is the time, and the label underneath is the city name.
+A world clock card shows the current local time for a selected city. The large value is the time, and the label underneath is the city name.
 
-Timezone cards are read-only — tapping them does nothing.
+World clock cards are read-only — tapping them does nothing.
 
-## Setting Up a Timezone Card
+## Setting Up a World Clock Card
 
-1. Select a card and change its type to **Timezone**.
-2. Choose the city/timezone from the **Timezone** dropdown.
+1. Select a card and change its type to **World Clock**.
+2. Choose the city/timezone from the **City / Timezone** dropdown.
 3. Apply the configuration so the panel restarts with the new card.
 
 ## How It Works on the Panel

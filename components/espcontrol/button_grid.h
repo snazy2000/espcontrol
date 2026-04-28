@@ -892,14 +892,14 @@ inline void reset_timezone_cards() {
 
 inline std::string timezone_city_label(const std::string &tz_option) {
   std::string tz_id = timezone_id_from_option(tz_option);
-  if (tz_id.empty()) return "Timezone";
+  if (tz_id.empty()) return "World Clock";
   if (tz_id == "UTC") return "UTC";
   size_t slash = tz_id.rfind('/');
   std::string city = slash == std::string::npos ? tz_id : tz_id.substr(slash + 1);
   for (char &ch : city) {
     if (ch == '_') ch = ' ';
   }
-  return city.empty() ? std::string("Timezone") : city;
+  return city.empty() ? std::string("World Clock") : city;
 }
 
 inline void set_posix_timezone_for_epoch(const std::string &tz_option, time_t epoch) {

@@ -1,7 +1,7 @@
-// Read-only timezone card: displays local time for a selected city.
+// Read-only world clock card: displays local time for a selected city.
 function timezoneCardCityLabel(tzOption) {
   var tzId = getTzId(tzOption || "");
-  if (!tzId) return "Timezone";
+  if (!tzId) return "World Clock";
   if (tzId === "UTC") return "UTC";
   var city = tzId.substring(tzId.lastIndexOf("/") + 1);
   return city.replace(/_/g, " ");
@@ -34,7 +34,7 @@ function timezoneCardTimeParts(tzOption) {
 }
 
 registerButtonType("timezone", {
-  label: "Timezone",
+  label: "World Clock",
   allowInSubpage: true,
   hideLabel: true,
   onSelect: function (b) {
@@ -55,7 +55,7 @@ registerButtonType("timezone", {
 
     var tzField = document.createElement("div");
     tzField.className = "sp-field";
-    tzField.appendChild(helpers.fieldLabel("Timezone", helpers.idPrefix + "timezone"));
+    tzField.appendChild(helpers.fieldLabel("City / Timezone", helpers.idPrefix + "timezone"));
 
     var tzSelect = document.createElement("select");
     tzSelect.className = "sp-select";

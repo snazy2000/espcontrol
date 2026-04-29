@@ -55,6 +55,11 @@ lvgl:
                   hidden: true
                   width: 0
                   height: 0
+              # Hidden arc ensures LVGL compiles lv_arc for the climate detail page
+              - arc:
+                  hidden: true
+                  width: 0
+                  height: 0
     - id: screen_off_page
       bg_color: 0x000000
       scrollable: false

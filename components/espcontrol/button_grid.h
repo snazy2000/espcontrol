@@ -684,10 +684,6 @@ inline bool climate_action_is_active(const ClimateCardCtx *ctx) {
   return climate_action_text_is_active(ctx->hvac_action);
 }
 
-inline bool climate_mode_is_on(const ClimateCardCtx *ctx) {
-  return ctx && ctx->available && !ctx->hvac_mode.empty() && ctx->hvac_mode != "off";
-}
-
 inline void climate_format_temp(char *buf, size_t size, float value) {
   snprintf(buf, size, "%.1f", value);
 }
@@ -759,7 +755,7 @@ inline std::string climate_dashboard_label(const ClimateCardCtx *ctx) {
 
 inline uint32_t climate_state_color(const ClimateCardCtx *ctx) {
   if (!ctx) return CLIMATE_NEUTRAL_COLOR;
-  return climate_mode_is_on(ctx) ? ctx->on_color : ctx->off_color;
+  return climate_action_is_active(ctx) ? ctx->on_color : ctx->off_color;
 }
 
 inline uint32_t climate_detail_accent_color(const ClimateCardCtx *ctx) {

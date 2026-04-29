@@ -670,8 +670,17 @@ inline std::string climate_action_label(const ClimateCardCtx *ctx) {
   return "Idle";
 }
 
-inline bool climate_state_is_enabled(const std::string &state) {
-  return !(state.empty() || state == "off" || state == "unavailable" || state == "unknown");
+inline bool climate_action_text_is_active(const std::string &action) {
+  return !(action.empty() ||
+           action == "idle" ||
+           action == "off" ||
+           action == "unavailable" ||
+           action == "unknown");
+}
+
+inline bool climate_action_is_active(const ClimateCardCtx *ctx) {
+  if (!ctx || !ctx->available || ctx->hvac_mode == "off") return false;
+  return climate_action_text_is_active(ctx->hvac_action);
 }
 
 inline void climate_format_temp(char *buf, size_t size, float value) {
@@ -715,18 +724,15 @@ inline float climate_selected_target(const ClimateCardCtx *ctx) {
 
 inline std::string climate_dashboard_label(const ClimateCardCtx *ctx) {
   if (!ctx) return "Climate";
-  if (ctx->available && ctx->hvac_action == "heating") return "Heating";
-  if (ctx->available && ctx->hvac_action == "cooling") return "Cooling";
+  if (climate_action_is_active(ctx)) return climate_action_label(ctx);
   if (!ctx->label.empty()) return ctx->label;
   if (!ctx->friendly_name.empty()) return ctx->friendly_name;
   return ctx->entity_id.empty() ? std::string("Climate") : ctx->entity_id;
 }
 
 inline uint32_t climate_state_color(const ClimateCardCtx *ctx) {
-  if (!ctx || !ctx->available || ctx->hvac_mode == "off") return ctx ? ctx->off_color : CLIMATE_NEUTRAL_COLOR;
-  if (ctx->hvac_action == "heating") return ctx->on_color;
-  if (ctx->hvac_action == "cooling") return CLIMATE_COOL_COLOR;
-  return ctx->off_color;
+  if (!ctx) return CLIMATE_NEUTRAL_COLOR;
+  return climate_action_is_active(ctx) ? ctx->on_color : ctx->off_color;
 }
 
 inline uint32_t climate_detail_accent_color(const ClimateCardCtx *ctx) {
@@ -749,7 +755,7 @@ inline void climate_apply_btn_color(lv_obj_t *btn, uint32_t color) {
 inline void climate_update_dashboard(ClimateCardCtx *ctx) {
   if (!ctx) return;
   climate_apply_btn_color(ctx->card_btn, climate_state_color(ctx));
-  if (ctx->available && ctx->hvac_mode != "off") lv_obj_add_state(ctx->card_btn, LV_STATE_CHECKED);
+  if (climate_action_is_active(ctx)) lv_obj_add_state(ctx->card_btn, LV_STATE_CHECKED);
   else lv_obj_clear_state(ctx->card_btn, LV_STATE_CHECKED);
 
   if (ctx->value_lbl) {
@@ -3082,11 +3088,11 @@ inline void subscribe_subpage_parent_climate_indicator(
     bool has_alt_icon, const char *off_glyph, const char *on_glyph,
     int *sp_on_count) {
   esphome::api::global_api_server->subscribe_home_assistant_state(
-    entity_id, {},
+    entity_id, std::string("hvac_action"),
     std::function<void(esphome::StringRef)>(
       [parent_btn, parent_icon, parent_idx, child_was_on,
-       has_alt_icon, off_glyph, on_glyph, sp_on_count](esphome::StringRef state) {
-        bool is_on = climate_state_is_enabled(string_ref_limited(state, HA_SHORT_STATE_MAX_LEN));
+       has_alt_icon, off_glyph, on_glyph, sp_on_count](esphome::StringRef action) {
+        bool is_on = climate_action_text_is_active(string_ref_limited(action, HA_SHORT_STATE_MAX_LEN));
         if (is_on && !*child_was_on) {
           sp_on_count[parent_idx]++;
           *child_was_on = true;

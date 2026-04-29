@@ -2448,15 +2448,6 @@
       postClockBar(state.clockBarOn);
     });
 
-    var degreeSymbol = toggleRow("Show Degree Symbol", "sp-set-temperature-degree-symbol", state.temperatureDegreeSymbolOn);
-    clockBarBody.appendChild(degreeSymbol.row);
-    els.setTemperatureDegreeSymbolToggle = degreeSymbol.input;
-    degreeSymbol.input.addEventListener("change", function () {
-      state.temperatureDegreeSymbolOn = this.checked;
-      syncClockBarUi();
-      postTemperatureDegreeSymbol(state.temperatureDegreeSymbolOn);
-    });
-
     var outdoor = createEntityToggleSection("Outdoor Temperature", "sp-set-outdoor-toggle", state._outdoorOn,
       "Outdoor Temp Enable", "Outdoor Temp Entity", "Outdoor Temp Entity", "sensor.outdoor_temperature");
     clockBarBody.appendChild(outdoor.toggle.row);
@@ -2481,6 +2472,15 @@
       state._indoorOn = this.checked;
       syncTemperatureUi();
       updateTempPreview();
+    });
+
+    var degreeSymbol = toggleRow("Show Degree Symbol", "sp-set-temperature-degree-symbol", state.temperatureDegreeSymbolOn);
+    clockBarBody.appendChild(degreeSymbol.row);
+    els.setTemperatureDegreeSymbolToggle = degreeSymbol.input;
+    degreeSymbol.input.addEventListener("change", function () {
+      state.temperatureDegreeSymbolOn = this.checked;
+      syncClockBarUi();
+      postTemperatureDegreeSymbol(state.temperatureDegreeSymbolOn);
     });
 
     var clockBarBadge = document.createElement("span");

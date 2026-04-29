@@ -767,30 +767,61 @@ inline void climate_update_dashboard(ClimateCardCtx *ctx) {
 
 inline std::vector<std::string> climate_parse_list(const std::string &raw) {
   std::vector<std::string> out;
-  std::string token;
-  bool in_quote = false;
-  char quote = 0;
-  auto push_token = [&]() {
+  auto trim_token = [](std::string token) {
     while (!token.empty() && std::isspace(static_cast<unsigned char>(token.front()))) token.erase(token.begin());
     while (!token.empty() && std::isspace(static_cast<unsigned char>(token.back()))) token.pop_back();
-    if (!token.empty()) out.push_back(token);
+    return token;
+  };
+  auto lowercase_token = [](const std::string &token) {
+    std::string lower;
+    lower.reserve(token.size());
+    for (char ch : token) lower.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(ch))));
+    return lower;
+  };
+  auto push_option = [&](std::string token) {
+    token = trim_token(token);
+    if (token.empty()) return;
+    std::string lower = lowercase_token(token);
+    if (lower == "hvacmode" || lower == "fanmode" || lower == "swingmode" || lower == "presetmode") return;
+    bool has_alpha = false;
+    bool has_lower = false;
+    for (char ch : token) {
+      if (!std::isalpha(static_cast<unsigned char>(ch))) continue;
+      has_alpha = true;
+      if (std::islower(static_cast<unsigned char>(ch))) has_lower = true;
+    }
+    if (has_alpha && !has_lower) token = lower;
+    for (const auto &existing : out) {
+      if (lowercase_token(existing) == lower) return;
+    }
+    out.push_back(token);
+  };
+
+  std::string quoted_token;
+  bool reading_quote = false;
+  char quote_char = 0;
+  for (char ch : raw) {
+    if (reading_quote) {
+      if (ch == quote_char) {
+        push_option(quoted_token);
+        quoted_token.clear();
+        reading_quote = false;
+      } else {
+        quoted_token.push_back(ch);
+      }
+    } else if (ch == '\'' || ch == '"') {
+      reading_quote = true;
+      quote_char = ch;
+    }
+  }
+  if (!out.empty()) return out;
+
+  std::string token;
+  auto push_token = [&]() {
+    push_option(token);
     token.clear();
   };
   for (char ch : raw) {
-    if (in_quote) {
-      if (ch == quote) {
-        in_quote = false;
-        push_token();
-      } else {
-        token.push_back(ch);
-      }
-      continue;
-    }
-    if (ch == '\'' || ch == '"') {
-      in_quote = true;
-      quote = ch;
-      continue;
-    }
     if (std::isalnum(static_cast<unsigned char>(ch)) || ch == '_' || ch == '-' || ch == '/' || ch == ' ') {
       token.push_back(ch);
     } else {

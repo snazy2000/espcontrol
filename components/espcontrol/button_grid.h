@@ -1286,8 +1286,8 @@ inline void climate_layout_detail_ui(ClimateCardCtx *ctx) {
 
   lv_obj_set_size(ui.arc, arc_size, arc_size);
   lv_obj_align(ui.arc, LV_ALIGN_CENTER, 0, sh < 520 ? -6 : -12);
-  lv_obj_set_style_arc_width(ui.arc, short_side < 520 ? 24 : 30, LV_PART_MAIN);
-  lv_obj_set_style_arc_width(ui.arc, short_side < 520 ? 24 : 30, LV_PART_INDICATOR);
+  lv_obj_set_style_arc_width(ui.arc, short_side < 520 ? 18 : 22, LV_PART_MAIN);
+  lv_obj_set_style_arc_width(ui.arc, short_side < 520 ? 18 : 22, LV_PART_INDICATOR);
   lv_obj_set_style_pad_all(ui.arc, 8, LV_PART_KNOB);
   lv_obj_set_size(ui.minus_btn, round_btn, round_btn);
   lv_obj_set_style_radius(ui.minus_btn, round_btn / 2, LV_PART_MAIN);

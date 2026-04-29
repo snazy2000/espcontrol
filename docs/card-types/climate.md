@@ -15,6 +15,7 @@ On the main screen it shows the target temperature. Tapping the card opens a ful
 1. Select a card and change its type to **Climate**.
 2. Enter a **Climate Entity**, for example `climate.living_room`.
 3. Set a **Label** if you want custom text on the dashboard card. If left blank, the card uses the Home Assistant name when it is available.
+4. Set **Unit Precision** if you want decimal places. The default is whole numbers.
 
 Climate cards can also be placed inside a [Subpage](/features/subpages).
 
@@ -25,6 +26,7 @@ Climate cards can also be placed inside a [Subpage](/features/subpages).
 - The card uses the normal on colour only while `hvac_action` is active, such as `heating`, `cooling`, `drying`, or `fan`. If Home Assistant reports `hvac_action` as `idle`, the card uses the off colour even when the mode is not **Off**.
 - The detail page uses `min_temp`, `max_temp`, and `target_temp_step` when Home Assistant provides them. Until those arrive, it uses 5-35 °C/°F with 0.5° steps.
 - The displayed unit comes from the panel's **Temperature Unit** setting.
+- The displayed temperature precision comes from the card's **Unit Precision** setting. Whole numbers are used by default.
 - Dragging the arc updates the display immediately, but sends the new temperature only when you release it. The plus and minus buttons wait briefly before sending, so repeated taps do not spam Home Assistant.
 
 ## Supported Controls

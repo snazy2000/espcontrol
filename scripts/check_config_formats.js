@@ -214,6 +214,17 @@ assertButtonRoundTrip(hooks, "climate button", {
   precision: "",
 }, false);
 
+assertButtonRoundTrip(hooks, "climate precision button", {
+  entity: "climate.bedroom",
+  label: "Bedroom",
+  icon: "Thermostat",
+  icon_on: "Auto",
+  sensor: "",
+  unit: "",
+  type: "climate",
+  precision: "1",
+}, false);
+
 assertButtonRoundTrip(hooks, "cover toggle button", {
   entity: "cover.office_blind",
   label: "Office Blind",

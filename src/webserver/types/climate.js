@@ -18,13 +18,39 @@ registerButtonType("climate", {
     ef.appendChild(entityInp);
     panel.appendChild(ef);
     helpers.bindField(entityInp, "entity", true);
+
+    var pf = document.createElement("div");
+    pf.className = "sp-field";
+    pf.appendChild(helpers.fieldLabel("Unit Precision", helpers.idPrefix + "precision"));
+    var precisionSelect = document.createElement("select");
+    precisionSelect.className = "sp-select";
+    precisionSelect.id = helpers.idPrefix + "precision";
+    [
+      ["0", "Whole numbers"],
+      ["1", "1 decimal"],
+      ["2", "2 decimals"],
+    ].forEach(function (opt) {
+      var o = document.createElement("option");
+      o.value = opt[0];
+      o.textContent = opt[1];
+      precisionSelect.appendChild(o);
+    });
+    precisionSelect.value = b.precision || "0";
+    precisionSelect.addEventListener("change", function () {
+      b.precision = this.value === "0" ? "" : this.value;
+      helpers.saveField("precision", b.precision);
+    });
+    pf.appendChild(precisionSelect);
+    panel.appendChild(pf);
   },
   renderPreview: function (b, helpers) {
     var label = b.label || b.entity || "Climate";
+    var precision = parseInt(b.precision || "0", 10) || 0;
+    var sample = (20).toFixed(precision);
     return {
       iconHtml:
         '<span class="sp-sensor-preview">' +
-          '<span class="sp-sensor-value">19.8</span>' +
+          '<span class="sp-sensor-value">' + sample + '</span>' +
           '<span class="sp-sensor-unit">' + temperatureUnitSymbol() + '</span>' +
         '</span>',
       labelHtml:

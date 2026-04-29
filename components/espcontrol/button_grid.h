@@ -646,6 +646,7 @@ struct ClimateCardCtx {
   const lv_font_t *climate_control_icon_font = nullptr;
   uint32_t on_color = DEFAULT_SLIDER_COLOR;
   uint32_t off_color = CLIMATE_NEUTRAL_COLOR;
+  int precision = 0;
   lv_timer_t *send_timer = nullptr;
 };
 
@@ -713,31 +714,44 @@ inline bool climate_action_is_active(const ClimateCardCtx *ctx) {
   return climate_action_text_is_active(ctx->hvac_action);
 }
 
-inline void climate_format_temp(char *buf, size_t size, float value) {
+inline void climate_format_service_temp(char *buf, size_t size, float value) {
   snprintf(buf, size, "%.1f", value);
 }
 
-inline void climate_format_temp_unit(char *buf, size_t size, float value) {
-  snprintf(buf, size, "%.1f%s", value, display_temperature_unit_symbol());
+inline int climate_display_precision(const ClimateCardCtx *ctx) {
+  if (!ctx) return 0;
+  return ctx->precision < 0 ? 0 : (ctx->precision > 3 ? 3 : ctx->precision);
+}
+
+inline void climate_format_temp(char *buf, size_t size, const ClimateCardCtx *ctx, float value) {
+  snprintf(buf, size, "%.*f", climate_display_precision(ctx), value);
+}
+
+inline void climate_format_temp_unit(char *buf, size_t size, const ClimateCardCtx *ctx, float value) {
+  snprintf(buf, size, "%.*f%s", climate_display_precision(ctx), value, display_temperature_unit_symbol());
 }
 
 inline std::string climate_dashboard_target_value_text(const ClimateCardCtx *ctx) {
   if (!ctx || !ctx->available) return "--";
   char buf[32];
   if (ctx->has_low && ctx->has_high) {
-    snprintf(buf, sizeof(buf), "%.1f-%.1f", ctx->low, ctx->high);
+    char low_buf[16];
+    char high_buf[16];
+    climate_format_temp(low_buf, sizeof(low_buf), ctx, ctx->low);
+    climate_format_temp(high_buf, sizeof(high_buf), ctx, ctx->high);
+    snprintf(buf, sizeof(buf), "%s-%s", low_buf, high_buf);
     return std::string(buf);
   }
   if (ctx->has_target) {
-    snprintf(buf, sizeof(buf), "%.1f", ctx->target);
+    climate_format_temp(buf, sizeof(buf), ctx, ctx->target);
     return std::string(buf);
   }
   if (ctx->has_low) {
-    snprintf(buf, sizeof(buf), "%.1f", ctx->low);
+    climate_format_temp(buf, sizeof(buf), ctx, ctx->low);
     return std::string(buf);
   }
   if (ctx->has_high) {
-    snprintf(buf, sizeof(buf), "%.1f", ctx->high);
+    climate_format_temp(buf, sizeof(buf), ctx, ctx->high);
     return std::string(buf);
   }
   return "--";
@@ -924,8 +938,8 @@ inline void climate_send_temperature_action(ClimateCardCtx *ctx) {
   char high_buf[16];
   char target_buf[16];
   if (dual) {
-    climate_format_temp(low_buf, sizeof(low_buf), ctx->low);
-    climate_format_temp(high_buf, sizeof(high_buf), ctx->high);
+    climate_format_service_temp(low_buf, sizeof(low_buf), ctx->low);
+    climate_format_service_temp(high_buf, sizeof(high_buf), ctx->high);
     auto &low_kv = req.data.emplace_back();
     low_kv.key = decltype(low_kv.key)("target_temp_low");
     low_kv.value = decltype(low_kv.value)(low_buf);
@@ -933,7 +947,7 @@ inline void climate_send_temperature_action(ClimateCardCtx *ctx) {
     high_kv.key = decltype(high_kv.key)("target_temp_high");
     high_kv.value = decltype(high_kv.value)(high_buf);
   } else {
-    climate_format_temp(target_buf, sizeof(target_buf), climate_selected_target(ctx));
+    climate_format_service_temp(target_buf, sizeof(target_buf), climate_selected_target(ctx));
     auto &temp_kv = req.data.emplace_back();
     temp_kv.key = decltype(temp_kv.key)("temperature");
     temp_kv.value = decltype(temp_kv.value)(target_buf);
@@ -1117,7 +1131,7 @@ inline void climate_update_detail(ClimateCardCtx *ctx) {
 
   if (ui.current_value) {
     char buf[24];
-    if (ctx->available && ctx->has_current) snprintf(buf, sizeof(buf), "%.1f %s", ctx->current, display_temperature_unit_symbol());
+    if (ctx->available && ctx->has_current) snprintf(buf, sizeof(buf), "%.*f %s", climate_display_precision(ctx), ctx->current, display_temperature_unit_symbol());
     else snprintf(buf, sizeof(buf), "-- %s", display_temperature_unit_symbol());
     lv_label_set_text(ui.current_value, buf);
   }
@@ -1130,7 +1144,7 @@ inline void climate_update_detail(ClimateCardCtx *ctx) {
   }
   if (ui.target_value) {
     char tbuf[16];
-    climate_format_temp(tbuf, sizeof(tbuf), climate_selected_target(ctx));
+    climate_format_temp(tbuf, sizeof(tbuf), ctx, climate_selected_target(ctx));
     lv_label_set_text(ui.target_value, tbuf);
   }
   if (ui.target_unit && ui.target_value) {
@@ -1642,6 +1656,7 @@ inline ClimateCardCtx *create_climate_context(lv_obj_t *card_btn,
   ctx->climate_control_icon_font = climate_control_icon_font ? climate_control_icon_font : ctx->icon_font;
   ctx->on_color = on_color;
   ctx->off_color = off_color;
+  ctx->precision = parse_precision(p.precision);
   ctx->send_timer = lv_timer_create(climate_send_timer_cb, 450, ctx);
   lv_timer_pause(ctx->send_timer);
   lv_obj_set_user_data(card_btn, (void *)ctx);

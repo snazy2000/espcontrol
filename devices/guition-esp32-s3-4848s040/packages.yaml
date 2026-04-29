@@ -56,6 +56,7 @@ packages:
   # Addons
   # ---------------------------------------------------------------------------
   connectivity:    !include ../../common/addon/connectivity.yaml
+  improv_serial:   !include ../../common/addon/improv_serial.yaml
   time_sync:       !include ../../common/addon/time.yaml
   backlight:       !include ../../common/addon/backlight.yaml
   bl_schedule:     !include ../../common/addon/backlight_schedule.yaml

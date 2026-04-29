@@ -25,7 +25,7 @@ registerButtonType("weather_forecast", {
       iconHtml:
         '<span class="sp-sensor-preview">' +
           '<span class="sp-sensor-value sp-forecast-value">18 / 10</span>' +
-          '<span class="sp-sensor-unit">\u2103</span>' +
+          '<span class="sp-sensor-unit">' + temperatureUnitSymbol() + '</span>' +
         '</span>',
       labelHtml:
         '<span class="sp-btn-label-row"><span class="sp-btn-label">Tomorrow</span>' +

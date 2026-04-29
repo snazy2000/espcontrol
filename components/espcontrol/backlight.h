@@ -8,7 +8,9 @@
 #pragma once
 #include <string>
 #include <cstdio>
+#include <cmath>
 #include "sun_calc.h"
+#include "temperature_unit.h"
 
 #ifdef USE_ESP32
 #include <esp_sleep.h>
@@ -130,15 +132,54 @@ inline bool screen_schedule_clock_mode(const std::string &mode) {
 
 inline void update_temp_label(lv_obj_t *label, lv_obj_t *main_page_obj,
                               bool this_enabled, bool other_enabled) {
+  char one[12];
+  char both[24];
+  snprintf(one, sizeof(one), "-%s", display_temperature_unit_symbol());
+  snprintf(both, sizeof(both), "-%s / -%s",
+           display_temperature_unit_symbol(), display_temperature_unit_symbol());
   if (this_enabled) {
     if (lv_scr_act() == main_page_obj)
       lv_obj_clear_flag(label, LV_OBJ_FLAG_HIDDEN);
-    lv_label_set_text(label, other_enabled ? "-\u00B0 / -\u00B0" : "-\u00B0");
+    lv_label_set_text(label, other_enabled ? both : one);
   } else if (!other_enabled) {
     lv_obj_add_flag(label, LV_OBJ_FLAG_HIDDEN);
   } else {
-    lv_label_set_text(label, "-\u00B0");
+    lv_label_set_text(label, one);
   }
+}
+
+inline void refresh_temp_label_values(lv_obj_t *label, lv_obj_t *main_page_obj,
+                                      bool clock_bar_enabled,
+                                      bool indoor_enabled, bool outdoor_enabled,
+                                      float indoor, float outdoor) {
+  if (!clock_bar_enabled || (!indoor_enabled && !outdoor_enabled)) {
+    lv_obj_add_flag(label, LV_OBJ_FLAG_HIDDEN);
+    return;
+  }
+
+  if (lv_scr_act() == main_page_obj) lv_obj_clear_flag(label, LV_OBJ_FLAG_HIDDEN);
+
+  char indoor_buf[16];
+  char outdoor_buf[16];
+  const char *unit = display_temperature_unit_symbol();
+  if (indoor_enabled) {
+    if (std::isnan(indoor)) snprintf(indoor_buf, sizeof(indoor_buf), "-%s", unit);
+    else snprintf(indoor_buf, sizeof(indoor_buf), "%.0f%s", indoor, unit);
+  }
+  if (outdoor_enabled) {
+    if (std::isnan(outdoor)) snprintf(outdoor_buf, sizeof(outdoor_buf), "-%s", unit);
+    else snprintf(outdoor_buf, sizeof(outdoor_buf), "%.0f%s", outdoor, unit);
+  }
+
+  char buf[40];
+  if (indoor_enabled && outdoor_enabled) {
+    snprintf(buf, sizeof(buf), "%s / %s", outdoor_buf, indoor_buf);
+  } else if (outdoor_enabled) {
+    snprintf(buf, sizeof(buf), "%s", outdoor_buf);
+  } else {
+    snprintf(buf, sizeof(buf), "%s", indoor_buf);
+  }
+  lv_label_set_text(label, buf);
 }
 
 // ── Firmware update interval ─────────────────────────────────────────

@@ -153,6 +153,11 @@ function assertSubpageRoundTrip(hooks, name, subpage, expectCompact) {
 
 const hooks = loadHooks();
 assert(hooks, "web config helpers were not exported");
+assert.strictEqual(hooks.normalizeTemperatureUnit("fahrenheit"), "°F", "fahrenheit unit normalization");
+assert.strictEqual(hooks.normalizeTemperatureUnit("centigrade"), "°C", "centigrade unit normalization");
+assert.strictEqual(hooks.temperatureUnitSymbolFor("America/New_York (GMT-5)", "Auto"), "°F", "auto unit for US timezone");
+assert.strictEqual(hooks.temperatureUnitSymbolFor("Europe/London (GMT+0)", "Auto"), "°C", "auto unit for UK timezone");
+assert.strictEqual(hooks.temperatureUnitSymbolFor("Europe/London (GMT+0)", "°F"), "°F", "manual fahrenheit override");
 
 assertButtonRoundTrip(hooks, "normal button", {
   entity: "light.kitchen",

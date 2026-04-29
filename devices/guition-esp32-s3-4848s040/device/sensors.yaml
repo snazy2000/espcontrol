@@ -43,6 +43,8 @@ esphome:
             cfg.climate_target_font = id(climate_target_font_sm)->get_lv_font();
             cfg.forecast_font = id(forecast_font_sm)->get_lv_font();
             cfg.forecast_unit_font = id(forecast_unit_font)->get_lv_font();
+            cfg.temperature_unit = id(temperature_unit_select).current_option();
+            cfg.timezone = id(timezone_select).current_option();
             // END GENERATED PHASE 1 GRID WIRING
             grid_phase1(slots, cfg,
               id(button_order).state,
@@ -105,6 +107,8 @@ esphome:
             cfg.climate_target_font = id(climate_target_font_sm)->get_lv_font();
             cfg.forecast_font = id(forecast_font_sm)->get_lv_font();
             cfg.forecast_unit_font = id(forecast_unit_font)->get_lv_font();
+            cfg.temperature_unit = id(temperature_unit_select).current_option();
+            cfg.timezone = id(timezone_select).current_option();
             // END GENERATED PHASE 2 GRID WIRING
             grid_phase2(slots, cfg, sp_cfgs, sp_ext, sp_ext2, sp_ext3,
               id(button_order).state,

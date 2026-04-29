@@ -40,7 +40,7 @@ struct BtnSlot {
   lv_obj_t *text_lbl;               // entity name / custom label
   lv_obj_t *sensor_container;       // flex row shown when sensor overlay is active
   lv_obj_t *sensor_lbl;             // numeric sensor value
-  lv_obj_t *unit_lbl;               // unit suffix (°, %, etc.)
+  lv_obj_t *unit_lbl;               // unit suffix (°C, %, etc.)
 };
 
 // Extract the Nth semicolon-delimited field from a config string
@@ -247,6 +247,10 @@ struct WeatherForecastCardRef {
   lv_obj_t *unit_lbl;
   lv_obj_t *label_lbl;
   std::string entity_id;
+  bool valid = false;
+  int high = 0;
+  int low = 0;
+  std::string source_unit;
 };
 
 inline WeatherForecastCardRef *weather_forecast_card_refs() {
@@ -266,11 +270,8 @@ inline void reset_weather_forecast_cards() {
 constexpr int WEATHER_FORECAST_TEMP_MISSING = 32767;
 
 inline std::string weather_forecast_unit_symbol(const std::string &unit) {
-  std::string lower = unit;
-  for (char &ch : lower) ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
-  if (lower.find("f") != std::string::npos || lower.find("fahrenheit") != std::string::npos) return "\u00B0";
-  if (lower.find("c") != std::string::npos || lower.find("celsius") != std::string::npos) return "\u00B0";
-  return unit;
+  (void)unit;
+  return display_temperature_unit_symbol();
 }
 
 inline void apply_weather_forecast_card_text(const WeatherForecastCardRef &ref,
@@ -303,6 +304,10 @@ inline void apply_weather_forecast_to_entity(const std::string &entity_id,
   int count = weather_forecast_card_count();
   for (int i = 0; i < count; i++) {
     if (refs[i].entity_id == entity_id) {
+      refs[i].valid = valid;
+      refs[i].high = high;
+      refs[i].low = low;
+      refs[i].source_unit = unit;
       apply_weather_forecast_card_text(refs[i], valid, high, low, unit);
     }
   }
@@ -316,7 +321,7 @@ inline void register_weather_forecast_card(lv_obj_t *value_lbl, lv_obj_t *unit_l
     ESP_LOGW("weather_forecast", "Too many forecast cards; skipping updates");
     return;
   }
-  weather_forecast_card_refs()[count++] = {value_lbl, unit_lbl, label_lbl, entity_id};
+  weather_forecast_card_refs()[count++] = {value_lbl, unit_lbl, label_lbl, entity_id, false, 0, 0, ""};
   apply_weather_forecast_card_text(weather_forecast_card_refs()[count - 1], false, 0, 0, "");
 }
 
@@ -650,6 +655,30 @@ struct ClimateOptionCtx {
   std::string value;
 };
 
+inline ClimateCardCtx **climate_card_contexts() {
+  static ClimateCardCtx *contexts[MAX_GRID_SLOTS + MAX_SUBPAGE_ITEMS];
+  return contexts;
+}
+
+inline int &climate_card_context_count() {
+  static int count = 0;
+  return count;
+}
+
+inline void register_climate_context(ClimateCardCtx *ctx) {
+  if (!ctx) return;
+  int &count = climate_card_context_count();
+  if (count >= MAX_GRID_SLOTS + MAX_SUBPAGE_ITEMS) {
+    ESP_LOGW("climate", "Too many climate cards; skipping unit refresh registration");
+    return;
+  }
+  climate_card_contexts()[count++] = ctx;
+}
+
+inline void reset_climate_contexts() {
+  climate_card_context_count() = 0;
+}
+
 inline std::string climate_mode_label(const std::string &mode) {
   if (mode == "off") return "Off";
   if (mode == "heat") return "Heat";
@@ -689,7 +718,7 @@ inline void climate_format_temp(char *buf, size_t size, float value) {
 }
 
 inline void climate_format_temp_unit(char *buf, size_t size, float value) {
-  snprintf(buf, size, "%.1f\u00B0", value);
+  snprintf(buf, size, "%.1f%s", value, display_temperature_unit_symbol());
 }
 
 inline std::string climate_dashboard_target_value_text(const ClimateCardCtx *ctx) {
@@ -784,7 +813,7 @@ inline void climate_update_dashboard(ClimateCardCtx *ctx) {
   if (ctx->value_lbl) {
     std::string target = climate_dashboard_target_value_text(ctx);
     lv_label_set_text(ctx->value_lbl, target.c_str());
-    if (ctx->unit_lbl) lv_label_set_text(ctx->unit_lbl, target == "--" ? "" : "\u00B0");
+    if (ctx->unit_lbl) lv_label_set_text(ctx->unit_lbl, target == "--" ? "" : display_temperature_unit_symbol());
   }
   if (ctx->text_lbl) {
     std::string label = climate_dashboard_label(ctx);
@@ -1088,8 +1117,8 @@ inline void climate_update_detail(ClimateCardCtx *ctx) {
 
   if (ui.current_value) {
     char buf[24];
-    if (ctx->available && ctx->has_current) snprintf(buf, sizeof(buf), "%.1f \u00B0", ctx->current);
-    else snprintf(buf, sizeof(buf), "-- \u00B0");
+    if (ctx->available && ctx->has_current) snprintf(buf, sizeof(buf), "%.1f %s", ctx->current, display_temperature_unit_symbol());
+    else snprintf(buf, sizeof(buf), "-- %s", display_temperature_unit_symbol());
     lv_label_set_text(ui.current_value, buf);
   }
   if (ui.current_title) lv_obj_set_style_text_color(ui.current_title, lv_color_hex(CLIMATE_DETAIL_TEXT_COLOR), LV_PART_MAIN);
@@ -1105,7 +1134,7 @@ inline void climate_update_detail(ClimateCardCtx *ctx) {
     lv_label_set_text(ui.target_value, tbuf);
   }
   if (ui.target_unit && ui.target_value) {
-    lv_label_set_text(ui.target_unit, "\u00B0");
+    lv_label_set_text(ui.target_unit, display_temperature_unit_symbol());
     lv_obj_update_layout(ui.target_value);
     lv_obj_align_to(ui.target_unit, ui.target_value, LV_ALIGN_OUT_RIGHT_TOP, 6, 8);
   }
@@ -1137,6 +1166,23 @@ inline void climate_update_detail(ClimateCardCtx *ctx) {
   lv_obj_set_style_bg_color(ui.arc, lv_color_hex(0xF4F4F4), LV_PART_KNOB);
   lv_obj_set_style_border_color(ui.arc, lv_color_hex(active_color), LV_PART_KNOB);
   climate_update_arc(ctx);
+}
+
+inline void refresh_temperature_unit_labels() {
+  WeatherForecastCardRef *weather_refs = weather_forecast_card_refs();
+  int weather_count = weather_forecast_card_count();
+  for (int i = 0; i < weather_count; i++) {
+    apply_weather_forecast_card_text(weather_refs[i], weather_refs[i].valid,
+                                     weather_refs[i].high, weather_refs[i].low,
+                                     weather_refs[i].source_unit);
+  }
+
+  ClimateCardCtx **climate_refs = climate_card_contexts();
+  int climate_count = climate_card_context_count();
+  for (int i = 0; i < climate_count; i++) {
+    climate_update_dashboard(climate_refs[i]);
+    climate_update_detail(climate_refs[i]);
+  }
 }
 
 inline lv_obj_t *climate_create_label(lv_obj_t *parent, const char *text,
@@ -1357,10 +1403,11 @@ inline void climate_ensure_detail_ui(ClimateCardCtx *ctx) {
   const lv_font_t *unit_font = ctx && ctx->unit_font ? ctx->unit_font : (ctx ? ctx->label_font : nullptr);
   ui.state_label = climate_create_label(ui.page, "Idle", LV_ALIGN_CENTER, 0, -50, ctx ? ctx->label_font : nullptr, CLIMATE_DETAIL_TEXT_COLOR);
   ui.target_value = climate_create_label(ui.page, "20.0", LV_ALIGN_CENTER, -14, 14, ctx ? ctx->target_font : nullptr);
-  ui.target_unit = climate_create_label(ui.page, "\u00B0", LV_ALIGN_CENTER, 64, -2, unit_font);
+  ui.target_unit = climate_create_label(ui.page, display_temperature_unit_symbol(), LV_ALIGN_CENTER, 64, -2, unit_font);
   ui.target_hint = climate_create_label(ui.page, "Target", LV_ALIGN_CENTER, 0, 78, ctx ? ctx->label_font : nullptr, 0xBDBDBD);
   ui.current_title = climate_create_label(ui.page, find_icon("Thermometer"), LV_ALIGN_CENTER, -64, 70, ctx ? ctx->icon_font : nullptr, CLIMATE_DETAIL_TEXT_COLOR);
-  ui.current_value = climate_create_label(ui.page, "-- \u00B0", LV_ALIGN_CENTER, 22, 70, ctx ? ctx->label_font : nullptr, CLIMATE_DETAIL_TEXT_COLOR);
+  std::string current_placeholder = std::string("-- ") + display_temperature_unit_symbol();
+  ui.current_value = climate_create_label(ui.page, current_placeholder.c_str(), LV_ALIGN_CENTER, 22, 70, ctx ? ctx->label_font : nullptr, CLIMATE_DETAIL_TEXT_COLOR);
   ui.minus_btn = climate_create_round_button(ui.page, 60, find_icon("Minus"), control_icon_font);
   ui.plus_btn = climate_create_round_button(ui.page, 60, find_icon("Plus"), control_icon_font);
   ui.low_btn = climate_create_chip(ui.page, "Low", ctx ? ctx->label_font : nullptr);
@@ -1598,6 +1645,7 @@ inline ClimateCardCtx *create_climate_context(lv_obj_t *card_btn,
   ctx->send_timer = lv_timer_create(climate_send_timer_cb, 450, ctx);
   lv_timer_pause(ctx->send_timer);
   lv_obj_set_user_data(card_btn, (void *)ctx);
+  register_climate_context(ctx);
   climate_update_dashboard(ctx);
   return ctx;
 }
@@ -3190,6 +3238,8 @@ struct GridConfig {
   const lv_font_t *climate_target_font;
   const lv_font_t *forecast_font;
   const lv_font_t *forecast_unit_font;
+  std::string temperature_unit;
+  std::string timezone;
 };
 
 // ── Phase 1: Visual setup ────────────────────────────────────────────
@@ -3200,6 +3250,7 @@ inline void grid_phase1(
     const std::string &on_hex, const std::string &off_hex,
     const std::string &sensor_hex) {
   ESP_LOGI("sensors", "Phase 1: visual setup start (%lu ms)", esphome::millis());
+  set_display_temperature_unit(cfg.temperature_unit, cfg.timezone);
   int NS = bounded_grid_slots(cfg.num_slots);
   int COLS = cfg.cols > 0 ? cfg.cols : 1;
   if (NS != cfg.num_slots) {
@@ -3237,6 +3288,7 @@ inline void grid_phase1(
   reset_calendar_cards();
   reset_timezone_cards();
   reset_weather_forecast_cards();
+  reset_climate_contexts();
 
   for (int i = 0; i < NS; i++)
     lv_obj_add_flag(slots[i].btn, LV_OBJ_FLAG_HIDDEN);
@@ -3330,6 +3382,7 @@ inline void grid_phase2(
     const std::string &sensor_hex,
     lv_obj_t *main_page_obj) {
   ESP_LOGI("sensors", "Phase 2: subscriptions + subpages start (%lu ms)", esphome::millis());
+  set_display_temperature_unit(cfg.temperature_unit, cfg.timezone);
   int NS = bounded_grid_slots(cfg.num_slots);
   int COLS = cfg.cols > 0 ? cfg.cols : 1;
   if (NS != cfg.num_slots) {
@@ -4133,9 +4186,14 @@ inline void grid_phase3(
   ESP_LOGI("sensors", "Phase 3: temp/presence subscriptions start (%lu ms)", esphome::millis());
 
   if (indoor_on && outdoor_on) {
-    lv_label_set_text(temp_label, "-\u00B0 / -\u00B0");
+    char buf[32];
+    snprintf(buf, sizeof(buf), "-%s / -%s",
+             display_temperature_unit_symbol(), display_temperature_unit_symbol());
+    lv_label_set_text(temp_label, buf);
   } else if (indoor_on || outdoor_on) {
-    lv_label_set_text(temp_label, "-\u00B0");
+    char buf[16];
+    snprintf(buf, sizeof(buf), "-%s", display_temperature_unit_symbol());
+    lv_label_set_text(temp_label, buf);
   }
 
   if (indoor_on && !indoor_entity.empty()) {
@@ -4147,11 +4205,13 @@ inline void grid_phase3(
           if (parse_float_ref(state, val)) {
             *indoor_temp_ptr = val;
             float outdoor = *outdoor_temp_ptr;
-            char buf[16];
+            char buf[40];
             if (std::isnan(outdoor)) {
-              snprintf(buf, sizeof(buf), "%.0f\u00B0", val);
+              snprintf(buf, sizeof(buf), "%.0f%s", val, display_temperature_unit_symbol());
             } else {
-              snprintf(buf, sizeof(buf), "%.0f\u00B0 / %.0f\u00B0", outdoor, val);
+              snprintf(buf, sizeof(buf), "%.0f%s / %.0f%s",
+                       outdoor, display_temperature_unit_symbol(),
+                       val, display_temperature_unit_symbol());
             }
             lv_label_set_text(temp_label, buf);
           }
@@ -4168,11 +4228,13 @@ inline void grid_phase3(
           if (parse_float_ref(state, val)) {
             *outdoor_temp_ptr = val;
             float indoor = *indoor_temp_ptr;
-            char buf[16];
+            char buf[40];
             if (std::isnan(indoor)) {
-              snprintf(buf, sizeof(buf), "%.0f\u00B0", val);
+              snprintf(buf, sizeof(buf), "%.0f%s", val, display_temperature_unit_symbol());
             } else {
-              snprintf(buf, sizeof(buf), "%.0f\u00B0 / %.0f\u00B0", val, indoor);
+              snprintf(buf, sizeof(buf), "%.0f%s / %.0f%s",
+                       val, display_temperature_unit_symbol(),
+                       indoor, display_temperature_unit_symbol());
             }
             lv_label_set_text(temp_label, buf);
           }

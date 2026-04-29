@@ -551,6 +551,7 @@
     _outdoorVal: null,
     indoorEntity: "",
     outdoorEntity: "",
+    temperatureUnit: "Auto",
     clockBarOn: true,
     presenceEntity: "",
     screensaverMode: "disabled",
@@ -627,6 +628,41 @@
     var n = parseInt(value, 10);
     if (!isFinite(n)) return value;
     return String((n + offset + 360) % 360);
+  }
+
+  function normalizeTemperatureUnit(value) {
+    var unit = String(value == null ? "" : value).trim().toLowerCase();
+    if (unit === "f" || unit === "\u00B0f" || unit === "fahrenheit") return "\u00B0F";
+    if (unit === "c" || unit === "\u00B0c" || unit === "celsius" || unit === "centigrade") return "\u00B0C";
+    return "Auto";
+  }
+
+  function timezonePrefersFahrenheit(timezone) {
+    var tz = getTzId(timezone || state.timezone);
+    var fahrenheitZones = {
+      "America/Adak": true,
+      "America/Anchorage": true,
+      "America/Boise": true,
+      "America/Chicago": true,
+      "America/Denver": true,
+      "America/Detroit": true,
+      "America/Juneau": true,
+      "America/Los_Angeles": true,
+      "America/New_York": true,
+      "America/Phoenix": true,
+      "America/Puerto_Rico": true,
+      "Pacific/Guam": true,
+      "Pacific/Honolulu": true,
+      "Pacific/Pago_Pago": true,
+    };
+    return !!fahrenheitZones[tz];
+  }
+
+  function temperatureUnitSymbol() {
+    var unit = normalizeTemperatureUnit(state.temperatureUnit);
+    if (unit === "\u00B0F") return "\u00B0F";
+    if (unit === "\u00B0C") return "\u00B0C";
+    return timezonePrefersFahrenheit(state.timezone) ? "\u00B0F" : "\u00B0C";
   }
 
   function appendScreenRotationOption(select, opt) {
@@ -2327,6 +2363,10 @@
     tzSelect.addEventListener("change", function () {
       state.timezone = this.value;
       postSelect("Screen: Timezone", this.value);
+      if (normalizeTemperatureUnit(state.temperatureUnit) === "Auto") {
+        updateTempPreview();
+        renderPreview();
+      }
       updateClock();
     });
     tzField.appendChild(tzSelect);
@@ -2418,6 +2458,33 @@
     }
 
     var tempBody = document.createElement("div");
+
+    var unitField = document.createElement("div");
+    unitField.className = "sp-field";
+    unitField.appendChild(fieldLabel("Temperature Unit", "sp-set-temperature-unit"));
+    var unitSelect = document.createElement("select");
+    unitSelect.className = "sp-select";
+    unitSelect.id = "sp-set-temperature-unit";
+    [
+      ["Auto", "Auto (from timezone)"],
+      ["\u00B0C", "Centigrade (\u00B0C)"],
+      ["\u00B0F", "Fahrenheit (\u00B0F)"],
+    ].forEach(function (opt) {
+      var o = document.createElement("option");
+      o.value = opt[0];
+      o.textContent = opt[1];
+      unitSelect.appendChild(o);
+    });
+    unitSelect.value = normalizeTemperatureUnit(state.temperatureUnit);
+    unitSelect.addEventListener("change", function () {
+      state.temperatureUnit = normalizeTemperatureUnit(this.value);
+      postSelect("Screen: Temperature Unit", state.temperatureUnit);
+      updateTempPreview();
+      renderPreview();
+    });
+    unitField.appendChild(unitSelect);
+    tempBody.appendChild(unitField);
+    els.setTemperatureUnit = unitSelect;
 
     var outdoor = createEntityToggleSection("Outdoor Temperature", "sp-set-outdoor-toggle", state._outdoorOn,
       "Outdoor Temp Enable", "Outdoor Temp Entity", "Outdoor Temp Entity", "sensor.outdoor_temperature");
@@ -4784,6 +4851,7 @@
         outdoor_temp_enable: state._outdoorOn,
         indoor_temp_entity: state.indoorEntity,
         outdoor_temp_entity: state.outdoorEntity,
+        temperature_unit: normalizeTemperatureUnit(state.temperatureUnit),
         clock_bar: state.clockBarOn,
         timezone: state.timezone,
         clock_format: state.clockFormat,
@@ -5013,6 +5081,7 @@
           postText("Outdoor Temp Entity", s.outdoor_temp_entity || "");
           postClockBar(s.clock_bar != null ? !!s.clock_bar : true);
           var importedTimezone = s.timezone || state.timezone;
+          var importedTemperatureUnit = normalizeTemperatureUnit(s.temperature_unit);
           var importedClockFormat =
             state.clockFormatOptions.indexOf(s.clock_format) !== -1
               ? s.clock_format
@@ -5030,6 +5099,7 @@
             ? normalizeNtpServer(s.ntp_server_3, "2.pool.ntp.org")
             : state.ntpServer3;
           if (s.timezone) postSelect("Screen: Timezone", importedTimezone);
+          postSelect("Screen: Temperature Unit", importedTemperatureUnit);
           if (s.clock_format) postSelect("Screen: Clock Format", importedClockFormat);
           if (hasNtpServer1) {
             postText("Screen: NTP Server 1", importedNtpServer1);
@@ -5066,6 +5136,7 @@
           state._outdoorOn = !!s.outdoor_temp_enable;
           state.indoorEntity = s.indoor_temp_entity || "";
           state.outdoorEntity = s.outdoor_temp_entity || "";
+          state.temperatureUnit = importedTemperatureUnit;
           state.clockBarOn = s.clock_bar != null ? !!s.clock_bar : true;
           state.timezone = importedTimezone;
           state.clockFormat = importedClockFormat;
@@ -5086,6 +5157,7 @@
           syncClockBarUi();
           syncInput(els.setIndoorEntity, state.indoorEntity);
           syncInput(els.setOutdoorEntity, state.outdoorEntity);
+          if (els.setTemperatureUnit) els.setTemperatureUnit.value = state.temperatureUnit;
           syncInput(els.setPresence, state.presenceEntity);
           if (els.setTimezone) els.setTimezone.value = state.timezone;
           if (els.setClockFormat) els.setClockFormat.value = state.clockFormat;
@@ -5337,6 +5409,12 @@
         state.outdoorEntity = val;
         syncInput(els.setOutdoorEntity, val);
       },
+      "select-screen__temperature_unit": function (val, d) {
+        state.temperatureUnit = normalizeTemperatureUnit(d.value || val);
+        if (els.setTemperatureUnit) els.setTemperatureUnit.value = state.temperatureUnit;
+        updateTempPreview();
+        renderPreview();
+      },
       "number-screensaver_timeout": function (val) {
         syncScreensaverTimeoutLimits(d);
         state.screensaverTimeout = parseFloat(val) || 300;
@@ -5469,6 +5547,10 @@
           }
         }
         if (els.setTimezone) els.setTimezone.value = state.timezone;
+        if (normalizeTemperatureUnit(state.temperatureUnit) === "Auto") {
+          updateTempPreview();
+          renderPreview();
+        }
         updateClock();
       },
       "select-screen__clock_format": function (val, d) {
@@ -5694,8 +5776,9 @@
     if (!els.temp) return;
     var show = state.clockBarOn && (state._indoorOn || state._outdoorOn);
     els.temp.className = "sp-temp" + (show ? " sp-visible" : "");
-    var indoor = state._indoorVal != null ? state._indoorVal + "\u00B0" : "24\u00B0";
-    var outdoor = state._outdoorVal != null ? state._outdoorVal + "\u00B0" : "17\u00B0";
+    var unit = temperatureUnitSymbol();
+    var indoor = state._indoorVal != null ? state._indoorVal + unit : "24" + unit;
+    var outdoor = state._outdoorVal != null ? state._outdoorVal + unit : "17" + unit;
     if (state._indoorOn && state._outdoorOn) {
       els.temp.textContent = outdoor + " / " + indoor;
     } else if (state._outdoorOn) {
@@ -5711,6 +5794,17 @@
       serializeButtonConfig: serializeButtonConfig,
       parseSubpageConfig: parseSubpageConfig,
       serializeSubpageConfig: serializeSubpageConfig,
+      normalizeTemperatureUnit: normalizeTemperatureUnit,
+      temperatureUnitSymbolFor: function (timezone, unit) {
+        var oldTimezone = state.timezone;
+        var oldUnit = state.temperatureUnit;
+        state.timezone = timezone || oldTimezone;
+        state.temperatureUnit = normalizeTemperatureUnit(unit);
+        var symbol = temperatureUnitSymbol();
+        state.timezone = oldTimezone;
+        state.temperatureUnit = oldUnit;
+        return symbol;
+      },
     };
   }
 

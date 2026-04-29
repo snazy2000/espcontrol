@@ -8,7 +8,7 @@ description:
 
 A Climate card controls a Home Assistant `climate` entity, such as a thermostat, heat pump, radiator valve, or air conditioner.
 
-On the main screen it shows the current temperature. Tapping the card opens a full-screen thermostat page with a target temperature arc, plus and minus buttons, mode controls, and a power-off button.
+On the main screen it shows the current temperature. Tapping the card opens a full-screen thermostat page with a target temperature arc, plus and minus buttons, and mode controls.
 
 ## Setting Up a Climate Card
 
@@ -22,7 +22,7 @@ Climate cards can also be placed inside a [Subpage](/features/subpages).
 
 - The dashboard card shows the current temperature from `current_temperature`.
 - The card label changes to **Heating** or **Cooling** while Home Assistant reports that active action.
-- The card uses the normal off colour while off or unavailable, the normal on colour while enabled and idle, orange while heating, and blue while cooling.
+- The card uses the normal off colour while off or unavailable, the normal on colour while enabled or heating, and blue while cooling.
 - The detail page uses `min_temp`, `max_temp`, and `target_temp_step` when Home Assistant provides them. Until those arrive, it uses 5-35 °C with 0.5 °C steps.
 - Dragging the arc updates the display immediately, but sends the new temperature only when you release it. The plus and minus buttons wait briefly before sending, so repeated taps do not spam Home Assistant.
 
@@ -36,9 +36,6 @@ The detail page only shows controls that the climate entity supports:
 | `fan_modes` | Fan selector |
 | `swing_modes` | Swing selector |
 | `preset_modes` | Preset selector |
-| `current_humidity` | Current humidity readout |
-
-The power button always sends `climate.set_hvac_mode` with `off`.
 
 ## Heat/Cool Mode
 

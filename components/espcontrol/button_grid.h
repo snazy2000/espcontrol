@@ -571,11 +571,8 @@ struct ClimateCardCtx;
 struct ClimateDetailUi {
   lv_obj_t *page = nullptr;
   lv_obj_t *back_btn = nullptr;
-  lv_obj_t *power_btn = nullptr;
   lv_obj_t *current_title = nullptr;
   lv_obj_t *current_value = nullptr;
-  lv_obj_t *humidity_title = nullptr;
-  lv_obj_t *humidity_value = nullptr;
   lv_obj_t *arc = nullptr;
   lv_obj_t *state_label = nullptr;
   lv_obj_t *target_value = nullptr;
@@ -617,13 +614,11 @@ struct ClimateCardCtx {
   std::vector<std::string> preset_modes;
   bool available = false;
   bool has_current = false;
-  bool has_humidity = false;
   bool has_target = false;
   bool has_low = false;
   bool has_high = false;
   bool edit_high = false;
   float current = 0.0f;
-  float humidity = 0.0f;
   float target = 20.0f;
   float low = 18.0f;
   float high = 22.0f;
@@ -724,6 +719,13 @@ inline std::string climate_dashboard_label(const ClimateCardCtx *ctx) {
 
 inline uint32_t climate_state_color(const ClimateCardCtx *ctx) {
   if (!ctx || !ctx->available || ctx->hvac_mode == "off") return ctx ? ctx->off_color : CLIMATE_NEUTRAL_COLOR;
+  if (ctx->hvac_action == "heating") return ctx->on_color;
+  if (ctx->hvac_action == "cooling") return CLIMATE_COOL_COLOR;
+  return ctx->on_color;
+}
+
+inline uint32_t climate_detail_accent_color(const ClimateCardCtx *ctx) {
+  if (!ctx || !ctx->available || ctx->hvac_mode == "off") return 0xBDBDBD;
   if (ctx->hvac_action == "heating") return CLIMATE_HEAT_COLOR;
   if (ctx->hvac_action == "cooling") return CLIMATE_COOL_COLOR;
   return ctx->on_color;
@@ -941,21 +943,17 @@ inline void climate_update_detail(ClimateCardCtx *ctx) {
 
   if (ui.current_value) {
     char buf[24];
-    if (ctx->available && ctx->has_current) climate_format_temp_unit(buf, sizeof(buf), ctx->current);
-    else snprintf(buf, sizeof(buf), "--");
+    if (ctx->available && ctx->has_current) snprintf(buf, sizeof(buf), "%.1f \u00B0C", ctx->current);
+    else snprintf(buf, sizeof(buf), "-- \u00B0C");
     lv_label_set_text(ui.current_value, buf);
   }
-  bool show_humidity = ctx->available && ctx->has_humidity;
-  climate_set_visible(ui.humidity_title, show_humidity);
-  climate_set_visible(ui.humidity_value, show_humidity);
-  if (show_humidity && ui.humidity_value) {
-    char hbuf[16];
-    snprintf(hbuf, sizeof(hbuf), "%.0f%%", ctx->humidity);
-    lv_label_set_text(ui.humidity_value, hbuf);
-  }
+  uint32_t accent_color = climate_detail_accent_color(ctx);
+  if (ui.current_title) lv_obj_set_style_text_color(ui.current_title, lv_color_hex(accent_color), LV_PART_MAIN);
+  if (ui.current_value) lv_obj_set_style_text_color(ui.current_value, lv_color_hex(accent_color), LV_PART_MAIN);
   if (ui.state_label) {
     std::string state = climate_action_label(ctx);
     lv_label_set_text(ui.state_label, state.c_str());
+    lv_obj_set_style_text_color(ui.state_label, lv_color_hex(accent_color), LV_PART_MAIN);
   }
   if (ui.target_value) {
     char tbuf[16];
@@ -966,8 +964,9 @@ inline void climate_update_detail(ClimateCardCtx *ctx) {
   if (ui.target_hint) {
     if (climate_dual_target(ctx)) {
       lv_label_set_text(ui.target_hint, ctx->edit_high ? "High target" : "Low target");
+      climate_set_visible(ui.target_hint, true);
     } else {
-      lv_label_set_text(ui.target_hint, "Target");
+      climate_set_visible(ui.target_hint, false);
     }
   }
   bool dual = climate_dual_target(ctx);
@@ -985,7 +984,7 @@ inline void climate_update_detail(ClimateCardCtx *ctx) {
   climate_set_button_label(ui.swing_chip, "Swing\n" + (ctx->swing_mode.empty() ? std::string("None") : climate_mode_label(ctx->swing_mode)));
   climate_set_button_label(ui.preset_chip, "Preset\n" + (ctx->preset_mode.empty() ? std::string("None") : climate_mode_label(ctx->preset_mode)));
 
-  uint32_t active_color = climate_state_color(ctx);
+  uint32_t active_color = climate_detail_accent_color(ctx);
   lv_obj_set_style_arc_color(ui.arc, lv_color_hex(0x2A2A2A), LV_PART_MAIN);
   lv_obj_set_style_arc_color(ui.arc, lv_color_hex(active_color), LV_PART_INDICATOR);
   lv_obj_set_style_bg_color(ui.arc, lv_color_hex(0xF4F4F4), LV_PART_KNOB);
@@ -1079,21 +1078,18 @@ inline void climate_layout_detail_ui(ClimateCardCtx *ctx) {
   lv_obj_align(ui.swing_chip, LV_ALIGN_BOTTOM_MID, chip_w / 2 + 2, bottom);
   lv_obj_align(ui.preset_chip, LV_ALIGN_BOTTOM_MID, chip_w * 3 / 2 + 6, bottom);
 
-  lv_obj_align(ui.current_title, LV_ALIGN_TOP_LEFT, sw / 13, sh / 14);
-  lv_obj_align(ui.current_value, LV_ALIGN_TOP_LEFT, sw / 8, sh / 14 + 34);
-  lv_obj_align(ui.humidity_title, LV_ALIGN_TOP_RIGHT, -sw / 10, sh / 14);
-  lv_obj_align(ui.humidity_value, LV_ALIGN_TOP_RIGHT, -sw / 6, sh / 14 + 34);
-  lv_obj_align(ui.state_label, LV_ALIGN_CENTER, 0, -50);
-  lv_obj_align(ui.target_value, LV_ALIGN_CENTER, -14, 14);
-  lv_obj_align(ui.target_unit, LV_ALIGN_CENTER, 64, -2);
-  lv_obj_align(ui.target_hint, LV_ALIGN_CENTER, 0, 78);
-  lv_obj_align(ui.low_btn, LV_ALIGN_CENTER, -44, 110);
-  lv_obj_align(ui.high_btn, LV_ALIGN_CENTER, 44, 110);
+  lv_obj_align(ui.state_label, LV_ALIGN_CENTER, 0, -arc_size / 5);
+  lv_obj_align(ui.target_value, LV_ALIGN_CENTER, -18, -arc_size / 18);
+  lv_obj_align(ui.target_unit, LV_ALIGN_CENTER, 74, -arc_size / 12);
+  lv_obj_align(ui.current_title, LV_ALIGN_CENTER, -64, arc_size / 5);
+  lv_obj_align(ui.current_value, LV_ALIGN_CENTER, 22, arc_size / 5);
+  lv_obj_align(ui.target_hint, LV_ALIGN_CENTER, 0, arc_size / 3);
+  lv_obj_align(ui.low_btn, LV_ALIGN_CENTER, -44, arc_size / 3 + 32);
+  lv_obj_align(ui.high_btn, LV_ALIGN_CENTER, 44, arc_size / 3 + 32);
   if (ctx && ctx->value_font) {
-    lv_obj_set_style_text_font(ui.current_value, ctx->value_font, LV_PART_MAIN);
-    lv_obj_set_style_text_font(ui.humidity_value, ctx->value_font, LV_PART_MAIN);
     lv_obj_set_style_text_font(ui.target_value, ctx->value_font, LV_PART_MAIN);
   }
+  if (ctx && ctx->label_font) lv_obj_set_style_text_font(ui.current_value, ctx->label_font, LV_PART_MAIN);
 }
 
 inline void climate_open_options(ClimateCardCtx *ctx, const char *kind,
@@ -1121,23 +1117,6 @@ inline void climate_ensure_detail_ui(ClimateCardCtx *ctx) {
     if (target) lv_scr_load_anim(target, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
   }, LV_EVENT_CLICKED, nullptr);
 
-  ui.power_btn = climate_create_round_button(ui.page, 48, find_icon("Power"), ctx ? ctx->icon_font : nullptr);
-  lv_obj_align(ui.power_btn, LV_ALIGN_TOP_RIGHT, -12, 12);
-  lv_obj_add_event_cb(ui.power_btn, [](lv_event_t *e) {
-    ClimateDetailUi &ui = climate_detail_ui();
-    if (!ui.active) return;
-    ui.active->hvac_mode = "off";
-    ui.active->available = true;
-    climate_update_dashboard(ui.active);
-    climate_update_detail(ui.active);
-    climate_send_string_action(ui.active, "climate.set_hvac_mode", "hvac_mode", "off");
-  }, LV_EVENT_CLICKED, nullptr);
-
-  ui.current_title = climate_create_label(ui.page, "Current temperature", LV_ALIGN_TOP_LEFT, 42, 36, nullptr, 0xBDBDBD);
-  ui.current_value = climate_create_label(ui.page, "--", LV_ALIGN_TOP_LEFT, 72, 74, ctx ? ctx->value_font : nullptr);
-  ui.humidity_title = climate_create_label(ui.page, "Current humidity", LV_ALIGN_TOP_RIGHT, -58, 36, nullptr, 0xBDBDBD);
-  ui.humidity_value = climate_create_label(ui.page, "--", LV_ALIGN_TOP_RIGHT, -104, 74, ctx ? ctx->value_font : nullptr);
-
   ui.arc = lv_arc_create(ui.page);
   lv_arc_set_bg_angles(ui.arc, 135, 45);
   lv_arc_set_range(ui.arc, 50, 350);
@@ -1161,10 +1140,12 @@ inline void climate_ensure_detail_ui(ClimateCardCtx *ctx) {
     if (ui.active) climate_send_temperature_action(ui.active);
   }, LV_EVENT_RELEASED, nullptr);
 
-  ui.state_label = climate_create_label(ui.page, "Idle", LV_ALIGN_CENTER, 0, -50, nullptr);
+  ui.state_label = climate_create_label(ui.page, "Idle", LV_ALIGN_CENTER, 0, -50, nullptr, CLIMATE_HEAT_COLOR);
   ui.target_value = climate_create_label(ui.page, "20.0", LV_ALIGN_CENTER, -14, 14, ctx ? ctx->value_font : nullptr);
   ui.target_unit = climate_create_label(ui.page, "\u00B0C", LV_ALIGN_CENTER, 64, -2);
   ui.target_hint = climate_create_label(ui.page, "Target", LV_ALIGN_CENTER, 0, 78, nullptr, 0xBDBDBD);
+  ui.current_title = climate_create_label(ui.page, find_icon("Thermometer"), LV_ALIGN_CENTER, -64, 70, ctx ? ctx->icon_font : nullptr, CLIMATE_HEAT_COLOR);
+  ui.current_value = climate_create_label(ui.page, "-- \u00B0C", LV_ALIGN_CENTER, 22, 70, nullptr, CLIMATE_HEAT_COLOR);
   ui.minus_btn = climate_create_round_button(ui.page, 60, "-", ctx ? ctx->label_font : nullptr);
   ui.plus_btn = climate_create_round_button(ui.page, 60, "+", ctx ? ctx->label_font : nullptr);
   ui.low_btn = climate_create_chip(ui.page, "Low");
@@ -1412,9 +1393,6 @@ inline void subscribe_climate_card(ClimateCardCtx *ctx) {
   climate_subscribe_attribute_float(ctx, "current_temperature",
     [ctx](float value) { ctx->current = value; ctx->has_current = true; },
     [ctx]() { ctx->has_current = false; });
-  climate_subscribe_attribute_float(ctx, "current_humidity",
-    [ctx](float value) { ctx->humidity = value; ctx->has_humidity = true; },
-    [ctx]() { ctx->has_humidity = false; });
   climate_subscribe_attribute_float(ctx, "temperature",
     [ctx](float value) { ctx->target = value; ctx->has_target = true; },
     [ctx]() { ctx->has_target = false; });

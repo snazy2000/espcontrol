@@ -22,7 +22,7 @@ Climate cards can also be placed inside a [Subpage](/features/subpages).
 
 - The dashboard card shows the current temperature from `current_temperature`.
 - The card label changes to **Heating** or **Cooling** while Home Assistant reports that active action.
-- The card uses the normal off colour while off or unavailable, the normal on colour while enabled or heating, and blue while cooling.
+- The card uses the normal on colour only while actively heating, blue while cooling, and the normal off colour while off, unavailable, idle, or otherwise enabled.
 - The detail page uses `min_temp`, `max_temp`, and `target_temp_step` when Home Assistant provides them. Until those arrive, it uses 5-35 °C with 0.5 °C steps.
 - Dragging the arc updates the display immediately, but sends the new temperature only when you release it. The plus and minus buttons wait briefly before sending, so repeated taps do not spam Home Assistant.
 

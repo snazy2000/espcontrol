@@ -721,7 +721,7 @@ inline uint32_t climate_state_color(const ClimateCardCtx *ctx) {
   if (!ctx || !ctx->available || ctx->hvac_mode == "off") return ctx ? ctx->off_color : CLIMATE_NEUTRAL_COLOR;
   if (ctx->hvac_action == "heating") return ctx->on_color;
   if (ctx->hvac_action == "cooling") return CLIMATE_COOL_COLOR;
-  return ctx->on_color;
+  return ctx->off_color;
 }
 
 inline uint32_t climate_detail_accent_color(const ClimateCardCtx *ctx) {

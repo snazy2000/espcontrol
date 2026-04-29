@@ -1164,6 +1164,7 @@ inline void climate_update_detail(ClimateCardCtx *ctx) {
     lv_label_set_text(ui.target_unit, display_temperature_unit_symbol());
     lv_obj_update_layout(ui.target_value);
     lv_obj_align_to(ui.target_unit, ui.target_value, LV_ALIGN_OUT_RIGHT_TOP, 2, 8);
+    if (ui.state_label) lv_obj_align_to(ui.state_label, ui.target_value, LV_ALIGN_OUT_BOTTOM_MID, 0, 8);
   }
   if (ui.target_hint) {
     if (climate_dual_target(ctx)) {
@@ -1366,9 +1367,10 @@ inline void climate_layout_detail_ui(ClimateCardCtx *ctx) {
     x += chip_w + gap;
   }
 
-  lv_obj_align(ui.state_label, LV_ALIGN_CENTER, frame_cx, arc_cy - arc_size / 4);
   lv_obj_align(ui.target_value, LV_ALIGN_CENTER, frame_cx, arc_cy - arc_size / 18);
+  lv_obj_update_layout(ui.target_value);
   lv_obj_align_to(ui.target_unit, ui.target_value, LV_ALIGN_OUT_RIGHT_TOP, 2, 8);
+  lv_obj_align_to(ui.state_label, ui.target_value, LV_ALIGN_OUT_BOTTOM_MID, 0, 8);
   lv_obj_align(ui.target_hint, LV_ALIGN_CENTER, frame_cx, arc_cy + arc_size / 3);
   lv_obj_align(ui.low_btn, LV_ALIGN_CENTER, frame_cx - 44, arc_cy + arc_size / 3 + 32);
   lv_obj_align(ui.high_btn, LV_ALIGN_CENTER, frame_cx + 44, arc_cy + arc_size / 3 + 32);

@@ -2435,7 +2435,7 @@
     ntpField.appendChild(ntpList);
     clockBody.appendChild(ntpField);
 
-    config.appendChild(makeCollapsibleCard("Time Settings", clockBody, true));
+    var timeSettingsCard = makeCollapsibleCard("Time Settings", clockBody, true);
 
     var clockBarBody = document.createElement("div");
 
@@ -2705,6 +2705,7 @@
     backupRow.appendChild(importBtn);
 
     backupBody.appendChild(backupRow);
+    config.appendChild(timeSettingsCard);
     config.appendChild(makeCollapsibleCard("Backup", backupBody, true));
 
     var fwBody = document.createElement("div");

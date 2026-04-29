@@ -1168,13 +1168,13 @@ inline void climate_update_detail(ClimateCardCtx *ctx) {
   climate_style_chip(ui.low_btn, dual && !ctx->edit_high);
   climate_style_chip(ui.high_btn, dual && ctx->edit_high);
 
-  climate_set_visible(ui.preset_chip, climate_has_options(ctx->preset_modes));
+  climate_set_visible(ui.preset_chip, climate_has_options(ctx->hvac_modes));
   climate_set_visible(ui.fan_chip, climate_has_options(ctx->fan_modes));
   climate_set_visible(ui.swing_chip, climate_has_options(ctx->swing_modes));
   climate_set_button_label(ui.preset_chip, "...");
   climate_set_button_label(ui.fan_chip, "Fan\n" + (ctx->fan_mode.empty() ? std::string("None") : climate_mode_label(ctx->fan_mode)));
   climate_set_button_label(ui.swing_chip, "Swing\n" + (ctx->swing_mode.empty() ? std::string("None") : climate_mode_label(ctx->swing_mode)));
-  climate_render_mode_tabs(ctx);
+  climate_set_visible(ui.mode_tabs, false);
 
   uint32_t active_color = climate_detail_accent_color(ctx);
   lv_obj_set_style_arc_color(ui.arc, lv_color_hex(0x2A2A2A), LV_PART_MAIN);
@@ -1273,8 +1273,7 @@ inline void climate_layout_detail_ui(ClimateCardCtx *ctx) {
   if (chip_w < 86) chip_w = 86;
   lv_coord_t chip_h = sh < 520 ? 56 : 64;
   lv_coord_t bottom = sh < 520 ? -10 : -22;
-  bool show_mode_tabs = ctx && climate_has_options(ctx->hvac_modes);
-  lv_coord_t control_bottom = show_mode_tabs ? bottom - chip_h - 10 : bottom;
+  lv_coord_t control_bottom = bottom;
   lv_coord_t back_size = short_side < 520 ? 44 : 48;
   lv_coord_t top_clearance = short_side < 520 ? 44 : 56;
 
@@ -1303,6 +1302,7 @@ inline void climate_layout_detail_ui(ClimateCardCtx *ctx) {
   lv_obj_set_size(ui.swing_chip, chip_w, chip_h);
   lv_obj_set_size(ui.mode_tabs, sw > 72 ? sw - 56 : sw, chip_h);
   lv_obj_align(ui.mode_tabs, LV_ALIGN_BOTTOM_MID, 0, bottom);
+  climate_set_visible(ui.mode_tabs, false);
 
   lv_obj_t *controls[2] = {ui.fan_chip, ui.swing_chip};
   bool visible[2] = {
@@ -1468,7 +1468,7 @@ inline void climate_ensure_detail_ui(ClimateCardCtx *ctx) {
   lv_obj_add_flag(ui.mode_tabs, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_event_cb(ui.preset_chip, [](lv_event_t *e) {
     ClimateDetailUi &ui = climate_detail_ui();
-    if (ui.active) climate_open_options(ui.active, "preset", "Preset", ui.active->preset_modes);
+    if (ui.active) climate_open_options(ui.active, "hvac", "Mode", ui.active->hvac_modes);
   }, LV_EVENT_CLICKED, nullptr);
   lv_obj_add_event_cb(ui.fan_chip, [](lv_event_t *e) {
     ClimateDetailUi &ui = climate_detail_ui();
@@ -1532,7 +1532,7 @@ inline void climate_open_options(ClimateCardCtx *ctx, const char *kind,
   ClimateDetailUi &ui = climate_detail_ui();
   if (!ctx || !ui.overlay || !ui.popup || options.empty()) return;
   lv_obj_clean(ui.popup);
-  bool compact_menu = std::strcmp(kind, "preset") == 0;
+  bool compact_menu = std::strcmp(kind, "preset") == 0 || std::strcmp(kind, "hvac") == 0;
   lv_obj_set_style_pad_all(ui.popup, compact_menu ? 12 : 16, LV_PART_MAIN);
   lv_obj_set_style_pad_row(ui.popup, compact_menu ? 8 : 10, LV_PART_MAIN);
   if (!compact_menu) {

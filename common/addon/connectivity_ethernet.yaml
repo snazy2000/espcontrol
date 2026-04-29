@@ -33,6 +33,8 @@ ethernet:
               then:
                 - lvgl.page.show: ha_setup_page
                 - script.execute: setup_screen_dim
+              else:
+                - script.execute: navigate_after_api
   on_disconnect:
     - if:
         condition:

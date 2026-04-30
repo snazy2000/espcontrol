@@ -1363,7 +1363,7 @@ inline void climate_layout_detail_ui(ClimateCardCtx *ctx) {
   for (bool is_visible : visible) {
     if (is_visible) visible_count++;
   }
-  lv_coord_t adjust_btn_x = round_btn * 6 / 10;
+  lv_coord_t adjust_btn_x = (round_btn + 18) / 2;
   lv_coord_t adjust_btn_y_abs = sh / 2 + arc_cy + arc_size / 2 - round_btn / 2;
   lv_coord_t max_btn_y_abs = (visible_count > 0 ? control_y - 12 : frame_y + frame_h) - round_btn / 2;
   if (adjust_btn_y_abs > max_btn_y_abs) adjust_btn_y_abs = max_btn_y_abs;

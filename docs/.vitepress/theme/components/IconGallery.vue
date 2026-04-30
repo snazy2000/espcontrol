@@ -282,6 +282,7 @@ const ICON_GROUPS = {
   'Broom': 'General',
   'Clock': 'General',
   'Dog': 'General',
+  'Dots Horizontal': 'General',
   'Gesture Tap': 'General',
   'Home': 'General',
   'Mailbox': 'General',

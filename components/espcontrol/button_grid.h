@@ -577,6 +577,7 @@ inline uint32_t correct_color(uint32_t rgb) {
 constexpr uint32_t CLIMATE_HEAT_COLOR = 0xA44A1C;
 constexpr uint32_t CLIMATE_COOL_COLOR = 0x1565C0;
 constexpr uint32_t CLIMATE_NEUTRAL_COLOR = 0x313131;
+constexpr uint32_t CLIMATE_DETAIL_CARD_COLOR = 0x252525;
 constexpr uint32_t CLIMATE_DETAIL_TEXT_COLOR = 0xD8D8D8;
 
 struct ClimateCardCtx;
@@ -1231,7 +1232,7 @@ inline lv_obj_t *climate_create_round_button(lv_obj_t *parent, lv_coord_t size,
                                              const char *text, const lv_font_t *font = nullptr,
                                              uint32_t border_color = 0xFFFFFF,
                                              uint32_t text_color = 0xD8D8D8,
-                                             uint32_t bg_color = 0x1C1C1C) {
+                                             uint32_t bg_color = CLIMATE_DETAIL_CARD_COLOR) {
   lv_obj_t *btn = lv_btn_create(parent);
   lv_obj_set_size(btn, size, size);
   lv_obj_set_style_radius(btn, size / 2, LV_PART_MAIN);
@@ -1416,7 +1417,7 @@ inline void climate_ensure_detail_ui(ClimateCardCtx *ctx) {
   lv_obj_clear_flag(ui.page, LV_OBJ_FLAG_SCROLLABLE);
 
   ui.card = lv_obj_create(ui.page);
-  lv_obj_set_style_bg_color(ui.card, lv_color_hex(0x252525), LV_PART_MAIN);
+  lv_obj_set_style_bg_color(ui.card, lv_color_hex(CLIMATE_DETAIL_CARD_COLOR), LV_PART_MAIN);
   lv_obj_set_style_bg_opa(ui.card, LV_OPA_COVER, LV_PART_MAIN);
   lv_obj_set_style_border_width(ui.card, 0, LV_PART_MAIN);
   lv_obj_set_style_shadow_width(ui.card, 0, LV_PART_MAIN);
@@ -1425,7 +1426,7 @@ inline void climate_ensure_detail_ui(ClimateCardCtx *ctx) {
   const lv_font_t *control_icon_font = ctx && ctx->climate_control_icon_font
     ? ctx->climate_control_icon_font : (ctx ? ctx->icon_font : nullptr);
   ui.back_btn = climate_create_round_button(ui.page, 72, "\U000F0141", control_icon_font,
-    0x8A8A8A, 0xBDBDBD);
+    0x8A8A8A, 0xBDBDBD, CLIMATE_DETAIL_CARD_COLOR);
   lv_obj_add_event_cb(ui.back_btn, [](lv_event_t *e) {
     ClimateDetailUi &ui = climate_detail_ui();
     climate_hide_popup();
@@ -1491,7 +1492,7 @@ inline void climate_ensure_detail_ui(ClimateCardCtx *ctx) {
   }, LV_EVENT_CLICKED, nullptr);
 
   ui.preset_chip = climate_create_round_button(ui.page, 48, "\U000F01D8", control_icon_font,
-    0x8A8A8A, 0xBDBDBD);
+    0x8A8A8A, 0xBDBDBD, CLIMATE_DETAIL_CARD_COLOR);
   ui.fan_chip = climate_create_chip(ui.page, "Fan\nNone", ctx ? ctx->label_font : nullptr);
   ui.swing_chip = climate_create_chip(ui.page, "Swing\nNone", ctx ? ctx->label_font : nullptr);
   ui.mode_tabs = lv_obj_create(ui.page);

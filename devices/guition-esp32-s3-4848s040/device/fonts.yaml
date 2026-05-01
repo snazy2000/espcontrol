@@ -4,6 +4,8 @@
 # Supplements the common fonts with smaller variants for the main UI.
 # The common fonts (icon_font, label_font, etc.) still load for setup screens;
 # these _sm variants are referenced by the device theme and LVGL config.
+# Hebrew glyphs are pulled from gfonts://Heebo via `extras`, since Roboto
+# does not include the Hebrew block.
 # =============================================================================
 
 font:
@@ -20,6 +22,9 @@ font:
     size: 22
     bpp: 4
     glyphs: !include ../../../common/assets/text_glyphs.yaml
+    extras:
+      - file: "gfonts://Heebo"
+        glyphs: !include ../../../common/assets/hebrew_glyphs.yaml
 
   # Climate detail page: oversized target temperature
   - file: "gfonts://Roboto@Light"
@@ -42,3 +47,6 @@ font:
     id: clockbar_font_sm
     size: 20
     bpp: 4
+    extras:
+      - file: "gfonts://Heebo"
+        glyphs: !include ../../../common/assets/hebrew_glyphs.yaml

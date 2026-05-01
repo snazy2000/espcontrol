@@ -34,18 +34,16 @@ export default defineConfig({
     ['meta', { property: 'og:image:type', content: 'image/jpeg' }],
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
     ['meta', { name: 'twitter:image', content: `${hostname}images/home_screen_hero.jpg` }],
-    ['script', {
-      'data-name': 'BMC-Widget',
-      'data-cfasync': 'false',
-      src: 'https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js',
-      'data-id': 'jtenniswood',
-      'data-description': 'Support me on Buy me a coffee!',
-      'data-message': '',
-      'data-color': '#FFDD00',
-      'data-position': 'Right',
-      'data-x_margin': '28',
-      'data-y_margin': '28',
-    }],
+    [
+      'style',
+      {},
+      '.sp-support-btn{position:fixed;right:28px;bottom:28px;z-index:150;display:inline-block;line-height:0}.sp-support-btn img{height:60px;display:block;border-radius:999px}',
+    ],
+    [
+      'script',
+      {},
+      `document.addEventListener('DOMContentLoaded',function(){if(document.querySelector('.sp-support-btn'))return;var link=document.createElement('a');link.className='sp-support-btn';link.href='https://www.buymeacoffee.com/jtenniswood';link.target='_blank';link.rel='noopener';link.innerHTML='<img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60" style="border-radius:999px;">';document.body.appendChild(link);});`,
+    ],
     [
       'script',
       { type: 'application/ld+json' },

@@ -13,9 +13,15 @@ font:
     size: 22
     bpp: 4
     glyphs: !include ../../../common/assets/text_glyphs.yaml
+    extras:
+      - file: "gfonts://Heebo"
+        glyphs: !include ../../../common/assets/hebrew_glyphs.yaml
 
   # Top bar clock and temperature (20px)
   - file: "gfonts://Roboto"
     id: clockbar_font_lt
     size: 20
     bpp: 4
+    extras:
+      - file: "gfonts://Heebo"
+        glyphs: !include ../../../common/assets/hebrew_glyphs.yaml

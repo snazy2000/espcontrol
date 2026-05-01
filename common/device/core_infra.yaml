@@ -5,6 +5,13 @@
 # identical across all hardware targets.
 # =============================================================================
 
+esphome:
+  # Enable LVGL's bidirectional text algorithm so right-to-left scripts
+  # (Hebrew, Arabic) render in visual order.
+  platformio_options:
+    build_flags:
+      - "-DLV_USE_BIDI=1"
+
 api:
   reboot_timeout: 0s
   homeassistant_states: true

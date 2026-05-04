@@ -6,7 +6,7 @@ description:
 
 # Cover
 
-A cover card lets you control a Home Assistant cover entity — blinds, shutters, roller shades, gates, or garage doors — as either a position slider or a simple toggle.
+A cover card lets you control a Home Assistant cover entity — blinds, shutters, roller shades, gates, or garage doors — as a slider, a toggle, or a one-tap command.
 
 <!-- ![Cover card showing a blinds icon with a position fill bar](/images/card-cover.png) -->
 
@@ -14,16 +14,17 @@ A cover card lets you control a Home Assistant cover entity — blinds, shutters
 
 1. Select a card and change its type to **Cover**.
 2. Choose the interaction:
-   - **Slider** lets you drag to a precise cover position.
+   - **Slider: Position** lets you drag to a precise cover position.
+   - **Slider: Tilt** lets you drag to a precise cover tilt position.
    - **Toggle** opens or closes the cover with a tap.
-3. If you choose **Slider**, choose the **Slider Function**:
-   - **Position** uses Home Assistant's `cover.set_cover_position` action.
-   - **Tilt** uses Home Assistant's `cover.set_cover_tilt_position` action.
-   - Your Home Assistant cover entity needs to support tilt for **Tilt** mode to work.
+   - **Open**, **Close**, and **Stop** send that exact cover command.
+   - **Set Position** sends the cover to the fixed percentage you enter.
+3. Your Home Assistant cover entity needs to support tilt for **Slider: Tilt** mode to work.
 4. Set a **Label** (optional) — shown at the bottom of the card. If left blank, the entity's friendly name from Home Assistant is used.
 5. Enter an **Entity ID** — the Home Assistant cover entity you want to control (for example, `cover.office_blind`).
-6. Choose a **Closed Icon** (defaults to **Blinds**).
-7. Choose an **Open Icon** (defaults to **Blinds Open**).
+6. Choose icons:
+   - Slider and Toggle modes use **Closed Icon** and **Open Icon**.
+   - Open, Close, Stop, and Set Position use one **Icon**.
 
 ## How It Works on the Panel
 
@@ -42,6 +43,14 @@ A cover card lets you control a Home Assistant cover entity — blinds, shutters
 - When the cover state changes, the label temporarily shows the Home Assistant state, such as **Open**, **Closed**, **Opening**, or **Closing**.
 - After the state settles, the card changes back to showing the configured label.
 
+### Command Interactions
+
+- **Open** sends `cover.open_cover`.
+- **Close** sends `cover.close_cover`.
+- **Stop** sends `cover.stop_cover`.
+- **Set Position** sends `cover.set_cover_position` with the configured position from 0 to 100.
+- Command cards briefly flash when tapped. They do not stay highlighted based on the live cover state.
+
 ## Cover Icons
 
-Cover cards always use two icons: one for the closed state and one for the open or partially open state.
+Slider and Toggle cover cards use two icons: one for the closed state and one for the open or partially open state. Command cover cards use one icon.

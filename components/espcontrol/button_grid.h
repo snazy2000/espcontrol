@@ -2871,6 +2871,50 @@ inline bool cover_tilt_mode(const std::string &sensor) {
   return sensor == "tilt";
 }
 
+inline bool cover_command_mode(const std::string &sensor) {
+  return sensor == "open" || sensor == "close" ||
+         sensor == "stop" || sensor == "set_position";
+}
+
+inline const char *cover_command_service(const std::string &sensor) {
+  if (sensor == "open") return "cover.open_cover";
+  if (sensor == "close") return "cover.close_cover";
+  if (sensor == "stop") return "cover.stop_cover";
+  if (sensor == "set_position") return "cover.set_cover_position";
+  return nullptr;
+}
+
+inline int cover_position_value(const std::string &value) {
+  char *end = nullptr;
+  long pos = std::strtol(value.c_str(), &end, 10);
+  if (end == value.c_str()) pos = 50;
+  if (pos < 0) pos = 0;
+  if (pos > 100) pos = 100;
+  return static_cast<int>(pos);
+}
+
+inline void send_cover_command_action(const ParsedCfg &p) {
+  const char *service = cover_command_service(p.sensor);
+  if (p.entity.empty() || service == nullptr) return;
+
+  bool has_position = p.sensor == "set_position";
+  esphome::api::HomeassistantActionRequest req;
+  req.service = decltype(req.service)(service);
+  req.is_event = false;
+  req.data.init(has_position ? 2 : 1);
+  auto &entity_kv = req.data.emplace_back();
+  entity_kv.key = decltype(entity_kv.key)("entity_id");
+  entity_kv.value = decltype(entity_kv.value)(p.entity.c_str());
+  if (has_position) {
+    char buf[8];
+    snprintf(buf, sizeof(buf), "%d", cover_position_value(p.unit));
+    auto &position_kv = req.data.emplace_back();
+    position_kv.key = decltype(position_kv.key)("position");
+    position_kv.value = decltype(position_kv.value)(buf);
+  }
+  esphome::api::global_api_server->send_homeassistant_action(req);
+}
+
 // Send HA action for a slider change: toggle (value<0), brightness, or cover position/tilt
 inline void send_slider_action(const std::string &entity_id, int value, bool cover_tilt = false) {
   esphome::api::HomeassistantActionRequest req;
@@ -3018,6 +3062,8 @@ inline void handle_button_click(const std::string &cfg, int slot_num,
       lv_obj_add_state(btn_obj, LV_STATE_CHECKED);
       send_toggle_action(p.entity);
     }
+  } else if (p.type == "cover" && cover_command_mode(p.sensor)) {
+    send_cover_command_action(p);
   } else if (p.type == "cover" && cover_toggle_mode(p.sensor)) {
     if (!p.entity.empty()) {
       lv_obj_add_state(btn_obj, LV_STATE_CHECKED);
@@ -3182,6 +3228,12 @@ inline const char *slider_icon_on(const std::string &type, const std::string &en
 inline void setup_cover_toggle_card(BtnSlot &s, const ParsedCfg &p) {
   lv_label_set_text(s.icon_lbl, slider_icon_off(p.type, p.entity, p.icon));
   lv_label_set_text(s.text_lbl, p.label.empty() ? "Cover" : p.label.c_str());
+}
+
+inline void setup_cover_command_card(BtnSlot &s, const ParsedCfg &p) {
+  lv_label_set_text(s.icon_lbl, slider_icon_off(p.type, p.entity, p.icon));
+  lv_label_set_text(s.text_lbl, p.label.empty() ? "Cover" : p.label.c_str());
+  apply_push_button_transition(s.btn);
 }
 
 // Full slider button setup: visual + event handlers + HA action on release
@@ -4047,6 +4099,10 @@ inline void grid_phase1(
       setup_garage_card(s, p);
       continue;
     }
+    if (p.type == "cover" && cover_command_mode(p.sensor)) {
+      setup_cover_command_card(s, p);
+      continue;
+    }
     if (p.type == "cover" && cover_toggle_mode(p.sensor)) {
       setup_cover_toggle_card(s, p);
       continue;
@@ -4188,6 +4244,11 @@ inline void grid_phase2(
         if (p.label.empty())
           subscribe_friendly_name(status_label, p.entity);
       }
+      continue;
+    }
+    if (p.type == "cover" && cover_command_mode(p.sensor)) {
+      if (!p.entity.empty() && p.label.empty())
+        subscribe_friendly_name(s.text_lbl, p.entity);
       continue;
     }
     if (p.type == "cover" && cover_toggle_mode(p.sensor)) {
@@ -4646,6 +4707,29 @@ inline void grid_phase2(
             ClimateCardCtx *ctx = (ClimateCardCtx *)lv_event_get_user_data(e);
             if (ctx) climate_open_detail(ctx, lv_scr_act());
           }, LV_EVENT_CLICKED, climate_ctx);
+        }
+
+      } else if (sb.type == "cover" && cover_command_mode(sb.sensor)) {
+        lv_label_set_text(sil, slider_icon_off(sb.type, sb.entity, sb.icon));
+        lv_label_set_text(stl, sb.label.empty() ? "Cover" : sb.label.c_str());
+        apply_push_button_transition(sb_btn);
+        if (!sb.entity.empty()) {
+          if (sb.label.empty())
+            subscribe_friendly_name(stl, sb.entity);
+
+          ParsedCfg *ctx = new ParsedCfg();
+          ctx->entity = sb.entity;
+          ctx->label = sb.label;
+          ctx->icon = sb.icon;
+          ctx->icon_on = sb.icon_on;
+          ctx->sensor = sb.sensor;
+          ctx->unit = sb.unit;
+          ctx->type = sb.type;
+          ctx->precision = sb.precision;
+          lv_obj_add_event_cb(sb_btn, [](lv_event_t *e) {
+            ParsedCfg *c = (ParsedCfg *)lv_event_get_user_data(e);
+            if (c) send_cover_command_action(*c);
+          }, LV_EVENT_CLICKED, ctx);
         }
 
       } else if (sb.type == "cover" && cover_toggle_mode(sb.sensor)) {

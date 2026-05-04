@@ -1,7 +1,24 @@
 // Slider and cover button types: draggable brightness/position control.
 // Factory creates both "slider" (light.turn_on w/ brightness) and "cover"
 // variants. Slider cards are always vertical. For covers, b.sensor stores
-// "toggle", "" (position slider), or "tilt".
+// "", "tilt", "toggle", or a one-tap cover command.
+function coverCommandMode(mode) {
+  return mode === "open" || mode === "close" || mode === "stop" || mode === "set_position";
+}
+
+function normalizeCoverMode(mode) {
+  if (mode === "tilt" || mode === "toggle" || coverCommandMode(mode)) return mode;
+  return "";
+}
+
+function normalizeCoverPosition(value) {
+  var n = parseInt(value, 10);
+  if (!isFinite(n)) n = 50;
+  if (n < 0) n = 0;
+  if (n > 100) n = 100;
+  return String(n);
+}
+
 function sliderTypeFactory(opts) {
   return {
     label: opts.label,
@@ -24,74 +41,102 @@ function sliderTypeFactory(opts) {
         helpers.bindField(labelInp, "label", true);
       }
 
+      var coverMode = "";
+      var coverPositionField = null;
+      var coverPositionInput = null;
+      var syncCoverUi = function () {};
+
       if (opts.interactionMode) {
-        var interactionMode = b.sensor === "toggle" ? "toggle" : "slider";
-        var sliderFunction = b.sensor === "tilt" ? "tilt" : "position";
-        if (b.sensor && b.sensor !== "toggle" && b.sensor !== "tilt") {
-          b.sensor = "";
-          helpers.saveField("sensor", "");
+        coverMode = normalizeCoverMode(b.sensor);
+        if (b.sensor !== coverMode) {
+          b.sensor = coverMode;
+          helpers.saveField("sensor", coverMode);
+        }
+        if (coverMode !== "set_position" && b.unit) {
+          b.unit = "";
+          helpers.saveField("unit", "");
+        }
+        if (coverCommandMode(coverMode) && b.icon_on !== "Auto") {
+          b.icon_on = "Auto";
+          helpers.saveField("icon_on", "Auto");
         }
 
         var imf = document.createElement("div");
         imf.className = "sp-field";
-        imf.appendChild(helpers.fieldLabel("Interaction"));
-        var imSeg = document.createElement("div");
-        imSeg.className = "sp-segment";
-        var sliderBtn = document.createElement("button");
-        sliderBtn.type = "button";
-        sliderBtn.textContent = "Slider";
-        var toggleBtn = document.createElement("button");
-        toggleBtn.type = "button";
-        toggleBtn.textContent = "Toggle";
-        imSeg.appendChild(sliderBtn);
-        imSeg.appendChild(toggleBtn);
-        imf.appendChild(imSeg);
-        panel.appendChild(imf);
-
-        var sliderModeField = document.createElement("div");
-        sliderModeField.className = "sp-field";
-        sliderModeField.appendChild(helpers.fieldLabel("Slider Function", helpers.idPrefix + "cover-slider-mode"));
-        var sliderModeSelect = document.createElement("select");
-        sliderModeSelect.className = "sp-select";
-        sliderModeSelect.id = helpers.idPrefix + "cover-slider-mode";
+        imf.appendChild(helpers.fieldLabel("Interaction", helpers.idPrefix + "cover-interaction"));
+        var interactionSelect = document.createElement("select");
+        interactionSelect.className = "sp-select";
+        interactionSelect.id = helpers.idPrefix + "cover-interaction";
         [
-          ["position", "Position"],
-          ["tilt", "Tilt"],
+          ["", "Slider: Position"],
+          ["tilt", "Slider: Tilt"],
+          ["toggle", "Toggle"],
+          ["open", "Open"],
+          ["close", "Close"],
+          ["stop", "Stop"],
+          ["set_position", "Set Position"],
         ].forEach(function (entry) {
           var option = document.createElement("option");
           option.value = entry[0];
           option.textContent = entry[1];
-          sliderModeSelect.appendChild(option);
+          interactionSelect.appendChild(option);
         });
-        sliderModeField.appendChild(sliderModeSelect);
-        panel.appendChild(sliderModeField);
+        interactionSelect.value = coverMode;
+        imf.appendChild(interactionSelect);
+        panel.appendChild(imf);
 
-        function persistCoverSliderMode() {
-          if (interactionMode === "toggle") {
-            b.sensor = "toggle";
-          } else {
-            b.sensor = sliderFunction === "tilt" ? "tilt" : "";
+        coverPositionField = document.createElement("div");
+        coverPositionField.className = "sp-field";
+        coverPositionField.appendChild(helpers.fieldLabel("Position", helpers.idPrefix + "cover-position"));
+        coverPositionInput = document.createElement("input");
+        coverPositionInput.type = "number";
+        coverPositionInput.className = "sp-input";
+        coverPositionInput.id = helpers.idPrefix + "cover-position";
+        coverPositionInput.min = "0";
+        coverPositionInput.max = "100";
+        coverPositionInput.step = "1";
+        coverPositionInput.placeholder = "e.g. 50";
+        coverPositionInput.value = normalizeCoverPosition(b.unit);
+        coverPositionField.appendChild(coverPositionInput);
+        panel.appendChild(coverPositionField);
+        if (coverMode === "set_position" && b.unit !== coverPositionInput.value) {
+          b.unit = coverPositionInput.value;
+          helpers.saveField("unit", b.unit);
+        }
+
+        function setCoverPosition(value) {
+          var position = normalizeCoverPosition(value);
+          coverPositionInput.value = position;
+          b.unit = position;
+          helpers.saveField("unit", position);
+        }
+
+        function setCoverMode(mode, persist) {
+          coverMode = normalizeCoverMode(mode);
+          interactionSelect.value = coverMode;
+          if (coverMode === "set_position") {
+            setCoverPosition(b.unit);
+          } else if (b.unit) {
+            b.unit = "";
+            helpers.saveField("unit", "");
+            coverPositionInput.value = "50";
           }
-          helpers.saveField("sensor", b.sensor);
+          if (coverCommandMode(coverMode)) {
+            b.icon_on = "Auto";
+            helpers.saveField("icon_on", "Auto");
+          }
+          if (persist) {
+            b.sensor = coverMode;
+            helpers.saveField("sensor", coverMode);
+          } else {
+            b.sensor = coverMode;
+          }
+          syncCoverUi();
         }
 
-        function setInteractionMode(mode, persist) {
-          interactionMode = mode;
-          sliderBtn.classList.toggle("active", mode === "slider");
-          toggleBtn.classList.toggle("active", mode === "toggle");
-          sliderModeField.style.display = mode === "slider" ? "" : "none";
-          if (!persist) return;
-          persistCoverSliderMode();
-        }
-
-        sliderModeSelect.value = sliderFunction;
-        sliderModeSelect.addEventListener("change", function () {
-          sliderFunction = this.value === "tilt" ? "tilt" : "position";
-          persistCoverSliderMode();
-        });
-        sliderBtn.addEventListener("click", function () { setInteractionMode("slider", true); });
-        toggleBtn.addEventListener("click", function () { setInteractionMode("toggle", true); });
-        setInteractionMode(interactionMode, false);
+        interactionSelect.addEventListener("change", function () { setCoverMode(this.value, true); });
+        coverPositionInput.addEventListener("change", function () { setCoverPosition(this.value); });
+        coverPositionInput.addEventListener("blur", function () { setCoverPosition(this.value); });
       }
 
       if (opts.renderLabelInSettings) labelField();
@@ -128,12 +173,26 @@ function sliderTypeFactory(opts) {
         var offIconVal = b.icon && b.icon !== "Auto" ? b.icon : opts.defaultIcon;
         var onIconDefault = opts.onIconInheritsOff ? offIconVal : opts.defaultIconOn;
         var onIconVal = b.icon_on && b.icon_on !== "Auto" ? b.icon_on : onIconDefault;
-        panel.appendChild(iconField(
+        var singleIconSection = iconField("Icon", "cover-icon", "icon", offIconVal, opts.defaultIcon);
+        var offIconSection = iconField(
           opts.iconOffFieldLabel || "Closed Icon", "icon", "icon", offIconVal, opts.defaultIcon
-        ));
-        panel.appendChild(iconField(
+        );
+        var onIconSection = iconField(
           opts.iconOnFieldLabel || "Open Icon", "icon-on", "icon_on", onIconVal, opts.defaultIconOn
-        ));
+        );
+        panel.appendChild(singleIconSection);
+        panel.appendChild(offIconSection);
+        panel.appendChild(onIconSection);
+        syncCoverUi = function () {
+          var singleIcon = opts.interactionMode && coverCommandMode(coverMode);
+          singleIconSection.style.display = singleIcon ? "" : "none";
+          offIconSection.style.display = singleIcon ? "none" : "";
+          onIconSection.style.display = singleIcon ? "none" : "";
+          if (coverPositionField) {
+            coverPositionField.style.display = coverMode === "set_position" ? "" : "none";
+          }
+        };
+        syncCoverUi();
       } else {
         panel.appendChild(helpers.makeIconPicker(
           helpers.idPrefix + "icon-picker", helpers.idPrefix + "icon",
@@ -197,7 +256,7 @@ function sliderTypeFactory(opts) {
     renderPreview: function (b, helpers) {
       var label = b.label || b.entity || opts.fallbackLabel;
       var iconName = b.icon && b.icon !== "Auto" ? iconSlug(b.icon) : opts.fallbackIcon;
-      if (opts.interactionMode && b.sensor === "toggle") {
+      if (opts.interactionMode && (b.sensor === "toggle" || coverCommandMode(b.sensor))) {
         return {
           iconHtml: '<span class="sp-btn-icon mdi mdi-' + iconName + '"></span>',
           labelHtml:

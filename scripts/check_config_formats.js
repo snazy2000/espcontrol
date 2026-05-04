@@ -260,6 +260,50 @@ assertButtonRoundTrip(hooks, "cover tilt button", {
   precision: "",
 }, false);
 
+assertButtonRoundTrip(hooks, "cover open command button", {
+  entity: "cover.office_blind",
+  label: "Open Blind",
+  icon: "Blinds Open",
+  icon_on: "Auto",
+  sensor: "open",
+  unit: "",
+  type: "cover",
+  precision: "",
+}, false);
+
+assertButtonRoundTrip(hooks, "cover close command button", {
+  entity: "cover.office_blind",
+  label: "Close Blind",
+  icon: "Blinds",
+  icon_on: "Auto",
+  sensor: "close",
+  unit: "",
+  type: "cover",
+  precision: "",
+}, false);
+
+assertButtonRoundTrip(hooks, "cover stop command button", {
+  entity: "cover.office_blind",
+  label: "Stop Blind",
+  icon: "Minus",
+  icon_on: "Auto",
+  sensor: "stop",
+  unit: "",
+  type: "cover",
+  precision: "",
+}, false);
+
+assertButtonRoundTrip(hooks, "cover set position command button", {
+  entity: "cover.office_blind",
+  label: "Half Blind",
+  icon: "Blinds",
+  icon_on: "Auto",
+  sensor: "set_position",
+  unit: "50",
+  type: "cover",
+  precision: "",
+}, false);
+
 assertButtonRoundTrip(hooks, "timezone card", {
   entity: "America/New_York (GMT-5)",
   label: "",
@@ -492,6 +536,15 @@ assertSubpageRoundTrip(hooks, "cover tilt subpage", {
   ],
 }, true);
 
+assertSubpageRoundTrip(hooks, "cover command subpage", {
+  order: ["1", "B", "2", "3"],
+  buttons: [
+    buttonShape({ entity: "cover.office_blind", label: "Open", icon: "Blinds Open", icon_on: "Auto", sensor: "open", type: "cover" }),
+    buttonShape({ entity: "cover.office_blind", label: "Stop", icon: "Minus", icon_on: "Auto", sensor: "stop", type: "cover" }),
+    buttonShape({ entity: "cover.office_blind", label: "50%", icon: "Blinds", icon_on: "Auto", sensor: "set_position", unit: "50", type: "cover" }),
+  ],
+}, true);
+
 assertSubpageRoundTrip(hooks, "climate subpage", {
   order: ["1", "B"],
   buttons: [
@@ -587,6 +640,13 @@ assert.deepStrictEqual(subpageShape(hooks.parseSubpageConfig("~1,B|C,cover.offic
     buttonShape({ entity: "cover.office_blind", label: "Office Blind", icon: "Blinds", icon_on: "Blinds Open", sensor: "tilt", type: "cover" }),
   ],
 }, "compact cover tilt subpage parse");
+
+assert.deepStrictEqual(subpageShape(hooks.parseSubpageConfig("~1,B|C,cover.office_blind,Office%20Blind,Blinds,,set_position,35")), {
+  order: ["1", "B"],
+  buttons: [
+    buttonShape({ entity: "cover.office_blind", label: "Office Blind", icon: "Blinds", icon_on: "Auto", sensor: "set_position", unit: "35", type: "cover" }),
+  ],
+}, "compact cover set position subpage parse");
 
 assert.deepStrictEqual(subpageShape(hooks.parseSubpageConfig("~1,B|I,relay_2,Gate,Power%20Plug,Power,push")), {
   order: ["1", "B"],

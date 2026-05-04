@@ -34,6 +34,16 @@ When **Display State** is on:
 - You can also enable **Change Icon When On** to use a different icon while anything inside the subpage is active.
 - Read-only cards such as Sensor, Date, World Clock, and Weather do not affect the Subpage card state.
 
+::: info Experimental
+When **Developer: Experimental Features** is enabled, Subpage cards use **Show State** instead of **Display State** and can show state in three ways:
+
+- **Icon** keeps the existing active indicator behavior, with separate Off Icon and On Icon choices.
+- **Numeric** shows a Home Assistant sensor value in the large number style used by Sensor cards.
+- **Text** shows a Home Assistant sensor state where the card label normally appears.
+
+Numeric and Text modes use the sensor entity you enter on the Subpage card. They do not automatically count the cards inside the subpage; use a Home Assistant helper or template sensor for that.
+:::
+
 ## Moving Cards Between Pages
 
 You can cut, copy, and paste cards between the home screen and subpages. Right-click a card, choose **Cut** or **Copy**, then right-click an empty space on the destination page and choose **Paste**.

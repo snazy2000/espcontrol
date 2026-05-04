@@ -2609,6 +2609,36 @@ inline void setup_text_sensor_card(BtnSlot &s, const ParsedCfg &p,
   lv_label_set_text(s.text_lbl, "--");
 }
 
+inline bool subpage_parent_sensor_state_enabled(const ParsedCfg &p, bool experimental_enabled) {
+  return experimental_enabled &&
+         p.type == "subpage" &&
+         !p.sensor.empty() &&
+         p.sensor != "indicator";
+}
+
+inline bool subpage_parent_text_state_enabled(const ParsedCfg &p, bool experimental_enabled) {
+  return subpage_parent_sensor_state_enabled(p, experimental_enabled) &&
+         p.precision == "text";
+}
+
+inline void setup_subpage_parent_state_card(BtnSlot &s, const ParsedCfg &p,
+                                            const lv_font_t *value_font) {
+  setup_toggle_visual(s, p);
+  if (p.precision == "text") {
+    lv_obj_clear_flag(s.icon_lbl, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(s.sensor_container, LV_OBJ_FLAG_HIDDEN);
+    lv_label_set_text(s.text_lbl, "--");
+    return;
+  }
+
+  lv_obj_add_flag(s.icon_lbl, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_clear_flag(s.sensor_container, LV_OBJ_FLAG_HIDDEN);
+  if (value_font) lv_obj_set_style_text_font(s.sensor_lbl, value_font, LV_PART_MAIN);
+  lv_label_set_text(s.sensor_lbl, "--");
+  lv_label_set_text(s.unit_lbl, p.unit.c_str());
+  lv_label_set_text(s.text_lbl, p.label.empty() ? "Subpage" : p.label.c_str());
+}
+
 // ── Home Assistant subscriptions ──────────────────────────────────────
 
 struct ToggleTextSensorCtx {
@@ -4099,6 +4129,10 @@ inline void grid_phase1(
       setup_garage_card(s, p);
       continue;
     }
+    if (subpage_parent_sensor_state_enabled(p, cfg.developer_experimental_features)) {
+      setup_subpage_parent_state_card(s, p, cfg.sp_sensor_font);
+      continue;
+    }
     if (p.type == "cover" && cover_command_mode(p.sensor)) {
       setup_cover_command_card(s, p);
       continue;
@@ -4243,6 +4277,16 @@ inline void grid_phase2(
           garage_closed_icon(p.icon), garage_open_icon(p.icon_on), p.entity);
         if (p.label.empty())
           subscribe_friendly_name(status_label, p.entity);
+      }
+      continue;
+    }
+    if (subpage_parent_sensor_state_enabled(p, cfg.developer_experimental_features)) {
+      if (subpage_parent_text_state_enabled(p, cfg.developer_experimental_features)) {
+        subscribe_text_sensor_value(s.text_lbl, p.sensor);
+      } else {
+        subscribe_sensor_value(s.sensor_lbl, p.sensor, parse_precision(p.precision));
+        if (p.label.empty())
+          subscribe_friendly_name(s.text_lbl, p.sensor);
       }
       continue;
     }

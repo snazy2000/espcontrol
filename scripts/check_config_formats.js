@@ -359,6 +359,54 @@ assertButtonRoundTrip(hooks, "media position card", {
   precision: "",
 }, false);
 
+const subpageStateOff = buttonShape({
+  label: "Windows",
+  icon: "Window Closed",
+  type: "subpage",
+});
+const subpageStateIcon = buttonShape({
+  label: "Lighting",
+  icon: "Lightbulb",
+  icon_on: "Lightbulb Group",
+  sensor: "indicator",
+  type: "subpage",
+});
+const subpageStateNumeric = buttonShape({
+  label: "Open Windows",
+  icon: "Window Closed",
+  sensor: "sensor.open_windows",
+  unit: "",
+  type: "subpage",
+});
+const subpageStateNumericPrecision = buttonShape({
+  label: "Average Temp",
+  icon: "Thermometer",
+  sensor: "sensor.average_temperature",
+  unit: "°C",
+  type: "subpage",
+  precision: "1",
+});
+const subpageStateText = buttonShape({
+  label: "Washer",
+  icon: "Washer",
+  sensor: "sensor.washer_state",
+  type: "subpage",
+  precision: "text",
+});
+
+assertButtonRoundTrip(hooks, "subpage state off", subpageStateOff, false);
+assertButtonRoundTrip(hooks, "subpage state icon", subpageStateIcon, false);
+assertButtonRoundTrip(hooks, "subpage state numeric", subpageStateNumeric, false);
+assertButtonRoundTrip(hooks, "subpage state numeric precision", subpageStateNumericPrecision, false);
+assertButtonRoundTrip(hooks, "subpage state text", subpageStateText, false);
+
+assert.strictEqual(hooks.subpageStateDisplayMode(subpageStateOff, false), "off", "subpage state off without flag");
+assert.strictEqual(hooks.subpageStateDisplayMode(subpageStateIcon, false), "icon", "subpage icon state without flag");
+assert.strictEqual(hooks.subpageStateDisplayMode(subpageStateNumeric, false), "off", "subpage numeric state disabled without flag");
+assert.strictEqual(hooks.subpageStateDisplayMode(subpageStateText, false), "off", "subpage text state disabled without flag");
+assert.strictEqual(hooks.subpageStateDisplayMode(subpageStateNumeric, true), "numeric", "subpage numeric state enabled with flag");
+assert.strictEqual(hooks.subpageStateDisplayMode(subpageStateText, true), "text", "subpage text state enabled with flag");
+
 assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("weather.forecast_home;Weather;Auto;Auto;;;weather_forecast")), {
   entity: "weather.forecast_home",
   label: "Weather",

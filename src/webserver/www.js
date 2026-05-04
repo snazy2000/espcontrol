@@ -152,6 +152,13 @@
   function isExperimentalEnabled(key) {
     return !!state.developerExperimentalFeatures;
   }
+
+  function subpageStateDisplayMode(b, experimentalEnabled) {
+    if (!b || !b.sensor) return "off";
+    if (b.sensor === "indicator") return "icon";
+    if (!experimentalEnabled) return "off";
+    return b.precision === "text" ? "text" : "numeric";
+  }
   // __BUTTON_TYPES_START__
   // __BUTTON_TYPES_END__
 
@@ -6201,6 +6208,7 @@
       serializeButtonConfig: serializeButtonConfig,
       parseSubpageConfig: parseSubpageConfig,
       serializeSubpageConfig: serializeSubpageConfig,
+      subpageStateDisplayMode: subpageStateDisplayMode,
       normalizeTemperatureUnit: normalizeTemperatureUnit,
       temperatureUnitSymbolFor: function (timezone, unit) {
         var oldTimezone = state.timezone;

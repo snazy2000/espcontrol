@@ -72,7 +72,7 @@ If a card already occupies the space needed for a larger size, the setup page tr
 
 ## Device Settings
 
-The **Settings** tab also includes display, brightness, screensaver, Bluetooth proxy, backup, and firmware update controls. Bluetooth proxy is off by default; see [Bluetooth Proxy](/features/bluetooth-proxy) for details.
+The **Settings** tab also includes display, brightness, screensaver, backup, and firmware update controls. Bluetooth proxy is available only when Developer/Experimental Features is enabled, and remains off by default; see [Bluetooth Proxy](/features/bluetooth-proxy) for details.
 
 ## Apply Configuration
 

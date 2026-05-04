@@ -8,9 +8,9 @@ description:
 
 EspControl can act as a Home Assistant Bluetooth proxy for nearby Bluetooth Low Energy devices, such as many battery sensors, buttons, locks, and trackers.
 
-The setting is off by default. Open the panel's setup page, go to **Settings > Bluetooth**, and turn on **Bluetooth Proxy**. The panel starts Bluetooth after the setting is enabled and keeps it enabled after restarts.
+The setting is off by default and is currently behind the developer features flag. Open the setup page with `?developer=experimental`, enable **Developer/Experimental Features** in **Settings > Developer**, then go to **Settings > Bluetooth** and turn on **Bluetooth Proxy**. The panel starts Bluetooth after the setting is enabled and keeps it enabled after restarts.
 
-When Bluetooth Proxy is off, the Bluetooth stack stays disabled on boot.
+When Bluetooth Proxy or Developer/Experimental Features is off, the Bluetooth stack stays disabled on boot.
 
 ::: warning Memory and range
 Bluetooth support uses extra memory and shares radio time with WiFi on WiFi panels. If a panel becomes unstable after enabling it, turn the setting off and restart the panel.

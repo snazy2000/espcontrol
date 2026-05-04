@@ -972,11 +972,21 @@
   }
 
   function syncBluetoothProxyUi() {
+    if (els.bluetoothProxyCard) {
+      els.bluetoothProxyCard.style.display = state.developerExperimentalFeatures ? "" : "none";
+    }
     if (els.setBluetoothProxy) els.setBluetoothProxy.checked = !!state.bluetoothProxyEnabled;
     if (els.setBluetoothProxyBadge) {
       els.setBluetoothProxyBadge.className =
         "sp-card-badge" + (state.bluetoothProxyEnabled ? "" : " sp-hidden");
     }
+  }
+
+  function disableBluetoothProxyForDeveloperGate() {
+    if (state.developerExperimentalFeatures || !state.bluetoothProxyEnabled) return;
+    state.bluetoothProxyEnabled = false;
+    syncBluetoothProxyUi();
+    postBluetoothProxy(false);
   }
 
   var els = {};
@@ -2945,6 +2955,12 @@
     var bluetoothToggle = toggleRow("Bluetooth Proxy", "sp-set-bluetooth-proxy", state.bluetoothProxyEnabled);
     bluetoothBody.appendChild(bluetoothToggle.row);
     bluetoothToggle.input.addEventListener("change", function () {
+      if (!state.developerExperimentalFeatures) {
+        this.checked = false;
+        state.bluetoothProxyEnabled = false;
+        syncBluetoothProxyUi();
+        return;
+      }
       state.bluetoothProxyEnabled = this.checked;
       syncBluetoothProxyUi();
       postBluetoothProxy(state.bluetoothProxyEnabled);
@@ -2955,7 +2971,10 @@
     bluetoothBadge.innerHTML = '<span class="sp-card-badge-dot"></span><span>ON</span>';
     els.setBluetoothProxyBadge = bluetoothBadge;
     syncBluetoothProxyUi();
-    config.appendChild(makeCollapsibleCard("Bluetooth", bluetoothBody, true, bluetoothBadge));
+    var bluetoothCard = makeCollapsibleCard("Bluetooth", bluetoothBody, true, bluetoothBadge);
+    els.bluetoothProxyCard = bluetoothCard;
+    syncBluetoothProxyUi();
+    config.appendChild(bluetoothCard);
 
     var fwBody = document.createElement("div");
 
@@ -3048,6 +3067,8 @@
       experimentalToggle.input.addEventListener("change", function () {
         state.developerExperimentalFeatures = this.checked;
         postSwitch("Developer: Experimental Features", state.developerExperimentalFeatures);
+        disableBluetoothProxyForDeveloperGate();
+        syncBluetoothProxyUi();
         renderButtonSettings();
       });
       els.setDeveloperExperimentalFeatures = experimentalToggle.input;
@@ -5173,7 +5194,7 @@
         home_screen_timeout: state.homeScreenTimeout,
         screen_rotation: state.screenRotation,
         developer_experimental_features: state.developerExperimentalFeatures,
-        bluetooth_proxy: state.bluetoothProxyEnabled,
+        bluetooth_proxy: state.developerExperimentalFeatures && state.bluetoothProxyEnabled,
       },
       screen: {
         brightness_day: Math.round(state.brightnessDayVal),
@@ -5401,6 +5422,12 @@
             Object.prototype.hasOwnProperty.call(s, "developer_experimental_features");
           var hasBluetoothProxy =
             Object.prototype.hasOwnProperty.call(s, "bluetooth_proxy");
+          var importedDeveloperExperimentalFeatures = hasDeveloperExperimentalFeatures
+            ? !!s.developer_experimental_features
+            : state.developerExperimentalFeatures;
+          var importedBluetoothProxy = importedDeveloperExperimentalFeatures && hasBluetoothProxy
+            ? !!s.bluetooth_proxy
+            : false;
           var importedNtpServer1 = hasNtpServer1
             ? normalizeNtpServer(s.ntp_server_1, NTP_SERVER_DEFAULTS[0])
             : state.ntpServer1;
@@ -5444,9 +5471,11 @@
           var importedScreenRotation = normalizeScreenRotation(s.screen_rotation);
           if (CFG.features && CFG.features.screenRotation) postSelect("Screen: Rotation", importedScreenRotation);
           if (hasDeveloperExperimentalFeatures) {
-            postSwitch("Developer: Experimental Features", !!s.developer_experimental_features);
+            postSwitch("Developer: Experimental Features", importedDeveloperExperimentalFeatures);
           }
-          postBluetoothProxy(hasBluetoothProxy ? !!s.bluetooth_proxy : false);
+          if (hasBluetoothProxy || state.bluetoothProxyEnabled) {
+            postBluetoothProxy(importedBluetoothProxy);
+          }
 
           state._indoorOn = !!s.indoor_temp_enable;
           state._outdoorOn = !!s.outdoor_temp_enable;
@@ -5471,9 +5500,9 @@
           state.homeScreenTimeout = s.home_screen_timeout != null ? s.home_screen_timeout : 60;
           state.screenRotation = importedScreenRotation;
           if (hasDeveloperExperimentalFeatures) {
-            state.developerExperimentalFeatures = !!s.developer_experimental_features;
+            state.developerExperimentalFeatures = importedDeveloperExperimentalFeatures;
           }
-          state.bluetoothProxyEnabled = hasBluetoothProxy ? !!s.bluetooth_proxy : false;
+          state.bluetoothProxyEnabled = importedBluetoothProxy;
 
           syncTemperatureUi();
           syncClockBarUi();
@@ -5991,6 +6020,7 @@
         if (els.setDeveloperExperimentalFeatures) {
           els.setDeveloperExperimentalFeatures.checked = state.developerExperimentalFeatures;
         }
+        syncBluetoothProxyUi();
         renderButtonSettings();
       },
       "switch-developer_experimental_features": function (val, d) {
@@ -5998,6 +6028,7 @@
         if (els.setDeveloperExperimentalFeatures) {
           els.setDeveloperExperimentalFeatures.checked = state.developerExperimentalFeatures;
         }
+        syncBluetoothProxyUi();
         renderButtonSettings();
       },
       "select-firmware__update_frequency": function (val, d) {

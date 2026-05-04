@@ -6,8 +6,13 @@ function coverCommandMode(mode) {
   return mode === "open" || mode === "close" || mode === "stop" || mode === "set_position";
 }
 
-function normalizeCoverMode(mode) {
-  if (mode === "tilt" || mode === "toggle" || coverCommandMode(mode)) return mode;
+function coverCommandModesEnabled() {
+  return typeof state !== "undefined" && !!state.developerExperimentalFeatures;
+}
+
+function normalizeCoverMode(mode, allowCommands) {
+  if (mode === "tilt" || mode === "toggle") return mode;
+  if (allowCommands && coverCommandMode(mode)) return mode;
   return "";
 }
 
@@ -47,16 +52,18 @@ function sliderTypeFactory(opts) {
       var syncCoverUi = function () {};
 
       if (opts.interactionMode) {
-        coverMode = normalizeCoverMode(b.sensor);
-        if (b.sensor !== coverMode) {
-          b.sensor = coverMode;
-          helpers.saveField("sensor", coverMode);
+        var allowCoverCommands = coverCommandModesEnabled();
+        var storedCoverMode = normalizeCoverMode(b.sensor, true);
+        coverMode = allowCoverCommands ? storedCoverMode : normalizeCoverMode(b.sensor, false);
+        if (b.sensor !== storedCoverMode) {
+          b.sensor = storedCoverMode;
+          helpers.saveField("sensor", storedCoverMode);
         }
-        if (coverMode !== "set_position" && b.unit) {
+        if (storedCoverMode !== "set_position" && b.unit && (allowCoverCommands || !coverCommandMode(storedCoverMode))) {
           b.unit = "";
           helpers.saveField("unit", "");
         }
-        if (coverCommandMode(coverMode) && b.icon_on !== "Auto") {
+        if (allowCoverCommands && coverCommandMode(storedCoverMode) && b.icon_on !== "Auto") {
           b.icon_on = "Auto";
           helpers.saveField("icon_on", "Auto");
         }
@@ -67,15 +74,20 @@ function sliderTypeFactory(opts) {
         var interactionSelect = document.createElement("select");
         interactionSelect.className = "sp-select";
         interactionSelect.id = helpers.idPrefix + "cover-interaction";
-        [
+        var interactionOptions = [
           ["", "Slider: Position"],
           ["tilt", "Slider: Tilt"],
           ["toggle", "Toggle"],
-          ["open", "Open"],
-          ["close", "Close"],
-          ["stop", "Stop"],
-          ["set_position", "Set Position"],
-        ].forEach(function (entry) {
+        ];
+        if (allowCoverCommands) {
+          interactionOptions = interactionOptions.concat([
+            ["open", "Open"],
+            ["close", "Close"],
+            ["stop", "Stop"],
+            ["set_position", "Set Position"],
+          ]);
+        }
+        interactionOptions.forEach(function (entry) {
           var option = document.createElement("option");
           option.value = entry[0];
           option.textContent = entry[1];
@@ -105,6 +117,7 @@ function sliderTypeFactory(opts) {
         }
 
         function setCoverPosition(value) {
+          if (!coverPositionInput) return;
           var position = normalizeCoverPosition(value);
           coverPositionInput.value = position;
           b.unit = position;
@@ -112,7 +125,7 @@ function sliderTypeFactory(opts) {
         }
 
         function setCoverMode(mode, persist) {
-          coverMode = normalizeCoverMode(mode);
+          coverMode = normalizeCoverMode(mode, allowCoverCommands);
           interactionSelect.value = coverMode;
           if (coverMode === "set_position") {
             setCoverPosition(b.unit);
@@ -254,6 +267,12 @@ function sliderTypeFactory(opts) {
       }
     },
     renderPreview: function (b, helpers) {
+      if (opts.interactionMode && coverCommandMode(b.sensor) && !coverCommandModesEnabled()) {
+        return {
+          iconHtml: '<span class="sp-btn-icon mdi mdi-cog"></span>',
+          labelHtml: '<span class="sp-btn-label">Configure</span>',
+        };
+      }
       var label = b.label || b.entity || opts.fallbackLabel;
       var iconName = b.icon && b.icon !== "Auto" ? iconSlug(b.icon) : opts.fallbackIcon;
       if (opts.interactionMode && (b.sensor === "toggle" || coverCommandMode(b.sensor))) {

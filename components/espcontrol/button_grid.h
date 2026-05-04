@@ -2912,7 +2912,9 @@ inline const char *action_card_value_key(const std::string &action) {
   return nullptr;
 }
 
-inline bool action_card_action_allowed(const std::string &action) {
+inline bool action_card_action_allowed(const std::string &action,
+                                       bool developer_experimental_features = false) {
+  if (action == "lock.open" && !developer_experimental_features) return false;
   return action == "scene.turn_on" ||
          action == "script.turn_on" ||
          action == "automation.trigger" ||
@@ -2925,8 +2927,10 @@ inline bool action_card_action_allowed(const std::string &action) {
          action_card_requires_value(action);
 }
 
-inline void send_action_card_action(const ParsedCfg &p) {
-  if (p.entity.empty() || p.sensor.empty() || !action_card_action_allowed(p.sensor)) return;
+inline void send_action_card_action(const ParsedCfg &p,
+                                    bool developer_experimental_features = false) {
+  if (p.entity.empty() || p.sensor.empty() ||
+      !action_card_action_allowed(p.sensor, developer_experimental_features)) return;
   const char *value_key = action_card_value_key(p.sensor);
   if (value_key && p.unit.empty()) return;
 
@@ -2944,6 +2948,11 @@ inline void send_action_card_action(const ParsedCfg &p) {
   }
   esphome::api::global_api_server->send_homeassistant_action(req);
 }
+
+struct ActionCardCtx {
+  ParsedCfg config;
+  bool developer_experimental_features = false;
+};
 
 inline void send_lock_action(const std::string &entity_id, const std::string &state) {
   if (entity_id.empty()) return;
@@ -3131,11 +3140,15 @@ inline void send_media_seek_action(const std::string &entity_id, int value, floa
 
 // ── Button click dispatch ─────────────────────────────────────────────
 
+inline bool experimental_card_enabled(const ParsedCfg &p, bool developer_experimental_features);
+
 // Handle a main-grid button press: dispatch push event, subpage nav,
 // slider toggle, or entity toggle based on the config string.
 inline void handle_button_click(const std::string &cfg, int slot_num,
-                                lv_obj_t *btn_obj) {
+                                lv_obj_t *btn_obj,
+                                bool developer_experimental_features = false) {
   ParsedCfg p = parse_cfg(cfg);
+  if (!experimental_card_enabled(p, developer_experimental_features)) return;
   if (p.type == "sensor" || p.type == "text_sensor" ||
       p.type == "calendar" || p.type == "timezone" ||
       p.type == "weather_forecast") return;
@@ -3185,7 +3198,7 @@ inline void handle_button_click(const std::string &cfg, int slot_num,
   } else if (p.type == "internal") {
     if (!p.entity.empty()) send_internal_relay_action(p);
   } else if (p.type == "action") {
-    send_action_card_action(p);
+    send_action_card_action(p, developer_experimental_features);
   } else if (p.type == "media") {
     if (!p.entity.empty() && media_card_mode(p.sensor) == "controls")
       send_media_player_action(p.entity, "media_player.media_play_pause");
@@ -4098,9 +4111,14 @@ struct GridConfig {
   bool developer_experimental_features;
 };
 
-inline bool experimental_card_enabled(const ParsedCfg &p, const GridConfig &cfg) {
-  if (p.type == "climate") return cfg.developer_experimental_features;
+inline bool experimental_card_enabled(const ParsedCfg &p, bool developer_experimental_features) {
+  if (p.type == "climate" || p.type == "lock") return developer_experimental_features;
+  if (p.type == "cover" && cover_command_mode(p.sensor)) return developer_experimental_features;
   return true;
+}
+
+inline bool experimental_card_enabled(const ParsedCfg &p, const GridConfig &cfg) {
+  return experimental_card_enabled(p, cfg.developer_experimental_features);
 }
 
 // ── Phase 1: Visual setup ────────────────────────────────────────────
@@ -4594,6 +4612,7 @@ inline void grid_phase2(
       auto &sb = sp_btns[bn - 1];
       ParsedCfg sb_cfg;
       sb_cfg.type = sb.type;
+      sb_cfg.sensor = sb.sensor;
       if (!experimental_card_enabled(sb_cfg, cfg)) continue;
       int col, row;
       if (sp_ord.has_back_token) { col = gp % COLS; row = gp / COLS; }
@@ -5023,18 +5042,19 @@ inline void grid_phase2(
         lv_label_set_text(sil, action_icon);
         apply_push_button_transition(sb_btn);
         if (!sb.entity.empty() && !sb.sensor.empty()) {
-          ParsedCfg *ctx = new ParsedCfg();
-          ctx->entity = sb.entity;
-          ctx->label = sb.label;
-          ctx->icon = sb.icon;
-          ctx->icon_on = sb.icon_on;
-          ctx->sensor = sb.sensor;
-          ctx->unit = sb.unit;
-          ctx->type = sb.type;
-          ctx->precision = sb.precision;
+          ActionCardCtx *ctx = new ActionCardCtx();
+          ctx->config.entity = sb.entity;
+          ctx->config.label = sb.label;
+          ctx->config.icon = sb.icon;
+          ctx->config.icon_on = sb.icon_on;
+          ctx->config.sensor = sb.sensor;
+          ctx->config.unit = sb.unit;
+          ctx->config.type = sb.type;
+          ctx->config.precision = sb.precision;
+          ctx->developer_experimental_features = cfg.developer_experimental_features;
           lv_obj_add_event_cb(sb_btn, [](lv_event_t *e) {
-            ParsedCfg *c = (ParsedCfg *)lv_event_get_user_data(e);
-            if (c) send_action_card_action(*c);
+            ActionCardCtx *c = (ActionCardCtx *)lv_event_get_user_data(e);
+            if (c) send_action_card_action(c->config, c->developer_experimental_features);
           }, LV_EVENT_CLICKED, ctx);
         }
 

@@ -9,9 +9,12 @@ esp32_ble:
   enable_on_boot: false
 
 esp32_ble_tracker:
+  scan_parameters:
+    active: false
 
 bluetooth_proxy:
-  active: true
+  id: bluetooth_proxy_component
+  active: false
 
 esphome:
   on_boot:
@@ -21,8 +24,10 @@ esphome:
           condition:
             switch.is_on: bluetooth_proxy_enabled
           then:
+            - lambda: 'id(bluetooth_proxy_component).set_active(true);'
             - ble.enable:
           else:
+            - lambda: 'id(bluetooth_proxy_component).set_active(false);'
             - ble.disable:
 
 switch:
@@ -37,6 +42,8 @@ switch:
     web_server:
       sorting_group_id: sg_connectivity
     on_turn_on:
+      - lambda: 'id(bluetooth_proxy_component).set_active(true);'
       - ble.enable:
     on_turn_off:
+      - lambda: 'id(bluetooth_proxy_component).set_active(false);'
       - ble.disable:

@@ -181,15 +181,35 @@ inline std::string text_sensor_display_text(esphome::StringRef value) {
   std::string raw = string_ref_limited(value, HA_TEXT_SENSOR_STATE_MAX_LEN);
   std::string out;
   out.reserve(raw.size());
+  bool cap_next = true;
+  bool last_space = false;
   for (size_t i = 0; i < raw.size(); i++) {
     char ch = raw[i];
-    if (ch == '\r') {
-      if (i + 1 < raw.size() && raw[i + 1] == '\n') continue;
-      out.push_back('\n');
+    unsigned char c = static_cast<unsigned char>(ch);
+    if (ch == '\r' || ch == '\n') {
+      if (ch == '\r' && i + 1 < raw.size() && raw[i + 1] == '\n') continue;
+      if (!out.empty() && out.back() == ' ') out.pop_back();
+      if (!out.empty() && out.back() != '\n') out.push_back('\n');
+      cap_next = true;
+      last_space = false;
+      continue;
+    }
+    if (ch == '_' || ch == '-' || std::isspace(c)) {
+      if (!out.empty() && !last_space && out.back() != '\n') {
+        out.push_back(' ');
+        last_space = true;
+      }
+      continue;
+    }
+    if (std::isalpha(c)) {
+      out.push_back(static_cast<char>(cap_next ? std::toupper(c) : std::tolower(c)));
+      cap_next = false;
     } else {
       out.push_back(ch);
     }
+    last_space = false;
   }
+  while (!out.empty() && (out.back() == ' ' || out.back() == '\n')) out.pop_back();
   return out;
 }
 

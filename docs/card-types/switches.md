@@ -37,7 +37,7 @@ Switch cards always have separate **Off Icon** and **On Icon** settings. The on 
 Switch cards can also show sensor data while the entity is active:
 
 - **Numeric** - show a live sensor value instead of the icon. You can set the sensor entity, unit, and decimal precision.
-- **Text** - show a live text state instead of the card label, preserving capital letters and line breaks.
+- **Text** - show a live text state instead of the card label, formatting it in sentence case and preserving line breaks.
 
 When the entity is not active, the card goes back to its normal off icon and label.
 

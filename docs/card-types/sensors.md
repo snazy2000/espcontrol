@@ -37,7 +37,7 @@ For **Text** mode:
 - Numeric mode displays the current value in large text, with the unit beside it and the label underneath.
 - Numeric mode uses the **tertiary** colour from [Appearance](/features/appearance), so it remains visually distinct from Switch and Trigger cards.
 - Text mode uses the same tertiary colour as Numeric mode, while keeping the normal Switch-style icon and label layout.
-- Text mode preserves the text from Home Assistant, including capital letters and line breaks. Very long values are limited to roughly 256 characters so the panel stays responsive.
+- Text mode formats the Home Assistant text in sentence case and preserves line breaks. Very long values are limited to roughly 256 characters so the panel stays responsive.
 
 ## Example Sensors
 

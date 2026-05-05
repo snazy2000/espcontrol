@@ -74,15 +74,16 @@ inline void format_fixed_decimal_unit(char *buf, size_t size, float value,
 inline void format_clock_bar_temperature_single(char *buf, size_t size,
                                                 const char *value_text) {
   snprintf(buf, size, "%s%s", value_text ? value_text : "-",
-           display_clock_bar_temperature_unit_symbol());
+           display_clock_bar_temperature_suffix());
 }
 
 inline void format_clock_bar_temperature_pair(char *buf, size_t size,
                                               const char *outdoor_text,
                                               const char *indoor_text) {
-  snprintf(buf, size, "%s / %s%s", outdoor_text ? outdoor_text : "-",
+  const char *suffix = display_clock_bar_temperature_suffix();
+  snprintf(buf, size, "%s%s / %s%s", outdoor_text ? outdoor_text : "-", suffix,
            indoor_text ? indoor_text : "-",
-           display_clock_bar_temperature_unit_symbol());
+           suffix);
 }
 
 inline SunCalcResult recalc_sunrise_sunset(

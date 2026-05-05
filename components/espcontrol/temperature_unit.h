@@ -88,7 +88,7 @@ inline const char *display_temperature_unit_symbol() {
   return display_temperature_uses_fahrenheit() ? "\u00B0F" : "\u00B0C";
 }
 
-inline const char *display_clock_bar_temperature_unit_symbol() {
-  if (display_temperature_degree_symbol_enabled()) return display_temperature_unit_symbol();
+inline const char *display_clock_bar_temperature_suffix() {
+  if (display_temperature_degree_symbol_enabled()) return "\u00B0";
   return "";
 }

@@ -695,8 +695,7 @@
   }
 
   function clockBarTemperatureUnitSymbol() {
-    var unit = temperatureUnitSymbol();
-    return state.temperatureDegreeSymbolOn ? unit : "";
+    return state.temperatureDegreeSymbolOn ? "\u00B0" : "";
   }
 
   function appendScreenRotationOption(select, opt) {
@@ -6466,7 +6465,7 @@
     var indoor = state._indoorVal != null ? state._indoorVal : "24";
     var outdoor = state._outdoorVal != null ? state._outdoorVal : "17";
     if (state._indoorOn && state._outdoorOn) {
-      els.temp.textContent = outdoor + " / " + indoor + unit;
+      els.temp.textContent = outdoor + unit + " / " + indoor + unit;
     } else if (state._outdoorOn) {
       els.temp.textContent = outdoor + unit;
     } else if (state._indoorOn) {

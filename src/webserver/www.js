@@ -4073,13 +4073,23 @@
       emptyEl.style.display = hasMatch ? "none" : "";
     }
 
-    function selectOpt(opt) {
+    function setPickerIcon(opt) {
       currentIcon = opt;
       input.value = opt;
       preview.className = "sp-icon-picker-preview mdi mdi-" + iconSlug(opt);
+      if (optionEls) {
+        for (var i = 0; i < optionEls.length; i++) {
+          optionEls[i].classList.toggle("sp-active", optionEls[i]._optName === opt);
+        }
+      }
+    }
+
+    function selectOpt(opt) {
+      setPickerIcon(opt);
       closePicker();
       onSelect(opt);
     }
+    picker._setIcon = setPickerIcon;
 
     function openPicker() {
       if (currentIcon === "Auto") {

@@ -49,7 +49,34 @@ function sliderTypeFactory(opts) {
       var coverMode = "";
       var coverPositionField = null;
       var coverPositionInput = null;
+      var singleIconSection = null;
+      var offIconSection = null;
       var syncCoverUi = function () {};
+
+      function syncIconSection(section, value) {
+        if (!section) return;
+        var picker = section.querySelector(".sp-icon-picker");
+        if (picker && picker._setIcon) {
+          picker._setIcon(value);
+          return;
+        }
+        var preview = section.querySelector(".sp-icon-picker-preview");
+        if (preview) preview.className = "sp-icon-picker-preview mdi mdi-" + iconSlug(value);
+        var input = section.querySelector(".sp-icon-picker-input");
+        if (input) input.value = value;
+      }
+
+      function useCoverOpenDefaultIcon() {
+        return opts.interactionMode && (!b.icon || b.icon === "Auto" || b.icon === opts.defaultIcon);
+      }
+
+      function applyCoverOpenDefaultIcon(mode) {
+        if (mode !== "open" || !useCoverOpenDefaultIcon()) return;
+        b.icon = opts.defaultIconOn;
+        helpers.saveField("icon", b.icon);
+        syncIconSection(singleIconSection, b.icon);
+        syncIconSection(offIconSection, b.icon);
+      }
 
       if (opts.interactionMode) {
         var allowCoverCommands = coverCommandModesEnabled();
@@ -66,6 +93,9 @@ function sliderTypeFactory(opts) {
         if (allowCoverCommands && coverCommandMode(storedCoverMode) && b.icon_on !== "Auto") {
           b.icon_on = "Auto";
           helpers.saveField("icon_on", "Auto");
+        }
+        if (allowCoverCommands) {
+          applyCoverOpenDefaultIcon(storedCoverMode);
         }
 
         var imf = document.createElement("div");
@@ -137,6 +167,7 @@ function sliderTypeFactory(opts) {
           if (coverCommandMode(coverMode)) {
             b.icon_on = "Auto";
             helpers.saveField("icon_on", "Auto");
+            applyCoverOpenDefaultIcon(coverMode);
           }
           if (persist) {
             b.sensor = coverMode;
@@ -186,8 +217,8 @@ function sliderTypeFactory(opts) {
         var offIconVal = b.icon && b.icon !== "Auto" ? b.icon : opts.defaultIcon;
         var onIconDefault = opts.onIconInheritsOff ? offIconVal : opts.defaultIconOn;
         var onIconVal = b.icon_on && b.icon_on !== "Auto" ? b.icon_on : onIconDefault;
-        var singleIconSection = iconField("Icon", "cover-icon", "icon", offIconVal, opts.defaultIcon);
-        var offIconSection = iconField(
+        singleIconSection = iconField("Icon", "cover-icon", "icon", offIconVal, opts.defaultIcon);
+        offIconSection = iconField(
           opts.iconOffFieldLabel || "Closed Icon", "icon", "icon", offIconVal, opts.defaultIcon
         );
         var onIconSection = iconField(

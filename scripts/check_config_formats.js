@@ -405,6 +405,14 @@ const subpageStateIcon = buttonShape({
   sensor: "indicator",
   type: "subpage",
 });
+const subpageStateIconEntity = buttonShape({
+  entity: "cover.office_blind",
+  label: "Blind",
+  icon: "Blinds",
+  icon_on: "Blinds Open",
+  sensor: "indicator",
+  type: "subpage",
+});
 const subpageStateNumeric = buttonShape({
   label: "Open Windows",
   icon: "Window Closed",
@@ -430,12 +438,14 @@ const subpageStateText = buttonShape({
 
 assertButtonRoundTrip(hooks, "subpage state off", subpageStateOff, false);
 assertButtonRoundTrip(hooks, "subpage state icon", subpageStateIcon, false);
+assertButtonRoundTrip(hooks, "subpage state icon entity", subpageStateIconEntity, false);
 assertButtonRoundTrip(hooks, "subpage state numeric", subpageStateNumeric, false);
 assertButtonRoundTrip(hooks, "subpage state numeric precision", subpageStateNumericPrecision, false);
 assertButtonRoundTrip(hooks, "subpage state text", subpageStateText, false);
 
 assert.strictEqual(hooks.subpageStateDisplayMode(subpageStateOff), "off", "subpage state off");
 assert.strictEqual(hooks.subpageStateDisplayMode(subpageStateIcon), "icon", "subpage icon state");
+assert.strictEqual(hooks.subpageStateDisplayMode(subpageStateIconEntity), "icon", "subpage icon entity state");
 assert.strictEqual(hooks.subpageStateDisplayMode(subpageStateNumeric), "numeric", "subpage numeric state");
 assert.strictEqual(hooks.subpageStateDisplayMode(subpageStateText), "text", "subpage text state");
 

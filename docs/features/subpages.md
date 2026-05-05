@@ -30,7 +30,7 @@ Turn on **Show State** if you want the Subpage card on the home screen to show s
 
 Subpage cards can show state in three ways:
 
-- **Icon** keeps the existing active indicator behavior, with separate Off Icon and On Icon choices. The Subpage card lights up if any active-capable card inside it is on, open, playing, unlocked, or otherwise active.
+- **Icon** shows separate Off Icon and On Icon choices. Enter a State Entity to track a specific Home Assistant entity, or leave it blank to keep the existing automatic behavior where the Subpage card lights up if any active-capable card inside it is on, open, playing, unlocked, or otherwise active.
 - **Numeric** shows a Home Assistant sensor value in the large number style used by Sensor cards.
 - **Text** shows a Home Assistant sensor state where the card label normally appears.
 

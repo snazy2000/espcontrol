@@ -2672,6 +2672,12 @@ inline bool subpage_parent_text_state_enabled(const ParsedCfg &p) {
          p.precision == "text";
 }
 
+inline bool subpage_parent_icon_entity_state_enabled(const ParsedCfg &p) {
+  return p.type == "subpage" &&
+         p.sensor == "indicator" &&
+         !p.entity.empty();
+}
+
 inline void setup_subpage_parent_state_card(BtnSlot &s, const ParsedCfg &p,
                                             const lv_font_t *value_font) {
   setup_toggle_visual(s, p);
@@ -4464,6 +4470,28 @@ inline void grid_phase2(
       }
       continue;
     }
+    if (subpage_parent_icon_entity_state_enabled(p)) {
+      has_sensor[idx - 1] = false;
+      sensor_text_mode[idx - 1] = false;
+      has_icon_on[idx - 1] = !p.icon_on.empty() && p.icon_on != "Auto";
+      if (has_icon_on[idx - 1])
+        icon_on_cp[idx - 1] = find_icon(p.icon_on.c_str());
+
+      if (p.icon.empty() || p.icon == "Auto") {
+        icon_off_cp[idx - 1] = domain_default_icon(p.entity.substr(0, p.entity.find('.')));
+      } else {
+        icon_off_cp[idx - 1] = find_icon(p.icon.c_str());
+      }
+
+      if (p.label.empty())
+        subscribe_friendly_name(s.text_lbl, p.entity);
+
+      subscribe_toggle_state(s.btn, s.icon_lbl, s.sensor_container,
+        &has_sensor[idx - 1], &sensor_text_mode[idx - 1],
+        &has_icon_on[idx - 1], &icon_off_cp[idx - 1], &icon_on_cp[idx - 1],
+        nullptr, p.entity);
+      continue;
+    }
     if (p.type == "lock") {
       if (!p.entity.empty()) {
         LockCardCtx *ctx = new LockCardCtx();
@@ -4617,7 +4645,7 @@ inline void grid_phase2(
   for (int si = 0; si < NS; si++) {
     ParsedCfg p = parse_cfg(slots[si].config->state);
     if (p.type != "subpage") continue;
-    bool sp_indicator = p.sensor == "indicator";
+    bool sp_indicator = p.sensor == "indicator" && p.entity.empty();
 
     bool sp_has_icon_on = !p.icon_on.empty() && p.icon_on != "Auto";
     const char* sp_icon_on_glyph = sp_has_icon_on ? find_icon(p.icon_on.c_str()) : nullptr;

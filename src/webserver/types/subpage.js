@@ -10,6 +10,7 @@ registerButtonType("subpage", {
     var mode = subpageStateDisplayMode(b);
     var showState = mode !== "off";
     var sensorEntity = b.sensor && b.sensor !== "indicator" ? b.sensor : "";
+    var iconStateEntity = mode === "icon" ? (b.entity || "") : "";
     var iconFields = [];
 
     function syncIconFields(value) {
@@ -64,6 +65,16 @@ registerButtonType("subpage", {
     stateCond.appendChild(modeField);
 
     var iconSection = condField();
+    var iconEntityField = document.createElement("div");
+    iconEntityField.className = "sp-field";
+    iconEntityField.appendChild(helpers.fieldLabel("State Entity", helpers.idPrefix + "icon-state-entity"));
+    var iconEntityInp = helpers.textInput(
+      helpers.idPrefix + "icon-state-entity",
+      iconStateEntity,
+      "e.g. cover.office_blind"
+    );
+    iconEntityField.appendChild(iconEntityInp);
+    iconSection.appendChild(iconEntityField);
     iconSection.appendChild(makeSubpageIconPicker("Off Icon", "icon-off"));
     var onIconSection = helpers.makeIconPicker(
       helpers.idPrefix + "icon-on-picker", helpers.idPrefix + "icon-on",
@@ -100,6 +111,23 @@ registerButtonType("subpage", {
     sensorInp.addEventListener("keydown", function (e) {
       if (e.key === "Enter") {
         saveSensorEntity();
+        this.blur();
+      }
+    });
+
+    function saveIconStateEntity() {
+      iconStateEntity = iconEntityInp.value;
+      if (showState && mode === "icon") {
+        b.entity = iconStateEntity;
+        helpers.saveField("entity", b.entity);
+      }
+    }
+    iconEntityInp.addEventListener("input", saveIconStateEntity);
+    iconEntityInp.addEventListener("change", saveIconStateEntity);
+    iconEntityInp.addEventListener("blur", saveIconStateEntity);
+    iconEntityInp.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        saveIconStateEntity();
         this.blur();
       }
     });
@@ -162,38 +190,52 @@ registerButtonType("subpage", {
 
       if (mode === "off") {
         b.sensor = "";
+        b.entity = "";
         b.unit = "";
         b.precision = "";
         b.icon_on = "Auto";
+        iconStateEntity = "";
         unitInp.value = "";
+        iconEntityInp.value = "";
         precisionSelect.value = "0";
         helpers.saveField("sensor", "");
+        helpers.saveField("entity", "");
         helpers.saveField("unit", "");
         helpers.saveField("precision", "");
         helpers.saveField("icon_on", "Auto");
       } else if (mode === "icon") {
         b.sensor = "indicator";
+        b.entity = iconStateEntity;
         b.unit = "";
         b.precision = "";
         unitInp.value = "";
         precisionSelect.value = "0";
         helpers.saveField("sensor", "indicator");
+        helpers.saveField("entity", b.entity);
         helpers.saveField("unit", "");
         helpers.saveField("precision", "");
       } else if (mode === "numeric") {
         b.sensor = sensorEntity;
+        b.entity = "";
         b.precision = precisionSelect.value === "0" ? "" : precisionSelect.value;
         b.icon_on = "Auto";
+        iconStateEntity = "";
+        iconEntityInp.value = "";
         helpers.saveField("sensor", b.sensor);
+        helpers.saveField("entity", "");
         helpers.saveField("precision", b.precision);
         helpers.saveField("icon_on", "Auto");
       } else if (mode === "text") {
         b.sensor = sensorEntity;
+        b.entity = "";
         b.unit = "";
         b.precision = "text";
         b.icon_on = "Auto";
+        iconStateEntity = "";
         unitInp.value = "";
+        iconEntityInp.value = "";
         helpers.saveField("sensor", b.sensor);
+        helpers.saveField("entity", "");
         helpers.saveField("unit", "");
         helpers.saveField("precision", "text");
         helpers.saveField("icon_on", "Auto");

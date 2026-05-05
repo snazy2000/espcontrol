@@ -31,6 +31,14 @@ registerButtonType("media", {
     b.precision = "";
     b.icon_on = "Auto";
 
+    var ef = document.createElement("div");
+    ef.className = "sp-field";
+    ef.appendChild(helpers.fieldLabel("Media Player Entity", helpers.idPrefix + "entity"));
+    var entityInp = helpers.textInput(helpers.idPrefix + "entity", b.entity, "e.g. media_player.living_room");
+    ef.appendChild(entityInp);
+    panel.appendChild(ef);
+    helpers.bindField(entityInp, "entity", true);
+
     var mf = document.createElement("div");
     mf.className = "sp-field";
     mf.appendChild(helpers.fieldLabel("Media Mode", helpers.idPrefix + "media-mode"));
@@ -50,14 +58,6 @@ registerButtonType("media", {
     });
     mf.appendChild(modeSelect);
     panel.appendChild(mf);
-
-    var ef = document.createElement("div");
-    ef.className = "sp-field";
-    ef.appendChild(helpers.fieldLabel("Media Player Entity", helpers.idPrefix + "entity"));
-    var entityInp = helpers.textInput(helpers.idPrefix + "entity", b.entity, "e.g. media_player.living_room");
-    ef.appendChild(entityInp);
-    panel.appendChild(ef);
-    helpers.bindField(entityInp, "entity", true);
 
     panel.appendChild(helpers.makeIconPicker(
       helpers.idPrefix + "icon-picker", helpers.idPrefix + "icon",

@@ -3221,6 +3221,8 @@ inline void send_media_playback_action(const std::string &entity_id,
 // ── Button click dispatch ─────────────────────────────────────────────
 
 inline bool experimental_card_enabled(const ParsedCfg &p, bool developer_experimental_features);
+struct MediaVolumeCtx;
+inline void media_volume_open_modal(MediaVolumeCtx *ctx);
 
 // Handle a main-grid button press: dispatch push event, subpage nav,
 // slider toggle, or entity toggle based on the config string.

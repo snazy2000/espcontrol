@@ -191,7 +191,7 @@ registerButtonType("media", {
       return {
         iconHtml:
           '<span class="sp-slider-preview"><span class="sp-slider-track">' +
-            '<span class="sp-slider-fill" style="width:62%;height:100%"></span>' +
+            '<span class="sp-slider-fill" style="width:100%;height:62%"></span>' +
           '</span></span>' +
           '<span class="sp-sensor-preview"><span class="sp-sensor-value">62%</span></span>',
         labelHtml:

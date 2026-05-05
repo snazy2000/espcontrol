@@ -7,8 +7,8 @@
 # =============================================================================
 
 substitutions:
-  device_slug: "esp32-p4-86-panel"
-  firmware_manifest_slug: "esp32-p4-86-panel"
+  device_slug: "esp32-p4-86"
+  firmware_manifest_slug: "esp32-p4-86"
   screen_width: "720"
   screen_height: "720"
   content_width: "570"

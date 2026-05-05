@@ -43,7 +43,7 @@
       "wrap_tall_labels": true
     },
     {
-      "slug": "esp32-p4-86-panel",
+      "slug": "esp32-p4-86",
       "slots": 9,
       "cols": 3,
       "grid": "3x3",

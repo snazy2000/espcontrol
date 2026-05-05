@@ -101,7 +101,7 @@ const screenProducts: Record<string, Record<string, string>> = {
     resolution: '1280 x 800',
     processor: 'ESP32-P4',
   },
-  'screens/p4-86-panel.md': {
+  'screens/p4-86.md': {
     name: 'Waveshare ESP32-P4 86 Panel',
     brand: 'Waveshare',
     model: 'ESP32-P4-86-Panel-ETH-2RO',
@@ -381,7 +381,7 @@ export default defineConfig({
           { text: '10.1-inch JC8012P4A1', link: '/screens/jc8012p4a1' },
           { text: '7-inch JC1060P470', link: '/screens/jc1060p470' },
           { text: '4.3-inch JC4880P443', link: '/screens/jc4880p443' },
-          { text: '4-inch Waveshare P4 86 Panel', link: '/screens/p4-86-panel' },
+          { text: '4-inch Waveshare P4 86 Panel', link: '/screens/p4-86' },
           { text: '4-inch 4848S040', link: '/screens/4848s040' },
         ],
       },

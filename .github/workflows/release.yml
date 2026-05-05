@@ -28,8 +28,8 @@ jobs:
           - device: guition-esp32-p4-jc4880p443
             slug: guition-esp32-p4-jc4880p443
             chip: ESP32-P4
-          - device: esp32-p4-86-panel
-            slug: esp32-p4-86-panel
+          - device: esp32-p4-86
+            slug: esp32-p4-86
             chip: ESP32-P4
           - device: guition-esp32-s3-4848s040
             slug: guition-esp32-s3-4848s040

@@ -5,7 +5,7 @@
 # =============================================================================
 
 substitutions:
-  name: "p4-86-panel-dev"
+  name: "p4-86-dev"
   friendly_name: "Waveshare ESP32-P4 86 Panel Dev"
   espcontrol_component_url: "../.."
   espcontrol_component_ref: "HEAD"

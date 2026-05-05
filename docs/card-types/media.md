@@ -30,7 +30,7 @@ For playback controls, add one Media card for each button you want, using the sa
 | **Previous Button** | Shows one normal button that skips to the previous track. |
 | **Next Button** | Shows one normal button that skips to the next track. |
 | **Volume Button** | Shows a normal button that opens a volume popup. The popup has a circular volume dial, a large percentage label, and minus/plus buttons. |
-| **Track Position** | Shows a horizontal progress slider, the current time position, and the playing or paused state. While playing, the slider keeps moving in proportion to the reported track length. Dragging it seeks within the current track when Home Assistant reports a duration. |
+| **Track Position** | Shows the current time position and a thin horizontal progress slider along the bottom of the card. While playing, the slider keeps moving in proportion to the reported track length. Dragging it seeks within the current track when Home Assistant reports a duration. |
 | **Now Playing** | Shows the current track title using the large value font, with the artist underneath using the normal card label font. |
 
 ## Home Assistant Actions

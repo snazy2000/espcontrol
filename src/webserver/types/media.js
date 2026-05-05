@@ -150,7 +150,8 @@ registerButtonType("media", {
     panel.appendChild(displayField);
     syncDisplayField();
 
-    if (b.sensor !== "now_playing" && (b.sensor !== "play_pause" || b.precision !== "state")) {
+    if (b.sensor !== "now_playing" && b.sensor !== "position" &&
+        (b.sensor !== "play_pause" || b.precision !== "state")) {
       var lf = document.createElement("div");
       lf.className = "sp-field";
       lf.appendChild(helpers.fieldLabel("Label", helpers.idPrefix + "label"));
@@ -169,7 +170,7 @@ registerButtonType("media", {
     helpers.bindField(entityInp, "entity", true);
     helpers.requireField(entityInp, "Add an entity before saving.");
 
-    if (b.sensor !== "now_playing") {
+    if (b.sensor !== "now_playing" && b.sensor !== "position") {
       panel.appendChild(helpers.makeIconPicker(
         helpers.idPrefix + "icon-picker", helpers.idPrefix + "icon",
         b.icon || "Speaker", function (opt) {
@@ -203,13 +204,13 @@ registerButtonType("media", {
       };
     }
     if (mode === "position") {
+      var trackColor = (typeof state !== "undefined" && state.sensorColor) ? state.sensorColor : "212121";
       return {
         iconHtml:
-          '<span class="sp-media-h-slider"><span style="width:42%"></span></span>' +
+          '<span class="sp-media-h-slider" style="background:#' + helpers.escHtml(trackColor) + '">' +
+          '<span style="width:42%"></span></span>' +
           '<span class="sp-media-position-time">1:31</span>',
-        labelHtml:
-          '<span class="sp-btn-label-row"><span class="sp-btn-label sp-media-position-status">Playing</span>' +
-          badge + '</span>',
+        labelHtml: "",
       };
     }
     if (mode === "now_playing") {

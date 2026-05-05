@@ -24,6 +24,7 @@
 #include "backlight.h"
 
 constexpr uint32_t DEFAULT_SLIDER_COLOR = 0xFF8C00;
+constexpr uint32_t DEFAULT_TERTIARY_COLOR = 0x212121;
 constexpr int MAX_GRID_SLOTS = 25;
 constexpr int MAX_SUBPAGE_ITEMS = MAX_GRID_SLOTS * MAX_GRID_SLOTS;
 
@@ -3315,6 +3316,7 @@ struct SliderCtx {
   uint32_t media_seek_pending_ms = 0;
   bool media_playing = false;
   lv_obj_t *media_slider = nullptr;
+  lv_obj_t *media_track_bg = nullptr;
   lv_obj_t *media_value_lbl = nullptr;
   lv_obj_t *media_status_lbl = nullptr;
   lv_timer_t *media_timer = nullptr;
@@ -3388,30 +3390,58 @@ inline void slider_update_fill(lv_obj_t *fill, lv_obj_t *btn, int pct, bool hori
   }
 }
 
-inline void slider_update_horizontal_track_fill(lv_obj_t *fill, lv_obj_t *btn, int pct) {
-  if (!fill || !btn) return;
+inline void slider_horizontal_track_geometry(lv_obj_t *btn, lv_coord_t &x,
+                                             lv_coord_t &y, lv_coord_t &w,
+                                             lv_coord_t &h) {
+  x = y = 0;
+  w = h = 0;
+  if (!btn) return;
   lv_coord_t bw = lv_obj_get_width(btn);
   lv_coord_t bh = lv_obj_get_height(btn);
   if (bw <= 0 || bh <= 0) return;
 
-  lv_coord_t track_w = (lv_coord_t)((int32_t)bw * 84 / 100);
-  lv_coord_t track_h = (lv_coord_t)((int32_t)bh * 12 / 100);
-  if (track_w < 1) track_w = 1;
-  if (track_h < 4) track_h = 4;
+  w = (lv_coord_t)((int32_t)bw * 84 / 100);
+  h = (lv_coord_t)((int32_t)bh * 5 / 100);
+  if (w < 1) w = 1;
+  if (h < 3) h = 3;
+  if (h > 8) h = 8;
+  x = (bw - w) / 2;
+  lv_coord_t bottom_pad = (lv_coord_t)((int32_t)bh * 8 / 100);
+  if (bottom_pad < 6) bottom_pad = 6;
+  y = -bottom_pad;
+}
+
+inline void slider_update_horizontal_track_bg(lv_obj_t *track, lv_obj_t *btn) {
+  if (!track || !btn) return;
+  lv_coord_t x, y, w, h;
+  slider_horizontal_track_geometry(btn, x, y, w, h);
+  if (w <= 0 || h <= 0) return;
+  lv_obj_set_style_radius(track, h / 2, LV_PART_MAIN);
+  lv_obj_set_size(track, w, h);
+  lv_obj_align(track, LV_ALIGN_BOTTOM_LEFT, x, y);
+}
+
+inline void slider_update_horizontal_track_fill(lv_obj_t *fill, lv_obj_t *btn, int pct) {
+  if (!fill || !btn) return;
+  lv_coord_t x, y, track_w, track_h;
+  slider_horizontal_track_geometry(btn, x, y, track_w, track_h);
+  if (track_w <= 0 || track_h <= 0) return;
   lv_coord_t fill_w = (lv_coord_t)((int32_t)track_w * pct / 100);
   if (fill_w < 0) fill_w = 0;
 
   lv_obj_set_style_radius(fill, track_h / 2, LV_PART_MAIN);
   lv_obj_set_size(fill, fill_w, track_h);
-  lv_obj_align(fill, LV_ALIGN_LEFT_MID, (bw - track_w) / 2, 0);
+  lv_obj_align(fill, LV_ALIGN_BOTTOM_LEFT, x, y);
 }
 
 inline void slider_update_ctx_fill(SliderCtx *c, lv_obj_t *btn, int pct) {
   if (!c || !c->fill || !btn) return;
-  if (c->media_position)
+  if (c->media_position) {
+    if (c->media_track_bg) slider_update_horizontal_track_bg(c->media_track_bg, btn);
     slider_update_horizontal_track_fill(c->fill, btn, pct);
-  else
+  } else {
     slider_update_fill(c->fill, btn, pct, c->horizontal, c->inverted, c->radius);
+  }
 }
 
 inline void slider_refresh_geometry(lv_obj_t *slider) {
@@ -4015,6 +4045,7 @@ inline lv_obj_t *setup_media_slider_layout(lv_obj_t *btn, lv_obj_t *icon_lbl,
                                            lv_obj_t *text_lbl, lv_obj_t *value_lbl,
                                            const ParsedCfg &p,
                                            uint32_t on_color,
+                                           uint32_t track_color,
                                            lv_coord_t pad) {
   std::string mode = media_card_mode(p.sensor);
   bool position = mode == "position";
@@ -4027,9 +4058,8 @@ inline lv_obj_t *setup_media_slider_layout(lv_obj_t *btn, lv_obj_t *icon_lbl,
       lv_obj_move_foreground(value_lbl);
     }
     if (text_lbl) {
-      lv_label_set_text(text_lbl, "Paused");
-      lv_obj_align(text_lbl, LV_ALIGN_BOTTOM_LEFT, pad, -pad);
-      lv_obj_move_foreground(text_lbl);
+      lv_label_set_text(text_lbl, "");
+      lv_obj_add_flag(text_lbl, LV_OBJ_FLAG_HIDDEN);
     }
   } else {
     if (icon_lbl) {
@@ -4048,6 +4078,19 @@ inline lv_obj_t *setup_media_slider_layout(lv_obj_t *btn, lv_obj_t *icon_lbl,
 
   lv_obj_t *slider = setup_slider_widget(btn, on_color, horizontal);
   lv_obj_t *fill = lv_obj_get_child(btn, 0);
+  lv_obj_t *track = nullptr;
+  if (position) {
+    track = lv_obj_create(btn);
+    lv_obj_set_style_bg_color(track, lv_color_hex(track_color), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(track, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_width(track, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(track, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(track, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_clear_flag(track, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_move_to_index(track, 0);
+    lv_obj_move_to_index(fill, 1);
+    lv_obj_move_to_index(slider, 2);
+  }
 
   SliderCtx *ctx = new SliderCtx();
   ctx->entity_id = p.entity;
@@ -4058,8 +4101,9 @@ inline lv_obj_t *setup_media_slider_layout(lv_obj_t *btn, lv_obj_t *icon_lbl,
   ctx->radius = lv_obj_get_style_radius(btn, LV_PART_MAIN);
   ctx->media_position = position;
   ctx->media_slider = slider;
+  ctx->media_track_bg = track;
   ctx->media_value_lbl = value_lbl;
-  ctx->media_status_lbl = text_lbl;
+  ctx->media_status_lbl = nullptr;
   lv_obj_set_user_data(slider, (void *)ctx);
   slider_bind_geometry_refresh(btn, slider);
 
@@ -4096,6 +4140,7 @@ inline lv_obj_t *setup_media_slider_layout(lv_obj_t *btn, lv_obj_t *icon_lbl,
 }
 
 inline void setup_media_card(BtnSlot &s, const ParsedCfg &p, uint32_t on_color,
+                             uint32_t tertiary_color,
                              const lv_font_t *value_font) {
   lv_obj_add_flag(s.sensor_container, LV_OBJ_FLAG_HIDDEN);
   lv_coord_t pad = lv_obj_get_style_radius(s.btn, LV_PART_MAIN) + 4;
@@ -4123,7 +4168,7 @@ inline void setup_media_card(BtnSlot &s, const ParsedCfg &p, uint32_t on_color,
     lv_obj_move_foreground(s.sensor_container);
   }
   lv_obj_t *slider = setup_media_slider_layout(s.btn, s.icon_lbl, s.text_lbl,
-    mode == "position" ? s.sensor_lbl : nullptr, p, on_color, pad);
+    mode == "position" ? s.sensor_lbl : nullptr, p, on_color, tertiary_color, pad);
   lv_obj_set_user_data(s.sensor_container, (void *)slider);
 }
 
@@ -4733,7 +4778,8 @@ inline void grid_phase1(
       continue;
     }
     if (p.type == "media") {
-      setup_media_card(s, p, has_on ? on_val : DEFAULT_SLIDER_COLOR, cfg.sp_sensor_font);
+      setup_media_card(s, p, has_on ? on_val : DEFAULT_SLIDER_COLOR,
+        has_sensor_color ? sensor_val : DEFAULT_TERTIARY_COLOR, cfg.sp_sensor_font);
       continue;
     }
     if (p.type == "slider" || p.type == "cover") {
@@ -5627,7 +5673,8 @@ inline void grid_phase2(
             lv_obj_align(svl, LV_ALIGN_TOP_LEFT, sp_pad, sp_pad);
           }
           lv_obj_t *media_slider = setup_media_slider_layout(
-            sb_btn, sil, stl, svl, mp, has_on ? on_val : DEFAULT_SLIDER_COLOR, sp_pad);
+            sb_btn, sil, stl, svl, mp, has_on ? on_val : DEFAULT_SLIDER_COLOR,
+            has_sensor_color ? sensor_val : DEFAULT_TERTIARY_COLOR, sp_pad);
           if (!mp.entity.empty()) {
             subscribe_media_slider_state(sb_btn, media_slider, mp.entity);
             if (mp.label.empty() && mode != "position")

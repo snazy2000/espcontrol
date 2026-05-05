@@ -106,7 +106,7 @@ const devices = [
     shape: 'portrait'
   },
   {
-    slug: 'waveshare-esp32-p4-86-panel',
+    slug: 'esp32-p4-86-panel',
     name: 'Waveshare P4 86 Panel',
     size: '4 in',
     resolution: '720 x 720',

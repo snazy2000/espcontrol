@@ -47,7 +47,7 @@
     "subpageBadge": { "bottom": 1.52, "right": 1.52, "fontSize": 4.03 },
     "backBtn": { "radius": 1.18, "padding": 2.73, "iconSize": 14, "labelSize": 5.5, "labelLines": 2, "labelLinesDouble": 3 }
   },
-  "waveshare-esp32-p4-86-panel": {
+  "esp32-p4-86-panel": {
     "slots": 9,
     "cols": 3,
     "rows": 3,

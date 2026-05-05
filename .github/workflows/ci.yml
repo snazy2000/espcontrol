@@ -90,7 +90,7 @@ jobs:
           - guition-esp32-p4-jc1060p470
           - guition-esp32-p4-jc4880p443
           - guition-esp32-p4-jc8012p4a1
-          - waveshare-esp32-p4-86-panel
+          - esp32-p4-86-panel
           - guition-esp32-s3-4848s040
     steps:
       - uses: actions/checkout@v6

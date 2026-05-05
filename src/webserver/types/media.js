@@ -193,7 +193,7 @@ registerButtonType("media", {
           '<span class="sp-slider-preview"><span class="sp-slider-track">' +
             '<span class="sp-slider-fill" style="width:62%;height:100%"></span>' +
           '</span></span>' +
-          '<span class="sp-sensor-preview"><span class="sp-sensor-value">62</span></span>',
+          '<span class="sp-sensor-preview"><span class="sp-sensor-value">62%</span></span>',
         labelHtml:
           '<span class="sp-btn-label-row"><span class="sp-btn-label">' + helpers.escHtml(label) + '</span>' +
           badge + '</span>',

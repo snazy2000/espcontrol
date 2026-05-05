@@ -3597,7 +3597,7 @@ inline void media_format_percent(int percent, char *buf, size_t size) {
   if (!buf || size == 0) return;
   if (percent < 0) percent = 0;
   if (percent > 100) percent = 100;
-  snprintf(buf, size, "%d", percent);
+  snprintf(buf, size, "%d%%", percent);
 }
 
 inline std::string media_status_text(const std::string &state) {
@@ -3741,7 +3741,7 @@ inline lv_obj_t *setup_media_slider_layout(lv_obj_t *btn, lv_obj_t *icon_lbl,
     int fill_val = ctx->inverted ? 100 - val : val;
     slider_update_fill(ctx->fill, lv_obj_get_parent(sl), fill_val, ctx->horizontal, ctx->inverted, ctx->radius);
     if (ctx->media_volume && ctx->media_value_lbl) {
-      char pct_buf[8];
+      char pct_buf[12];
       media_format_percent(val, pct_buf, sizeof(pct_buf));
       lv_label_set_text(ctx->media_value_lbl, pct_buf);
     }
@@ -3843,7 +3843,7 @@ inline void subscribe_media_slider_state(lv_obj_t *btn_ptr,
           if (pct > 100) pct = 100;
           lv_slider_set_value(slider, pct, LV_ANIM_OFF);
           if (ctx->media_value_lbl) {
-            char pct_buf[8];
+            char pct_buf[12];
             media_format_percent(pct, pct_buf, sizeof(pct_buf));
             lv_label_set_text(ctx->media_value_lbl, pct_buf);
           }

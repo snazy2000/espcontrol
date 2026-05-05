@@ -228,7 +228,7 @@
     ".sp-sensor-badge{position:absolute;top:var(--sensor-top);right:var(--sensor-right);font-size:var(--sensor-fs);opacity:.5}" +
     ".sp-sensor-preview{display:flex;align-items:baseline;gap:0;color:#fff}" +
     ".sp-forecast-preview{white-space:nowrap;gap:0}" +
-    ".sp-sensor-value{font-size:var(--sensor-value);line-height:1;font-weight:300}" +
+    ".sp-sensor-value{font-size:var(--btn-icon);line-height:1;font-weight:300}" +
     ".sp-sensor-unit{font-size:var(--btn-label);line-height:1;color:#fff}" +
     ".sp-slider-preview{position:absolute;inset:0;border-radius:var(--r);overflow:hidden;pointer-events:none}" +
     ".sp-slider-track{width:100%;height:100%;position:relative}" +
@@ -2349,7 +2349,6 @@
     r.setProperty("--btn-r", CFG.btn.radius + "cqw");
     r.setProperty("--btn-pad", CFG.btn.padding + "cqw");
     r.setProperty("--btn-icon", CFG.btn.iconSize + "cqw");
-    r.setProperty("--sensor-value", (CFG.btn.sensorValueSize || CFG.btn.iconSize) + "cqw");
     r.setProperty("--btn-label", CFG.btn.labelSize + "cqw");
     r.setProperty("--btn-lines", String(CFG.btn.labelLines || 1));
     r.setProperty("--btn-lines-dbl", String(CFG.btn.labelLinesDouble || CFG.btn.labelLines || 1));

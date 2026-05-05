@@ -24,10 +24,10 @@ font:
       - file: "gfonts://Heebo"
         glyphs: !include ../../../common/assets/hebrew_glyphs.yaml
 
-  # Sensor value large number (reduced further so sensor cards do not dominate)
+  # Sensor value large number (reduced from 78px so sensor cards do not dominate)
   - file: "gfonts://Roboto@Light"
     id: statistics_font_md_square
-    size: 58
+    size: 66
     bpp: 4
     glyphs:
       - "0123456789.-°/%kWhVA "

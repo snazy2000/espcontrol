@@ -4179,8 +4179,10 @@ inline void media_volume_layout_modal(MediaVolumeCtx *ctx) {
   lv_obj_set_size(ui.panel, panel_side, panel_side);
   lv_obj_align(ui.panel, LV_ALIGN_CENTER, 0, 0);
   lv_coord_t arc_center_x = (arc_size - visible_arc_w) / 2;
-  lv_coord_t arc_center_y = (top_pad + arc_size / 2) - panel_side / 2;
-  lv_coord_t controls_center_y = panel_side / 2 - bottom_pad - btn_size / 2;
+  lv_coord_t vertical_nudge = short_side * 4 / 100;
+  if (vertical_nudge < 14) vertical_nudge = 14;
+  lv_coord_t arc_center_y = (top_pad + arc_size / 2) - panel_side / 2 + vertical_nudge;
+  lv_coord_t controls_center_y = panel_side / 2 - bottom_pad - btn_size / 2 - vertical_nudge;
 
   lv_obj_set_size(ui.arc, arc_size, arc_size);
   apply_width_compensation(ui.arc, ctx->width_compensation_percent);

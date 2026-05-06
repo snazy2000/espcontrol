@@ -4089,6 +4089,15 @@ inline void media_volume_layout_modal(MediaVolumeCtx *ctx) {
   lv_coord_t btn_size = short_side * 15 / 100;
   if (btn_size < 54) btn_size = 54;
   if (btn_size > 108) btn_size = 108;
+  lv_coord_t visible_arc_w = compensated_width(arc_size, ctx->width_compensation_percent);
+  lv_coord_t panel_side_pad = short_side * 10 / 100;
+  if (panel_side_pad < 42) panel_side_pad = 42;
+  if (panel_side_pad > 70) panel_side_pad = 70;
+  lv_coord_t compact_panel_w = visible_arc_w + panel_side_pad * 2;
+  lv_coord_t min_button_w = (btn_size + 18) + compensated_width(btn_size, ctx->width_compensation_percent) + panel_side_pad;
+  if (compact_panel_w < min_button_w) compact_panel_w = min_button_w;
+  if (compact_panel_w < short_side * 72 / 100) compact_panel_w = short_side * 72 / 100;
+  if (compact_panel_w < panel_w) panel_w = compact_panel_w;
 
   lv_obj_set_size(ui.overlay, lv_pct(100), lv_pct(100));
   lv_obj_set_size(ui.panel, panel_w, panel_h);

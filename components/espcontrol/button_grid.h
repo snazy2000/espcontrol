@@ -3500,6 +3500,7 @@ struct MediaVolumeModalUi {
   lv_obj_t *panel = nullptr;
   lv_obj_t *arc = nullptr;
   lv_obj_t *title_lbl = nullptr;
+  lv_obj_t *pct_row = nullptr;
   lv_obj_t *pct_lbl = nullptr;
   lv_obj_t *pct_unit_lbl = nullptr;
   lv_obj_t *minus_btn = nullptr;
@@ -4103,6 +4104,7 @@ inline void media_volume_hide_modal() {
   ui.panel = nullptr;
   ui.arc = nullptr;
   ui.title_lbl = nullptr;
+  ui.pct_row = nullptr;
   ui.pct_lbl = nullptr;
   ui.pct_unit_lbl = nullptr;
   ui.minus_btn = nullptr;
@@ -4191,8 +4193,7 @@ inline void media_volume_layout_modal(MediaVolumeCtx *ctx) {
   lv_obj_set_size(ui.plus_btn, btn_size, btn_size);
   lv_obj_set_style_radius(ui.plus_btn, btn_size / 2, LV_PART_MAIN);
   lv_obj_align(ui.title_lbl, LV_ALIGN_CENTER, 0, arc_center_y - arc_size / 7);
-  lv_obj_align(ui.pct_lbl, LV_ALIGN_CENTER, 0, arc_center_y + arc_stroke);
-  lv_obj_align_to(ui.pct_unit_lbl, ui.pct_lbl, LV_ALIGN_OUT_RIGHT_BOTTOM, 4, -8);
+  lv_obj_align(ui.pct_row, LV_ALIGN_CENTER, 0, arc_center_y + arc_stroke);
   lv_obj_align(ui.minus_btn, LV_ALIGN_CENTER, -(btn_size + 18) / 2, controls_center_y);
   lv_obj_align(ui.plus_btn, LV_ALIGN_CENTER, (btn_size + 18) / 2, controls_center_y);
 }
@@ -4267,13 +4268,26 @@ inline void media_volume_open_modal(MediaVolumeCtx *ctx) {
   if (ctx->label_font) lv_obj_set_style_text_font(ui.title_lbl, ctx->label_font, LV_PART_MAIN);
   apply_width_compensation(ui.title_lbl, ctx->width_compensation_percent);
 
-  ui.pct_lbl = lv_label_create(ui.panel);
+  ui.pct_row = lv_obj_create(ui.panel);
+  lv_obj_set_size(ui.pct_row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+  lv_obj_clear_flag(ui.pct_row, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_clear_flag(ui.pct_row, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_set_style_bg_opa(ui.pct_row, LV_OPA_TRANSP, LV_PART_MAIN);
+  lv_obj_set_style_border_width(ui.pct_row, 0, LV_PART_MAIN);
+  lv_obj_set_style_pad_all(ui.pct_row, 0, LV_PART_MAIN);
+  lv_obj_set_style_pad_column(ui.pct_row, 4, LV_PART_MAIN);
+  lv_obj_set_layout(ui.pct_row, LV_LAYOUT_FLEX);
+  lv_obj_set_style_flex_flow(ui.pct_row, LV_FLEX_FLOW_ROW, LV_PART_MAIN);
+  lv_obj_set_style_flex_main_place(ui.pct_row, LV_FLEX_ALIGN_CENTER, LV_PART_MAIN);
+  lv_obj_set_style_flex_cross_place(ui.pct_row, LV_FLEX_ALIGN_END, LV_PART_MAIN);
+
+  ui.pct_lbl = lv_label_create(ui.pct_row);
   lv_obj_set_style_text_color(ui.pct_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
   lv_obj_set_style_text_align(ui.pct_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
   if (ctx->number_font) lv_obj_set_style_text_font(ui.pct_lbl, ctx->number_font, LV_PART_MAIN);
   apply_width_compensation(ui.pct_lbl, ctx->width_compensation_percent);
 
-  ui.pct_unit_lbl = lv_label_create(ui.panel);
+  ui.pct_unit_lbl = lv_label_create(ui.pct_row);
   lv_label_set_text(ui.pct_unit_lbl, "%");
   lv_obj_set_style_text_color(ui.pct_unit_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
   lv_obj_set_style_text_align(ui.pct_unit_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);

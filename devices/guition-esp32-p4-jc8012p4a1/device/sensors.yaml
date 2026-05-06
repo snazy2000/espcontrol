@@ -62,6 +62,9 @@ esphome:
             cfg.developer_experimental_features = id(developer_experimental_features).state;
             cfg.pause_home_idle = []() { id(home_screen_idle_check).stop(); };
             cfg.resume_home_idle = []() { id(home_screen_idle_check).execute(); };
+            apply_width_compensation(id(display_time), cfg.width_compensation_percent);
+            apply_width_compensation(id(temperatures), cfg.width_compensation_percent);
+            apply_width_compensation(id(clock_label), cfg.width_compensation_percent);
             // END GENERATED PHASE 1 GRID WIRING
             grid_phase1(slots, cfg,
               id(button_order).state,
@@ -149,6 +152,9 @@ esphome:
             cfg.developer_experimental_features = id(developer_experimental_features).state;
             cfg.pause_home_idle = []() { id(home_screen_idle_check).stop(); };
             cfg.resume_home_idle = []() { id(home_screen_idle_check).execute(); };
+            apply_width_compensation(id(display_time), cfg.width_compensation_percent);
+            apply_width_compensation(id(temperatures), cfg.width_compensation_percent);
+            apply_width_compensation(id(clock_label), cfg.width_compensation_percent);
             // END GENERATED PHASE 2 GRID WIRING
             grid_phase2(slots, cfg, sp_cfgs, sp_ext, sp_ext2, sp_ext3,
               id(button_order).state,

@@ -888,6 +888,11 @@ inline void apply_width_compensation(lv_obj_t *obj, int percent) {
   lv_obj_set_style_transform_scale_y(obj, 256, LV_PART_MAIN);
 }
 
+inline void apply_slot_text_width_compensation(const BtnSlot &s, int percent) {
+  apply_width_compensation(s.text_lbl, percent);
+  apply_width_compensation(s.sensor_container, percent);
+}
+
 // ── Climate card helpers ──────────────────────────────────────────────
 
 constexpr uint32_t CLIMATE_HEAT_COLOR = 0xA44A1C;
@@ -1438,6 +1443,7 @@ inline void climate_render_mode_tabs(ClimateCardCtx *ctx) {
       lv_label_set_text(label, climate_mode_label(value).c_str());
       lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
       if (ctx->label_font) lv_obj_set_style_text_font(label, ctx->label_font, LV_PART_MAIN);
+      apply_width_compensation(label, ctx->width_compensation_percent);
       lv_obj_center(label);
       ClimateOptionCtx *opt = new ClimateOptionCtx();
       opt->ctx = ctx;
@@ -1572,6 +1578,12 @@ inline void climate_set_button_label_font(lv_obj_t *btn, const lv_font_t *font) 
   if (!btn || !font) return;
   lv_obj_t *label = lv_obj_get_child(btn, 0);
   if (label) lv_obj_set_style_text_font(label, font, LV_PART_MAIN);
+}
+
+inline void climate_apply_button_label_width_compensation(lv_obj_t *btn, int percent) {
+  if (!btn) return;
+  lv_obj_t *label = lv_obj_get_child(btn, 0);
+  apply_width_compensation(label, percent);
 }
 
 inline void climate_center_button_label(lv_obj_t *btn) {
@@ -1715,6 +1727,16 @@ inline void climate_layout_detail_ui(ClimateCardCtx *ctx) {
   lv_obj_align(ui.high_btn, LV_ALIGN_CENTER, frame_cx + 44, arc_cy + arc_size / 3 + 32);
   if (ctx && ctx->target_font) {
     lv_obj_set_style_text_font(ui.target_value, ctx->target_font, LV_PART_MAIN);
+  }
+  if (ctx) {
+    apply_width_compensation(ui.target_value, ctx->width_compensation_percent);
+    apply_width_compensation(ui.target_unit, ctx->width_compensation_percent);
+    apply_width_compensation(ui.state_label, ctx->width_compensation_percent);
+    apply_width_compensation(ui.target_hint, ctx->width_compensation_percent);
+    climate_apply_button_label_width_compensation(ui.low_btn, ctx->width_compensation_percent);
+    climate_apply_button_label_width_compensation(ui.high_btn, ctx->width_compensation_percent);
+    climate_apply_button_label_width_compensation(ui.fan_chip, ctx->width_compensation_percent);
+    climate_apply_button_label_width_compensation(ui.swing_chip, ctx->width_compensation_percent);
   }
   if (ctx && ctx->label_font) {
     lv_obj_set_style_text_font(ui.state_label, ctx->label_font, LV_PART_MAIN);
@@ -4237,11 +4259,13 @@ inline void media_volume_open_modal(MediaVolumeCtx *ctx) {
   lv_obj_set_style_text_color(ui.title_lbl, lv_color_hex(0xA0A0A0), LV_PART_MAIN);
   lv_obj_set_style_text_align(ui.title_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
   if (ctx->label_font) lv_obj_set_style_text_font(ui.title_lbl, ctx->label_font, LV_PART_MAIN);
+  apply_width_compensation(ui.title_lbl, ctx->width_compensation_percent);
 
   ui.pct_lbl = lv_label_create(ui.panel);
   lv_obj_set_style_text_color(ui.pct_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
   lv_obj_set_style_text_align(ui.pct_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
   if (ctx->value_font) lv_obj_set_style_text_font(ui.pct_lbl, ctx->value_font, LV_PART_MAIN);
+  apply_width_compensation(ui.pct_lbl, ctx->width_compensation_percent);
 
   ui.minus_btn = media_volume_create_round_button(ui.panel, 72, find_icon("Minus"),
     ctx->icon_font, 0xBDBDBD, 0x252525, ctx->width_compensation_percent);
@@ -4512,10 +4536,12 @@ inline lv_obj_t *setup_media_position_layout(lv_obj_t *btn, lv_obj_t *icon_lbl,
                                              uint32_t track_color,
                                              const lv_font_t *value_font,
                                              lv_color_t text_color,
-                                             lv_coord_t pad) {
+                                             lv_coord_t pad,
+                                             int width_compensation_percent = 100) {
   lv_obj_t *value_lbl = lv_label_create(btn);
   if (value_font) lv_obj_set_style_text_font(value_lbl, value_font, LV_PART_MAIN);
   lv_obj_set_style_text_color(value_lbl, text_color, LV_PART_MAIN);
+  apply_width_compensation(value_lbl, width_compensation_percent);
   lv_label_set_text(value_lbl, "0:00");
   lv_obj_align(value_lbl, LV_ALIGN_TOP_LEFT, pad, pad);
   return setup_media_slider_layout(
@@ -4524,7 +4550,8 @@ inline lv_obj_t *setup_media_position_layout(lv_obj_t *btn, lv_obj_t *icon_lbl,
 
 inline void setup_media_card(BtnSlot &s, const ParsedCfg &p, uint32_t on_color,
                              uint32_t tertiary_color,
-                             const lv_font_t *value_font) {
+                             const lv_font_t *value_font,
+                             int width_compensation_percent = 100) {
   lv_obj_add_flag(s.sensor_container, LV_OBJ_FLAG_HIDDEN);
   lv_coord_t pad = lv_obj_get_style_radius(s.btn, LV_PART_MAIN) + 4;
   std::string mode = media_card_mode(p.sensor);
@@ -4542,6 +4569,7 @@ inline void setup_media_card(BtnSlot &s, const ParsedCfg &p, uint32_t on_color,
     lv_color_t text_color = lv_obj_get_style_text_color(s.sensor_lbl, LV_PART_MAIN);
     lv_obj_t *title_lbl = lv_label_create(s.btn);
     lv_obj_set_style_text_color(title_lbl, text_color, LV_PART_MAIN);
+    apply_width_compensation(title_lbl, width_compensation_percent);
     s.sensor_lbl = title_lbl;
     setup_media_now_playing_layout(
       s.btn, s.icon_lbl, s.sensor_lbl, s.text_lbl, value_font, pad);
@@ -4552,7 +4580,7 @@ inline void setup_media_card(BtnSlot &s, const ParsedCfg &p, uint32_t on_color,
     lv_color_t text_color = lv_obj_get_style_text_color(s.sensor_lbl, LV_PART_MAIN);
     lv_obj_t *slider = setup_media_position_layout(
       s.btn, s.icon_lbl, s.text_lbl, p, on_color, tertiary_color,
-      value_font, text_color, position_pad);
+      value_font, text_color, position_pad, width_compensation_percent);
     lv_obj_set_user_data(s.sensor_container, (void *)slider);
     return;
   }
@@ -5167,7 +5195,8 @@ inline void setup_card_visual(BtnSlot &s, const ParsedCfg &p,
     setup_media_card(s, p,
       palette.has_on ? palette.on_val : DEFAULT_SLIDER_COLOR,
       palette.has_sensor_color ? palette.sensor_val : DEFAULT_TERTIARY_COLOR,
-      cfg.media_title_font ? cfg.media_title_font : cfg.sp_sensor_font);
+      cfg.media_title_font ? cfg.media_title_font : cfg.sp_sensor_font,
+      cfg.width_compensation_percent);
     return;
   }
   if (p.type == "slider" || p.type == "cover") {
@@ -5260,6 +5289,7 @@ inline void grid_phase1(
 
     ParsedCfg p = parse_cfg(scfg);
     apply_width_compensation(s.icon_lbl, cfg.width_compensation_percent);
+    apply_slot_text_width_compensation(s, cfg.width_compensation_percent);
     setup_card_visual(s, p, cfg, palette);
   }
   ESP_LOGI("sensors", "Phase 1: done (%lu ms)", esphome::millis());
@@ -5644,6 +5674,7 @@ inline void grid_phase2(
     BtnSlot back_slot = create_dynamic_card_slot(
       back_btn, sp_icon_fnt, cfg.sp_sensor_font, sp_btn_fnt, sp_txt_color);
     apply_width_compensation(back_slot.icon_lbl, cfg.width_compensation_percent);
+    apply_slot_text_width_compensation(back_slot, cfg.width_compensation_percent);
     lv_label_set_text(back_slot.icon_lbl, "\U000F0141");
     lv_label_set_text(back_slot.text_lbl, "Back");
 
@@ -5716,6 +5747,7 @@ inline void grid_phase2(
       BtnSlot sub_slot = create_dynamic_card_slot(
         sb_btn, sp_icon_fnt, cfg.sp_sensor_font, sp_btn_fnt, sp_txt_color);
       apply_width_compensation(sub_slot.icon_lbl, cfg.width_compensation_percent);
+      apply_slot_text_width_compensation(sub_slot, cfg.width_compensation_percent);
       setup_card_visual(sub_slot, sb_cfg, cfg, palette);
 
       if (is_text_sensor_card(sb_cfg)) {

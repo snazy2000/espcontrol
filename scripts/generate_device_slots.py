@@ -95,6 +95,9 @@ def cfg_lines(device: dict) -> list[str]:
     lines.append("            cfg.developer_experimental_features = id(developer_experimental_features).state;")
     lines.append("            cfg.pause_home_idle = []() { id(home_screen_idle_check).stop(); };")
     lines.append("            cfg.resume_home_idle = []() { id(home_screen_idle_check).execute(); };")
+    lines.append("            apply_width_compensation(id(display_time), cfg.width_compensation_percent);")
+    lines.append("            apply_width_compensation(id(temperatures), cfg.width_compensation_percent);")
+    lines.append("            apply_width_compensation(id(clock_label), cfg.width_compensation_percent);")
     return lines
 
 

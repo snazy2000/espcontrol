@@ -4053,7 +4053,8 @@ inline lv_obj_t *media_volume_create_round_button(lv_obj_t *parent, lv_coord_t s
                                                   uint32_t bg_color,
                                                   int width_compensation_percent = 100) {
   lv_obj_t *btn = lv_btn_create(parent);
-  lv_obj_set_size(btn, compensated_width(size, width_compensation_percent), size);
+  lv_obj_set_size(btn, size, size);
+  apply_width_compensation(btn, width_compensation_percent);
   lv_obj_set_style_radius(btn, size / 2, LV_PART_MAIN);
   lv_obj_set_style_bg_color(btn, lv_color_hex(bg_color), LV_PART_MAIN);
   lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, LV_PART_MAIN);
@@ -4065,7 +4066,6 @@ inline lv_obj_t *media_volume_create_round_button(lv_obj_t *parent, lv_coord_t s
   lv_obj_set_style_text_color(label, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
   lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
   if (font) lv_obj_set_style_text_font(label, font, LV_PART_MAIN);
-  apply_width_compensation(label, width_compensation_percent);
   lv_obj_center(label);
   return btn;
 }

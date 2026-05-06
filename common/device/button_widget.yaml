@@ -33,7 +33,6 @@ button:
         bg_opa: TRANSP
         border_width: 0
         pad_all: 0
-        pad_column: 0
         hidden: true
         widgets:
           - label:

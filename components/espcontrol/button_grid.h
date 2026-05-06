@@ -4583,7 +4583,7 @@ inline void setup_media_card(BtnSlot &s, const ParsedCfg &p, uint32_t on_color,
     lv_coord_t position_pad = lv_obj_get_style_pad_top(s.btn, LV_PART_MAIN);
     lv_color_t text_color = lv_obj_get_style_text_color(s.sensor_lbl, LV_PART_MAIN);
     lv_obj_t *slider = setup_media_position_layout(
-      s.btn, s.icon_lbl, s.text_lbl, p, on_color, tertiary_color,
+      s.btn, s.icon_lbl, s.text_lbl, p, 0xFFFFFF, tertiary_color,
       sensor_font, text_color, position_pad, width_compensation_percent);
     lv_obj_set_user_data(s.sensor_container, (void *)slider);
     return;

@@ -56,8 +56,14 @@ esphome:
             cfg.temperature_unit = id(temperature_unit_select).current_option();
             cfg.timezone = id(timezone_select).current_option();
             cfg.developer_experimental_features = id(developer_experimental_features).state;
-            cfg.pause_home_idle = []() { id(home_screen_idle_check).stop(); };
-            cfg.resume_home_idle = []() { id(home_screen_idle_check).execute(); };
+            cfg.pause_home_idle = []() {
+              id(home_screen_idle_suspended) = true;
+              id(home_screen_idle_check).stop();
+            };
+            cfg.resume_home_idle = []() {
+              id(home_screen_idle_suspended) = false;
+              id(home_screen_idle_check).execute();
+            };
             apply_width_compensation(id(display_time), cfg.width_compensation_percent);
             apply_width_compensation(id(temperatures), cfg.width_compensation_percent);
             apply_width_compensation(id(clock_label), cfg.width_compensation_percent);
@@ -138,8 +144,14 @@ esphome:
             cfg.temperature_unit = id(temperature_unit_select).current_option();
             cfg.timezone = id(timezone_select).current_option();
             cfg.developer_experimental_features = id(developer_experimental_features).state;
-            cfg.pause_home_idle = []() { id(home_screen_idle_check).stop(); };
-            cfg.resume_home_idle = []() { id(home_screen_idle_check).execute(); };
+            cfg.pause_home_idle = []() {
+              id(home_screen_idle_suspended) = true;
+              id(home_screen_idle_check).stop();
+            };
+            cfg.resume_home_idle = []() {
+              id(home_screen_idle_suspended) = false;
+              id(home_screen_idle_check).execute();
+            };
             apply_width_compensation(id(display_time), cfg.width_compensation_percent);
             apply_width_compensation(id(temperatures), cfg.width_compensation_percent);
             apply_width_compensation(id(clock_label), cfg.width_compensation_percent);

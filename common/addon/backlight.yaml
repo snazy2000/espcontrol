@@ -31,6 +31,9 @@ globals:
   - id: screensaver_display_off_active
     type: bool
     initial_value: 'false'
+  - id: home_screen_idle_suspended
+    type: bool
+    initial_value: 'false'
   - id: presence_detected
     type: bool
     initial_value: 'false'
@@ -328,7 +331,7 @@ script:
                 if (std::isnan(val) || val <= 0) val = 60;
                 return (int)(val * 1000);
             - lambda: |-
-                if (lv_scr_act() != id(main_page)->obj) {
+                if (!id(home_screen_idle_suspended) && lv_scr_act() != id(main_page)->obj) {
                   lv_scr_load_anim(id(main_page)->obj, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
                 }
 

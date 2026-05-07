@@ -4406,7 +4406,7 @@ inline std::string media_status_text(const std::string &state) {
 }
 
 inline const char *media_play_pause_icon_for_state(const std::string &state) {
-  return find_icon(state == "playing" ? "Pause" : "Play");
+  return find_icon(state == "playing" ? "Play" : "Pause");
 }
 
 inline void media_set_metadata_text(lv_obj_t *label, esphome::StringRef value,

@@ -4050,7 +4050,7 @@ inline const char *media_default_icon(const std::string &mode,
   if (!icon.empty() && icon != "Auto") return find_icon(icon.c_str());
   if (mode == "previous") return find_icon("Skip Previous");
   if (mode == "next") return find_icon("Skip Next");
-  if (mode == "play_pause") return find_icon("Play");
+  if (mode == "play_pause") return find_icon("Play Pause");
   if (mode == "volume") return find_icon("Volume High");
   if (mode == "position") return find_icon("Progress Clock");
   if (mode == "now_playing") return find_icon("Music");
@@ -4416,10 +4416,6 @@ inline std::string media_status_text(const std::string &state) {
   if (state == "unavailable") return "Unavailable";
   if (state == "unknown" || state.empty()) return "Unknown";
   return sentence_cap_text(state);
-}
-
-inline const char *media_play_pause_icon_for_state(const std::string &state) {
-  return find_icon(state == "playing" ? "Play" : "Pause");
 }
 
 inline void media_set_metadata_text(lv_obj_t *label, esphome::StringRef value,
@@ -4802,18 +4798,16 @@ inline void setup_media_card(BtnSlot &s, const ParsedCfg &p, uint32_t on_color,
 }
 
 inline void subscribe_media_state(lv_obj_t *btn_ptr,
-                                  lv_obj_t *icon_lbl,
                                   lv_obj_t *status_lbl,
                                   const std::string &entity_id) {
   esphome::api::global_api_server->subscribe_home_assistant_state(
     entity_id, {},
     std::function<void(esphome::StringRef)>(
-      [btn_ptr, icon_lbl, status_lbl](esphome::StringRef state) {
+      [btn_ptr, status_lbl](esphome::StringRef state) {
         std::string state_text = string_ref_limited(state, HA_SHORT_STATE_MAX_LEN);
         bool playing = state_text == "playing";
         if (playing) lv_obj_add_state(btn_ptr, LV_STATE_CHECKED);
         else lv_obj_clear_state(btn_ptr, LV_STATE_CHECKED);
-        if (icon_lbl) lv_label_set_text(icon_lbl, media_play_pause_icon_for_state(state_text));
         if (status_lbl) {
           std::string label = media_status_text(state_text);
           lv_label_set_text(status_lbl, label.c_str());
@@ -5742,10 +5736,7 @@ inline void grid_phase2(
       if (!p.entity.empty()) {
         std::string mode = media_card_mode(p.sensor);
         if (mode == "play_pause") {
-          subscribe_media_state(
-            s.btn, s.icon_lbl,
-            media_play_pause_show_state(p) ? s.text_lbl : nullptr,
-            p.entity);
+          subscribe_media_state(s.btn, media_play_pause_show_state(p) ? s.text_lbl : nullptr, p.entity);
         } else if (media_playback_button_mode(mode)) {
           // Previous/next are momentary actions and do not reflect player state.
         } else if (mode == "volume") {
@@ -6141,7 +6132,6 @@ inline void grid_phase2(
             }, LV_EVENT_CLICKED, ctx);
             if (mode == "play_pause")
               subscribe_media_state(sub_slot.btn,
-                sub_slot.icon_lbl,
                 media_play_pause_show_state(sb_cfg) ? sub_slot.text_lbl : nullptr,
                 sb_cfg.entity);
           } else if (mode == "volume") {

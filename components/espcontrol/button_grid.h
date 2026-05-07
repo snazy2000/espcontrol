@@ -4473,7 +4473,7 @@ inline lv_obj_t *setup_media_slider_layout(lv_obj_t *btn, lv_obj_t *icon_lbl,
                                            lv_obj_t *text_lbl, lv_obj_t *value_lbl,
                                            const ParsedCfg &p,
                                            uint32_t on_color,
-                                           uint32_t track_color,
+                                           uint32_t /*track_color*/,
                                            lv_coord_t pad) {
   std::string mode = media_card_mode(p.sensor);
   bool position = mode == "position";
@@ -4507,18 +4507,6 @@ inline lv_obj_t *setup_media_slider_layout(lv_obj_t *btn, lv_obj_t *icon_lbl,
   lv_obj_t *slider = setup_slider_widget(btn, on_color, horizontal);
   lv_obj_t *fill = lv_obj_get_child(btn, 0);
   lv_obj_t *track = nullptr;
-  if (position) {
-    track = lv_obj_create(btn);
-    lv_obj_set_style_bg_color(track, lv_color_hex(track_color), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(track, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_border_width(track, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(track, 0, LV_PART_MAIN);
-    lv_obj_clear_flag(track, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_clear_flag(track, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_move_to_index(track, 0);
-    lv_obj_move_to_index(fill, 1);
-    lv_obj_move_to_index(slider, 2);
-  }
 
   SliderCtx *ctx = new SliderCtx();
   ctx->entity_id = p.entity;
@@ -4620,7 +4608,7 @@ inline void setup_media_card(BtnSlot &s, const ParsedCfg &p, uint32_t on_color,
     lv_coord_t position_pad = lv_obj_get_style_pad_top(s.btn, LV_PART_MAIN);
     lv_color_t text_color = lv_obj_get_style_text_color(s.sensor_lbl, LV_PART_MAIN);
     lv_obj_t *slider = setup_media_position_layout(
-      s.btn, s.icon_lbl, s.text_lbl, p, on_color, tertiary_color,
+      s.btn, s.icon_lbl, s.text_lbl, p, tertiary_color, tertiary_color,
       sensor_font, text_color, position_pad, width_compensation_percent);
     lv_obj_set_user_data(s.sensor_container, (void *)slider);
     return;

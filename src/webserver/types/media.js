@@ -247,8 +247,8 @@ registerButtonType("media", {
       var progressColor = (typeof state !== "undefined" && state.offColor) ? state.offColor : "313131";
       return {
         iconHtml:
-          '<span class="sp-slider-preview" style="background:#' + helpers.escHtml(bgColor) + '">' +
-          '<span class="sp-slider-track"><span class="sp-slider-fill" style="width:42%;height:100%;background:#' +
+          '<span class="sp-slider-preview" style="inset:-2px;background:#' + helpers.escHtml(bgColor) + '">' +
+          '<span class="sp-slider-track"><span class="sp-slider-fill" style="width:50%;height:100%;background:#' +
           helpers.escHtml(progressColor) + '"></span></span></span>' +
           '<span class="sp-sensor-preview sp-media-position-time">' +
           '<span class="sp-sensor-value">1:31</span></span>',

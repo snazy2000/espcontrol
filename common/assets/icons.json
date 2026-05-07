@@ -720,9 +720,19 @@
       "mdi": "plus"
     },
     {
+      "name": "Play",
+      "codepoint": "F040A",
+      "mdi": "play"
+    },
+    {
       "name": "Play Pause",
       "codepoint": "F040E",
       "mdi": "play-pause"
+    },
+    {
+      "name": "Pause",
+      "codepoint": "F03E4",
+      "mdi": "pause"
     },
     {
       "name": "Pool",

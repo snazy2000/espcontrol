@@ -225,7 +225,7 @@ registerButtonType("media", {
       if (value === "volume") return { mode: "volume", label: "Volume", icon: "volume-high" };
       if (value === "position") return { mode: "position", label: "Track", icon: "progress-clock" };
       if (value === "now_playing") return { mode: "now_playing", label: "Now Playing", icon: "music" };
-      return { mode: "play_pause", label: "Play/Pause", icon: "play-pause" };
+      return { mode: "play_pause", label: "Play/Pause", icon: b.precision === "state" ? "pause" : "play" };
     }
     var info = modeInfo(b.sensor);
     var mode = info.mode;

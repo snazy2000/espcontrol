@@ -13,7 +13,7 @@ registerButtonType("weather", {
   },
   renderSettings: function (panel, b, slot, helpers) {
     function defaultForecastLabel() {
-      return b.precision === "today" ? "Temperatures Today" : "Temperatures Tomorrow";
+      return b.precision === "today" ? "Today" : "Tomorrow";
     }
 
     var modeField = document.createElement("div");
@@ -68,7 +68,7 @@ registerButtonType("weather", {
   },
   renderPreview: function (b, helpers) {
     if (b.precision === "today" || b.precision === "tomorrow") {
-      var defaultLabel = b.precision === "today" ? "Temperatures Today" : "Temperatures Tomorrow";
+      var defaultLabel = b.precision === "today" ? "Today" : "Tomorrow";
       var label = b.label || defaultLabel;
       return {
         iconHtml:

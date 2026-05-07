@@ -28,7 +28,7 @@ Older cards that were created as **Weather Forecast** cards still work. They now
 - In **Current Conditions** mode, the icon changes automatically and the label uses the condition name from Home Assistant.
 - In **Temperatures Today** and **Temperatures Tomorrow** modes, the card asks Home Assistant for the daily forecast for the configured weather entity.
 - In temperature modes, the unit label comes from the panel's **Temperature Unit** setting.
-- In temperature modes, the card label defaults to **Temperatures Today** or **Temperatures Tomorrow**, unless you set your own label.
+- In temperature modes, the card label defaults to **Today** or **Tomorrow**, unless you set your own label.
 - If Home Assistant reports `unknown`, `unavailable`, or an unexpected current condition, the card shows a fallback weather icon and a readable label.
 - If the requested forecast is missing or unavailable, the card shows **--/--** instead of leaving the card blank.
 - The card uses the **tertiary** colour from [Appearance](/features/appearance), like Sensor, Date, and World Clock cards.

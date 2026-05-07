@@ -361,7 +361,7 @@ inline void apply_weather_forecast_card_text(const WeatherForecastCardRef &ref,
                                              const std::string &unit) {
   if (ref.label_lbl) {
     std::string label = ref.label.empty()
-      ? (ref.day == "today" ? "Temperatures Today" : "Temperatures Tomorrow")
+      ? (ref.day == "today" ? "Today" : "Tomorrow")
       : ref.label;
     lv_label_set_text(ref.label_lbl, label.c_str());
   }
@@ -2700,7 +2700,7 @@ inline void setup_weather_forecast_card(BtnSlot &s, const ParsedCfg &p,
   lv_label_set_text(s.unit_lbl, "");
   std::string day = weather_card_forecast_day(p);
   std::string label = p.label.empty()
-    ? (day == "today" ? "Temperatures Today" : "Temperatures Tomorrow")
+    ? (day == "today" ? "Today" : "Tomorrow")
     : p.label;
   lv_label_set_text(s.text_lbl, label.c_str());
   apply_width_compensation(s.sensor_container, width_compensation_percent);

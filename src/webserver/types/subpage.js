@@ -234,9 +234,7 @@ registerButtonType("subpage", {
         b.precision = "";
         b.icon_on = "Auto";
         iconStateEntity = "";
-        unitInp.value = "";
         iconEntityInp.value = "";
-        precisionSelect.value = "0";
         helpers.saveField("sensor", "");
         helpers.saveField("entity", "");
         helpers.saveField("unit", "");
@@ -247,8 +245,6 @@ registerButtonType("subpage", {
         b.entity = iconStateEntity;
         b.unit = "";
         b.precision = "";
-        unitInp.value = "";
-        precisionSelect.value = "0";
         helpers.saveField("sensor", "indicator");
         helpers.saveField("entity", b.entity);
         helpers.saveField("unit", "");
@@ -256,12 +252,14 @@ registerButtonType("subpage", {
       } else if (mode === "numeric") {
         b.sensor = sensorEntity;
         b.entity = "";
+        b.unit = unitInp.value;
         b.precision = precisionSelect.value === "0" ? "" : precisionSelect.value;
         b.icon_on = "Auto";
         iconStateEntity = "";
         iconEntityInp.value = "";
         helpers.saveField("sensor", b.sensor);
         helpers.saveField("entity", "");
+        helpers.saveField("unit", b.unit);
         helpers.saveField("precision", b.precision);
         helpers.saveField("icon_on", "Auto");
       } else if (mode === "text") {
@@ -271,7 +269,6 @@ registerButtonType("subpage", {
         b.precision = "text";
         b.icon_on = "Auto";
         iconStateEntity = "";
-        unitInp.value = "";
         iconEntityInp.value = "";
         helpers.saveField("sensor", b.sensor);
         helpers.saveField("entity", "");

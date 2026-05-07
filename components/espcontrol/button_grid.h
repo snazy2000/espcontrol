@@ -4262,7 +4262,7 @@ inline void media_volume_layout_modal(MediaVolumeCtx *ctx) {
 
   lv_obj_set_size(ui.overlay, lv_pct(100), lv_pct(100));
   lv_obj_set_size(ui.panel, panel_w, panel_h);
-  lv_obj_align(ui.panel, LV_ALIGN_TOP_LEFT, panel_x, panel_y);
+  lv_obj_set_pos(ui.panel, panel_x, panel_y);
   lv_coord_t arc_center_x = (arc_size - visible_arc_w) / 2;
   lv_coord_t arc_center_y = inset + arc_size / 2 - panel_h / 2 + (short_side < 520 ? 6 : 10);
   lv_coord_t controls_center_y = panel_h / 2 - inset - btn_size / 2;
@@ -4317,6 +4317,7 @@ inline void media_volume_open_modal(MediaVolumeCtx *ctx) {
   lv_obj_set_style_bg_color(ui.overlay, lv_color_hex(0x000000), LV_PART_MAIN);
   lv_obj_set_style_bg_opa(ui.overlay, LV_OPA_60, LV_PART_MAIN);
   lv_obj_set_style_border_width(ui.overlay, 0, LV_PART_MAIN);
+  lv_obj_set_style_pad_all(ui.overlay, 0, LV_PART_MAIN);
   lv_obj_clear_flag(ui.overlay, LV_OBJ_FLAG_SCROLLABLE);
   lv_obj_add_event_cb(ui.overlay, [](lv_event_t *) { media_volume_hide_modal(); },
     LV_EVENT_CLICKED, nullptr);
@@ -4327,6 +4328,7 @@ inline void media_volume_open_modal(MediaVolumeCtx *ctx) {
   lv_obj_set_style_border_width(ui.panel, 0, LV_PART_MAIN);
   lv_obj_set_style_shadow_width(ui.panel, 0, LV_PART_MAIN);
   lv_obj_set_style_radius(ui.panel, 18, LV_PART_MAIN);
+  lv_obj_set_style_pad_all(ui.panel, 0, LV_PART_MAIN);
   lv_obj_clear_flag(ui.panel, LV_OBJ_FLAG_SCROLLABLE);
 
   ui.back_btn = media_volume_create_round_button(ui.panel, 32, "\U000F0141",

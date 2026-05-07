@@ -226,7 +226,7 @@
     "display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:var(--btn-lines);" +
     "overflow:hidden;word-break:break-word;min-height:0}" +
     ".sp-sensor-badge{position:absolute;top:var(--sensor-top);right:var(--sensor-right);font-size:var(--sensor-fs);opacity:.5}" +
-    ".sp-sensor-preview{display:flex;align-items:baseline;gap:0;color:#fff}" +
+    ".sp-sensor-preview{display:flex;align-items:baseline;gap:.18em;color:#fff}" +
     ".sp-forecast-preview{white-space:nowrap;gap:0}" +
     ".sp-sensor-value{font-size:var(--btn-icon);line-height:1;font-weight:300}" +
     ".sp-sensor-unit{font-size:var(--btn-label);line-height:1;color:#fff}" +

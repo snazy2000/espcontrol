@@ -1030,6 +1030,7 @@ inline void reset_climate_contexts() {
 
 struct ClimateHomeGridMetrics {
   lv_obj_t *page = nullptr;
+  lv_obj_t *first_card = nullptr;
   int cols = 3;
   int rows = 3;
 };
@@ -1039,9 +1040,11 @@ inline ClimateHomeGridMetrics &climate_home_grid_metrics() {
   return metrics;
 }
 
-inline void set_climate_home_grid_metrics(lv_obj_t *page, int cols, int rows) {
+inline void set_climate_home_grid_metrics(lv_obj_t *page, int cols, int rows,
+                                          lv_obj_t *first_card = nullptr) {
   ClimateHomeGridMetrics &metrics = climate_home_grid_metrics();
   metrics.page = page;
+  metrics.first_card = first_card;
   metrics.cols = cols > 0 ? cols : 3;
   metrics.rows = rows > 0 ? rows : 3;
 }
@@ -4196,12 +4199,22 @@ inline void media_volume_grid_card_rect(lv_coord_t sw, lv_coord_t sh,
   lv_coord_t pad_bottom = lv_obj_get_style_pad_bottom(home, LV_PART_MAIN);
   lv_coord_t gap_col = lv_obj_get_style_pad_column(home, LV_PART_MAIN);
   lv_coord_t gap_row = lv_obj_get_style_pad_row(home, LV_PART_MAIN);
+  int span_cols = cols < 3 ? cols : 3;
+  int span_rows = rows < 3 ? rows : 3;
+  if (metrics.first_card) {
+    lv_area_t card_area;
+    lv_obj_get_coords(metrics.first_card, &card_area);
+    x = card_area.x1;
+    y = card_area.y1;
+    w = lv_obj_get_width(metrics.first_card) * span_cols + gap_col * (span_cols - 1);
+    h = lv_obj_get_height(metrics.first_card) * span_rows + gap_row * (span_rows - 1);
+    return;
+  }
+
   lv_coord_t usable_w = sw - pad_left - pad_right - gap_col * (cols - 1);
   lv_coord_t usable_h = sh - pad_top - pad_bottom - gap_row * (rows - 1);
   lv_coord_t cell_w = usable_w > 0 ? usable_w / cols : w;
   lv_coord_t cell_h = usable_h > 0 ? usable_h / rows : h;
-  int span_cols = cols < 3 ? cols : 3;
-  int span_rows = rows < 3 ? rows : 3;
   w = cell_w * span_cols + gap_col * (span_cols - 1);
   h = cell_h * span_rows + gap_row * (span_rows - 1);
   x = pad_left;
@@ -5540,7 +5553,6 @@ inline void grid_phase2(
       cfg.num_slots, MAX_GRID_SLOTS);
   }
   int ROWS = (NS + COLS - 1) / COLS;
-  set_climate_home_grid_metrics(main_page_obj, COLS, ROWS);
 
   static bool has_sensor[MAX_GRID_SLOTS] = {};
   static bool sensor_text_mode[MAX_GRID_SLOTS] = {};
@@ -5580,6 +5592,13 @@ inline void grid_phase2(
 
   OrderResult parsed;
   parse_order_string(order_str, NS, parsed);
+  lv_obj_t *first_card = nullptr;
+  if (parsed.positions[0] >= 1 && parsed.positions[0] <= NS) {
+    first_card = slots[parsed.positions[0] - 1].btn;
+  } else if (NS > 0) {
+    first_card = slots[0].btn;
+  }
+  set_climate_home_grid_metrics(main_page_obj, COLS, ROWS, first_card);
 
   for (int pos = 0; pos < NS; pos++) {
     int idx = parsed.positions[pos];

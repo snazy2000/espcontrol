@@ -10,7 +10,6 @@
       "sensor_font": "statistics_font",
       "media_title_font": "media_title_font",
       "climate_target_font": "climate_target_font",
-      "width_compensation_percent": 95,
       "color_correction": false,
       "wrap_tall_labels": true
     },

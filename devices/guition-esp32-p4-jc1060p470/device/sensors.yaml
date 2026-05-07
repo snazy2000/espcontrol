@@ -46,7 +46,6 @@ esphome:
             cfg.num_slots = 15;
             cfg.cols = 5;
             cfg.wrap_tall_labels = true;
-            cfg.width_compensation_percent = 95;
             cfg.icon_font = id(icon_font)->get_lv_font();
             cfg.climate_control_icon_font = id(climate_control_icon_font)->get_lv_font();
             cfg.sp_sensor_font = id(statistics_font)->get_lv_font();
@@ -134,7 +133,6 @@ esphome:
             cfg.num_slots = 15;
             cfg.cols = 5;
             cfg.wrap_tall_labels = true;
-            cfg.width_compensation_percent = 95;
             cfg.icon_font = id(icon_font)->get_lv_font();
             cfg.climate_control_icon_font = id(climate_control_icon_font)->get_lv_font();
             cfg.sp_sensor_font = id(statistics_font)->get_lv_font();

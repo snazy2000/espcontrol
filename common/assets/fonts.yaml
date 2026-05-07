@@ -20,10 +20,10 @@ font:
     glyphs:
       - "0123456789"
 
-  # Main page: media now-playing titles
+  # Main page: media now-playing titles (sensor value size, full text glyph coverage)
   - file: "gfonts://Roboto@Light"
     id: media_title_font
-    size: 42
+    size: 48
     bpp: 4
     glyphs: !include text_glyphs.yaml
     extras:

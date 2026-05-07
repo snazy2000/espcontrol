@@ -238,7 +238,7 @@
     "background:#212121;overflow:hidden;pointer-events:none}" +
     ".sp-media-h-slider span{display:block;width:62%;height:100%;background:#fff;border-radius:999px}" +
     ".sp-media-position-time{z-index:1}" +
-    ".sp-media-now-title{font-size:var(--media-title);line-height:1;color:#fff;font-weight:300;z-index:1;" +
+    ".sp-media-now-title{font-size:var(--btn-icon);line-height:1;color:#fff;font-weight:300;z-index:1;" +
     "display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;word-break:break-word}" +
     ".sp-media-now-artist{font-size:var(--btn-label);line-height:1.2;color:#fff}" +
     ".sp-btn-double{grid-row:span 2}" +
@@ -2341,7 +2341,6 @@
     r.setProperty("--btn-pad", CFG.btn.padding + "cqw");
     r.setProperty("--btn-icon", CFG.btn.iconSize + "cqw");
     r.setProperty("--btn-label", CFG.btn.labelSize + "cqw");
-    r.setProperty("--media-title", (CFG.btn.mediaTitleSize || (CFG.btn.iconSize * 0.75)) + "cqw");
     r.setProperty("--btn-lines", String(CFG.btn.labelLines || 1));
     r.setProperty("--btn-lines-dbl", String(CFG.btn.labelLinesDouble || CFG.btn.labelLines || 1));
     r.setProperty("--sensor-top", CFG.sensorBadge.top + "cqw");

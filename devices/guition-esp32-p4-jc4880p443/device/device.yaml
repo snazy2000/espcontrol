@@ -19,6 +19,8 @@ esp32:
   engineering_sample: true
   framework:
     type: esp-idf
+    version: 5.5.2
+    platform_version: 55.03.37
     advanced:
       enable_idf_experimental_features: yes
 

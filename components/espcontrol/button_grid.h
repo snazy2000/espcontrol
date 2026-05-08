@@ -3508,7 +3508,14 @@ struct SliderCtx {
 
 constexpr uint32_t MEDIA_SEEK_PENDING_TIMEOUT_MS = 3000;
 constexpr float MEDIA_SEEK_MATCH_TOLERANCE_SECONDS = 2.0f;
+constexpr lv_coord_t MEDIA_VOLUME_REFERENCE_SIDE_PX = 480;
 constexpr lv_coord_t MEDIA_VOLUME_ARC_STROKE_PX = 18;
+constexpr lv_coord_t MEDIA_VOLUME_BACK_BUTTON_REF_PX = 46;
+constexpr lv_coord_t MEDIA_VOLUME_BUTTON_REF_PX = 80;
+constexpr lv_coord_t MEDIA_VOLUME_INSET_REF_PX = 26;
+constexpr lv_coord_t MEDIA_VOLUME_CONTROLS_GAP_REF_PX = 48;
+constexpr lv_coord_t MEDIA_VOLUME_TITLE_OFFSET_REF_PX = 70;
+constexpr lv_coord_t MEDIA_VOLUME_UNIT_Y_REF_PX = -22;
 
 struct MediaVolumeCtx {
   std::string entity_id;
@@ -4182,6 +4189,22 @@ inline lv_obj_t *media_volume_create_round_button(lv_obj_t *parent, lv_coord_t s
   return btn;
 }
 
+inline lv_coord_t media_volume_scaled_px(lv_coord_t px, lv_coord_t short_side) {
+  return px * short_side / MEDIA_VOLUME_REFERENCE_SIDE_PX;
+}
+
+inline int media_volume_scaled_zoom(lv_coord_t short_side) {
+  return 256 * short_side / MEDIA_VOLUME_REFERENCE_SIDE_PX;
+}
+
+inline void media_volume_set_child_label_zoom(lv_obj_t *btn, int zoom) {
+  if (!btn) return;
+  lv_obj_t *label = lv_obj_get_child(btn, 0);
+  if (!label) return;
+  lv_obj_set_style_transform_zoom(label, zoom, LV_PART_MAIN);
+  lv_obj_center(label);
+}
+
 inline void media_volume_grid_card_rect(lv_coord_t sw, lv_coord_t sh,
                                         lv_coord_t &x, lv_coord_t &y,
                                         lv_coord_t &w, lv_coord_t &h) {
@@ -4246,19 +4269,13 @@ inline void media_volume_layout_modal(MediaVolumeCtx *ctx) {
     panel_h = sh - panel_y - panel_bottom;
   }
   int width_percent = normalize_width_compensation_percent(ctx->width_compensation_percent);
-  lv_coord_t min_side = panel_w < panel_h ? panel_w : panel_h;
-  lv_coord_t back_size = min_side * 22 / 100;
-  if (back_size < 28) back_size = 28;
-  if (back_size > 46) back_size = 46;
-  lv_coord_t btn_size = min_side * 18 / 100;
-  if (btn_size < 76) btn_size = 76;
-  if (btn_size > 88) btn_size = 88;
-  lv_coord_t inset = min_side * 6 / 100;
+  int modal_zoom = media_volume_scaled_zoom(short_side);
+  lv_coord_t back_size = media_volume_scaled_px(MEDIA_VOLUME_BACK_BUTTON_REF_PX, short_side);
+  lv_coord_t btn_size = media_volume_scaled_px(MEDIA_VOLUME_BUTTON_REF_PX, short_side);
+  lv_coord_t inset = media_volume_scaled_px(MEDIA_VOLUME_INSET_REF_PX, short_side);
   if (inset < 8) inset = 8;
   lv_coord_t arc_stroke = MEDIA_VOLUME_ARC_STROKE_PX;
-  lv_coord_t controls_gap = min_side * 10 / 100;
-  if (controls_gap < 48) controls_gap = 48;
-  if (controls_gap > 120) controls_gap = 120;
+  lv_coord_t controls_gap = media_volume_scaled_px(MEDIA_VOLUME_CONTROLS_GAP_REF_PX, short_side);
   lv_coord_t arc_size = panel_w < panel_h ? panel_w : panel_h;
   arc_size -= inset * 2;
   lv_coord_t reserved_bottom = btn_size + inset * 2;
@@ -4281,11 +4298,13 @@ inline void media_volume_layout_modal(MediaVolumeCtx *ctx) {
   lv_coord_t arc_center_y = 0;
   lv_coord_t controls_center_y = arc_size / 2 - btn_size / 2 - inset;
   lv_coord_t value_center_y = arc_stroke / 2;
-  lv_coord_t title_center_y = value_center_y - min_side * 16 / 100;
+  lv_coord_t title_center_y = value_center_y -
+    media_volume_scaled_px(MEDIA_VOLUME_TITLE_OFFSET_REF_PX, short_side);
 
   lv_obj_set_size(ui.back_btn, back_size, back_size);
   lv_obj_set_style_radius(ui.back_btn, back_size / 2, LV_PART_MAIN);
   lv_obj_align(ui.back_btn, LV_ALIGN_TOP_LEFT, inset, inset);
+  media_volume_set_child_label_zoom(ui.back_btn, modal_zoom);
   lv_obj_set_size(ui.arc, arc_size, arc_size);
   apply_width_compensation(ui.arc, ctx->width_compensation_percent);
   lv_obj_align(ui.arc, LV_ALIGN_CENTER, arc_center_x, arc_center_y);
@@ -4296,6 +4315,13 @@ inline void media_volume_layout_modal(MediaVolumeCtx *ctx) {
   lv_obj_set_style_radius(ui.minus_btn, btn_size / 2, LV_PART_MAIN);
   lv_obj_set_size(ui.plus_btn, btn_size, btn_size);
   lv_obj_set_style_radius(ui.plus_btn, btn_size / 2, LV_PART_MAIN);
+  media_volume_set_child_label_zoom(ui.minus_btn, modal_zoom);
+  media_volume_set_child_label_zoom(ui.plus_btn, modal_zoom);
+  lv_obj_set_style_transform_zoom(ui.title_lbl, modal_zoom, LV_PART_MAIN);
+  lv_obj_set_style_transform_zoom(ui.pct_lbl, modal_zoom, LV_PART_MAIN);
+  lv_obj_set_style_transform_zoom(ui.pct_unit_lbl, modal_zoom, LV_PART_MAIN);
+  lv_obj_set_style_translate_y(ui.pct_unit_lbl,
+    media_volume_scaled_px(MEDIA_VOLUME_UNIT_Y_REF_PX, short_side), LV_PART_MAIN);
   lv_obj_align(ui.title_lbl, LV_ALIGN_CENTER, 0, title_center_y);
   lv_obj_align(ui.pct_row, LV_ALIGN_CENTER, 0, value_center_y);
   lv_obj_align(ui.minus_btn, LV_ALIGN_CENTER, -(btn_size + controls_gap) / 2, controls_center_y);
@@ -4409,7 +4435,7 @@ inline void media_volume_open_modal(MediaVolumeCtx *ctx) {
   lv_obj_set_style_text_color(ui.pct_unit_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
   lv_obj_set_style_text_align(ui.pct_unit_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
   if (ctx->unit_font) lv_obj_set_style_text_font(ui.pct_unit_lbl, ctx->unit_font, LV_PART_MAIN);
-  lv_obj_set_style_translate_y(ui.pct_unit_lbl, -22, LV_PART_MAIN);
+  lv_obj_set_style_translate_y(ui.pct_unit_lbl, MEDIA_VOLUME_UNIT_Y_REF_PX, LV_PART_MAIN);
   apply_width_compensation(ui.pct_unit_lbl, ctx->width_compensation_percent);
 
   ui.minus_btn = media_volume_create_round_button(ui.panel, 72, find_icon("Minus"),

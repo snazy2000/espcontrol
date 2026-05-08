@@ -5364,6 +5364,7 @@ struct GridConfig {
   const lv_font_t *media_title_font;
   const lv_font_t *volume_number_font;
   const lv_font_t *volume_label_font = nullptr;
+  const lv_font_t *volume_icon_font = nullptr;
   const lv_font_t *climate_target_font;
   std::string temperature_unit;
   std::string timezone;

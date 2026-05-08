@@ -31,7 +31,6 @@ function lightTempClampMax(v, mn) {
 
 registerButtonType("light_temperature", {
   label: "Lights",
-  experimental: "light_temperature",
   allowInSubpage: true,
   hideLabel: true,
   labelPlaceholder: "e.g. Living Room",

@@ -43,26 +43,6 @@ font:
       - file: "gfonts://Heebo@Light"
         glyphs: !include ../../../common/assets/hebrew_glyphs.yaml
 
-  # Climate detail controls (chevron-left, dots-horizontal, minus, plus, thermometer)
-  - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'
-    id: climate_control_icon_font_md_square
-    size: 63
-    bpp: 4
-    glyphs:
-      - "\U000F0141"  # mdi-chevron-left
-      - "\U000F01D8"  # mdi-dots-horizontal
-      - "\U000F0374"  # mdi-minus
-      - "\U000F0415"  # mdi-plus
-      - "\U000F050F"  # mdi-thermometer
-
-  # Climate detail page: oversized target temperature
-  - file: "gfonts://Roboto@Light"
-    id: climate_target_font_md_square
-    size: 150
-    bpp: 4
-    glyphs:
-      - "0123456789.-"
-
   # Volume modal: 96px on the 480px S3 reference scaled to this 720px short side
   - file: "gfonts://Roboto@Thin"
     id: volume_modal_number_font_md_square

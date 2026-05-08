@@ -43,14 +43,6 @@ font:
       - file: "gfonts://Heebo@Light"
         glyphs: !include ../../../common/assets/hebrew_glyphs.yaml
 
-  # Climate detail page: oversized target temperature
-  - file: "gfonts://Roboto@Light"
-    id: climate_target_font_lg
-    size: 132
-    bpp: 4
-    glyphs:
-      - "0123456789.-"
-
   # Volume modal: 96px on the S3 reference scaled for the larger 4.3-inch portrait card grid
   - file: "gfonts://Roboto@Thin"
     id: volume_modal_number_font_lg
@@ -67,18 +59,6 @@ font:
     extras:
       - file: "gfonts://Heebo"
         glyphs: !include ../../../common/assets/hebrew_glyphs.yaml
-
-  # Climate detail controls: 42px on the S3 reference scaled for the larger 4.3-inch portrait card grid
-  - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'
-    id: climate_control_icon_font_480
-    size: 59
-    bpp: 4
-    glyphs:
-      - "\U000F0141"  # mdi-chevron-left
-      - "\U000F01D8"  # mdi-dots-horizontal
-      - "\U000F0374"  # mdi-minus
-      - "\U000F0415"  # mdi-plus
-      - "\U000F050F"  # mdi-thermometer
 
   # Setup screen icons: 61px on the S3 reference scaled for the larger 4.3-inch portrait setup layout
   - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'

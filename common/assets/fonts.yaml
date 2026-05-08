@@ -30,14 +30,6 @@ font:
       - file: "gfonts://Heebo@Light"
         glyphs: !include hebrew_glyphs.yaml
 
-  # Climate detail page: oversized target temperature
-  - file: "gfonts://Roboto@Light"
-    id: climate_target_font
-    size: 112
-    bpp: 4
-    glyphs:
-      - "0123456789.-"
-
   # Main page: button labels
   - file: "gfonts://Roboto"
     id: label_font

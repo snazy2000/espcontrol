@@ -44,7 +44,6 @@ These are the current reference sizes from the S3 480px screen.
 | UI item | Reference size | Notes |
 |---|---:|---|
 | Button/card icons | `44` | Main card icons, based on `icon_font_sm` |
-| Climate/detail icons | `42` | Back, dots, minus, plus, thermometer |
 | Setup screen icons | `61` | WiFi, Ethernet, cog, Home Assistant setup icons |
 | Volume modal number | `96` | Large percentage number, using `Roboto@Thin` |
 | Volume modal label | `22` | `Volume` label |

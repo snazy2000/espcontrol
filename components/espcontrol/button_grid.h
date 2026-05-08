@@ -4719,6 +4719,10 @@ inline lv_obj_t *setup_media_slider_layout(lv_obj_t *btn, lv_obj_t *icon_lbl,
   lv_obj_t *slider = setup_slider_widget(btn, on_color, horizontal);
   lv_obj_t *fill = lv_obj_get_child(btn, 0);
   lv_obj_t *track = nullptr;
+  if (position) {
+    if (value_lbl) lv_obj_move_foreground(value_lbl);
+    if (text_lbl) lv_obj_move_foreground(text_lbl);
+  }
 
   SliderCtx *ctx = new SliderCtx();
   ctx->entity_id = p.entity;

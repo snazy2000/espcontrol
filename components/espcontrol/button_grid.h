@@ -4347,8 +4347,6 @@ inline void media_volume_open_modal(MediaVolumeCtx *ctx) {
   lv_obj_set_style_border_width(ui.overlay, 0, LV_PART_MAIN);
   lv_obj_set_style_pad_all(ui.overlay, 0, LV_PART_MAIN);
   lv_obj_clear_flag(ui.overlay, LV_OBJ_FLAG_SCROLLABLE);
-  lv_obj_add_event_cb(ui.overlay, [](lv_event_t *) { media_volume_hide_modal(); },
-    LV_EVENT_CLICKED, nullptr);
 
   ui.panel = lv_obj_create(ui.overlay);
   lv_obj_set_style_bg_color(ui.panel, lv_color_hex(ctx->tertiary_color), LV_PART_MAIN);

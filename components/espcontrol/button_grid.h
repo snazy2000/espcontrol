@@ -3508,6 +3508,7 @@ struct SliderCtx {
 
 constexpr uint32_t MEDIA_SEEK_PENDING_TIMEOUT_MS = 3000;
 constexpr float MEDIA_SEEK_MATCH_TOLERANCE_SECONDS = 2.0f;
+constexpr lv_coord_t MEDIA_VOLUME_ARC_STROKE_PX = 18;
 
 struct MediaVolumeCtx {
   std::string entity_id;
@@ -4254,9 +4255,7 @@ inline void media_volume_layout_modal(MediaVolumeCtx *ctx) {
   if (btn_size > 88) btn_size = 88;
   lv_coord_t inset = min_side * 6 / 100;
   if (inset < 8) inset = 8;
-  lv_coord_t arc_stroke = min_side * 10 / 100;
-  if (arc_stroke < 12) arc_stroke = 12;
-  if (arc_stroke > 22) arc_stroke = 22;
+  lv_coord_t arc_stroke = MEDIA_VOLUME_ARC_STROKE_PX;
   lv_coord_t controls_gap = min_side * 10 / 100;
   if (controls_gap < 48) controls_gap = 48;
   if (controls_gap > 120) controls_gap = 120;

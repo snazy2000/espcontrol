@@ -68,7 +68,7 @@
       "icon_font": "icon_font_sm",
       "climate_control_icon_font": "climate_control_icon_font_sm",
       "sensor_font": "statistics_font_sm",
-      "media_title_font": "media_title_font",
+      "media_title_font": "media_title_font_sm",
       "volume_number_font": "volume_modal_number_font",
       "volume_label_font": "label_font_sm",
       "climate_target_font": "climate_target_font_sm",

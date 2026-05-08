@@ -7,10 +7,10 @@
 # =============================================================================
 
 font:
-  # Main page icons: 44px on the 480px S3 reference scaled to this 480px short side
+  # Main page icons: 44px on the S3 reference scaled for the larger 4.3-inch portrait card grid
   - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'
     id: icon_font_480
-    size: 44
+    size: 62
     bpp: 4
     glyphs: !include ../../../common/assets/icon_glyphs.yaml
 
@@ -51,6 +51,14 @@ font:
     glyphs:
       - "0123456789.-"
 
+  # Volume modal: 112px on the S3 reference scaled for the larger 4.3-inch portrait card grid
+  - file: "gfonts://Roboto@Light"
+    id: volume_modal_number_font_lg
+    size: 158
+    bpp: 4
+    glyphs:
+      - "0123456789"
+
   # Top bar clock and temperature (25px)
   - file: "gfonts://Roboto"
     id: clockbar_font_lg
@@ -60,10 +68,10 @@ font:
       - file: "gfonts://Heebo"
         glyphs: !include ../../../common/assets/hebrew_glyphs.yaml
 
-  # Climate detail controls: 42px on the 480px S3 reference scaled to this 480px short side
+  # Climate detail controls: 42px on the S3 reference scaled for the larger 4.3-inch portrait card grid
   - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'
     id: climate_control_icon_font_480
-    size: 42
+    size: 59
     bpp: 4
     glyphs:
       - "\U000F0141"  # mdi-chevron-left
@@ -72,20 +80,20 @@ font:
       - "\U000F0415"  # mdi-plus
       - "\U000F050F"  # mdi-thermometer
 
-  # Volume modal controls: 44px on the 480px S3 reference scaled to this 480px short side
+  # Volume modal controls: 44px on the S3 reference scaled for the larger 4.3-inch portrait card grid
   - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'
     id: volume_modal_icon_font_480
-    size: 44
+    size: 62
     bpp: 4
     glyphs:
       - "\U000F0141"  # mdi-chevron-left
       - "\U000F0374"  # mdi-minus
       - "\U000F0415"  # mdi-plus
 
-  # Setup screen icons: 61px on the 480px S3 reference scaled to this 480px short side
+  # Setup screen icons: 61px on the S3 reference scaled for the larger 4.3-inch portrait setup layout
   - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'
     id: icon_font_setup_480
-    size: 61
+    size: 86
     bpp: 4
     glyphs:
       - "\U000F05A9"  # mdi-wifi

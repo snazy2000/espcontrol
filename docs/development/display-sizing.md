@@ -25,6 +25,8 @@ new size = reference size * target short side / 480
 
 Round to the nearest whole number. For `.5`, round up.
 
+The 4.3-inch P4 portrait screen (`guition-esp32-p4-jc4880p443`) is the exception. It has a `480px` short side, but its 2-column portrait grid creates much larger cards than the 4-inch square S3 grid. For that screen, match the existing `label_font_lg` scale instead of the raw short side. In practice, that means `22 -> 31`, which gives a scale of about `1.41`.
+
 Examples:
 
 | Reference size | 480px target | 600px target | 720px target | 800px target |

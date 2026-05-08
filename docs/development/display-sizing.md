@@ -35,7 +35,7 @@ Examples:
 | `42` | `42` | `53` | `63` | `70` |
 | `44` | `44` | `55` | `66` | `73` |
 | `61` | `61` | `76` | `92` | `102` |
-| `112` | `112` | `140` | `168` | `187` |
+| `96` | `96` | `120` | `144` | `160` |
 
 ## Current Master Sizes
 
@@ -46,10 +46,10 @@ These are the current reference sizes from the S3 480px screen.
 | Button/card icons | `44` | Main card icons, based on `icon_font_sm` |
 | Climate/detail icons | `42` | Back, dots, minus, plus, thermometer |
 | Setup screen icons | `61` | WiFi, Ethernet, cog, Home Assistant setup icons |
-| Volume modal number | `112` | Large percentage number |
+| Volume modal number | `96` | Large percentage number, using `Roboto@Thin` |
 | Volume modal label | `22` | `Volume` label |
 | Volume modal icons | `44` | Back, minus, and plus controls using the standard card icon font |
-| Volume modal arc stroke | `18` | Runtime layout constant, not a font |
+| Volume modal arc stroke | `12` | Runtime layout constant, not a font |
 
 If a master size changes, update each native target font using the same formula.
 

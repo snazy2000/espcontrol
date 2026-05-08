@@ -63,10 +63,10 @@ font:
     glyphs:
       - "0123456789.-"
 
-  # Volume modal: 112px on the 480px S3 reference scaled to this 720px short side
-  - file: "gfonts://Roboto@Light"
+  # Volume modal: 96px on the 480px S3 reference scaled to this 720px short side
+  - file: "gfonts://Roboto@Thin"
     id: volume_modal_number_font_md_square
-    size: 168
+    size: 144
     bpp: 4
     glyphs:
       - "0123456789"

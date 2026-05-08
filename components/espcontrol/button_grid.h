@@ -3509,11 +3509,11 @@ struct SliderCtx {
 constexpr uint32_t MEDIA_SEEK_PENDING_TIMEOUT_MS = 3000;
 constexpr float MEDIA_SEEK_MATCH_TOLERANCE_SECONDS = 2.0f;
 constexpr lv_coord_t MEDIA_VOLUME_REFERENCE_SIDE_PX = 480;
-constexpr lv_coord_t MEDIA_VOLUME_ARC_STROKE_REF_PX = 18;
+constexpr lv_coord_t MEDIA_VOLUME_ARC_STROKE_REF_PX = 12;
 constexpr lv_coord_t MEDIA_VOLUME_BACK_BUTTON_REF_PX = 46;
 constexpr lv_coord_t MEDIA_VOLUME_BUTTON_REF_PX = 80;
-constexpr lv_coord_t MEDIA_VOLUME_INSET_REF_PX = 26;
-constexpr lv_coord_t MEDIA_VOLUME_CONTROLS_GAP_REF_PX = 48;
+constexpr lv_coord_t MEDIA_VOLUME_INSET_REF_PX = 18;
+constexpr lv_coord_t MEDIA_VOLUME_CONTROLS_GAP_REF_PX = 24;
 constexpr lv_coord_t MEDIA_VOLUME_TITLE_OFFSET_REF_PX = 70;
 constexpr lv_coord_t MEDIA_VOLUME_UNIT_Y_REF_PX = -22;
 

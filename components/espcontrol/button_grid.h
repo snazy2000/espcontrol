@@ -4234,13 +4234,15 @@ inline void media_volume_layout_modal(MediaVolumeCtx *ctx) {
   lv_coord_t panel_y = 0;
   lv_coord_t panel_w = sw - panel_x - 4;
   lv_coord_t panel_h = sh;
-  if (sw == 720 && sh == 720) {
-    ClimateHomeGridMetrics &metrics = climate_home_grid_metrics();
-    if (metrics.page) lv_obj_update_layout(metrics.page);
-    panel_x = 8;
-    panel_y = metrics.page ? lv_obj_get_style_pad_top(metrics.page, LV_PART_MAIN) : 57;
-    panel_w = sw - panel_x - 8;
-    panel_h = sh - panel_y - 6;
+  ClimateHomeGridMetrics &metrics = climate_home_grid_metrics();
+  if (metrics.page) {
+    lv_obj_update_layout(metrics.page);
+    panel_x = lv_obj_get_style_pad_left(metrics.page, LV_PART_MAIN);
+    panel_y = lv_obj_get_style_pad_top(metrics.page, LV_PART_MAIN);
+    lv_coord_t panel_right = lv_obj_get_style_pad_right(metrics.page, LV_PART_MAIN);
+    lv_coord_t panel_bottom = lv_obj_get_style_pad_bottom(metrics.page, LV_PART_MAIN);
+    panel_w = sw - panel_x - panel_right;
+    panel_h = sh - panel_y - panel_bottom;
   }
   int width_percent = normalize_width_compensation_percent(ctx->width_compensation_percent);
   lv_coord_t min_side = panel_w < panel_h ? panel_w : panel_h;

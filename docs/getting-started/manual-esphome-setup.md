@@ -53,7 +53,7 @@ packages:
   setup:
     url: https://github.com/jtenniswood/espcontrol/
     file: devices/guition-esp32-p4-jc1060p470/packages.yaml
-    refresh: 1d
+    refresh: 1sec
 ```
 
 If you do not use ESPHome secrets, replace the two `!secret` lines with your WiFi details:
@@ -86,7 +86,7 @@ packages:
   setup:
     url: https://github.com/jtenniswood/espcontrol/
     file: devices/esp32-p4-86/packages.yaml
-    refresh: 1d
+    refresh: 1sec
 ```
 
 If Ethernet is unplugged or your network does not give the display an IP address, the display will show an Ethernet setup message. It will not create a WiFi hotspot in this mode.
@@ -130,6 +130,6 @@ If ESPHome cannot access the USB port directly, choose **Manual download** inste
 
 ## Updating Later
 
-Because the package uses `refresh: 1d`, ESPHome checks GitHub for EspControl updates about once a day when it compiles. To update manually, open ESPHome Device Builder and run **Install** again. If the display is online, use OTA so you do not need to reconnect USB.
+Because the package uses `refresh: 1sec`, ESPHome checks GitHub for EspControl updates each time it compiles. To update manually, open ESPHome Device Builder and run **Install** again. If the display is online, use OTA so you do not need to reconnect USB.
 
 Next: [Home Assistant Actions](/getting-started/home-assistant-actions)

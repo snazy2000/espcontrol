@@ -4803,7 +4803,7 @@ inline void setup_media_card(BtnSlot &s, const ParsedCfg &p, uint32_t on_color,
                              const lv_font_t *sensor_font,
                              const lv_font_t *media_title_font,
                              int width_compensation_percent = 100,
-                             int /*row_span*/ = 1,
+                             int row_span = 1,
                              int col_span = 1) {
   lv_obj_add_flag(s.sensor_container, LV_OBJ_FLAG_HIDDEN);
   lv_coord_t pad = lv_obj_get_style_radius(s.btn, LV_PART_MAIN) + 4;
@@ -4826,7 +4826,7 @@ inline void setup_media_card(BtnSlot &s, const ParsedCfg &p, uint32_t on_color,
     s.sensor_lbl = title_lbl;
     lv_obj_set_user_data(s.sensor_container, (void *)title_lbl);
     setup_media_now_playing_layout(
-      s.btn, s.icon_lbl, s.sensor_lbl, s.text_lbl, media_title_font, pad, col_span == 1);
+      s.btn, s.icon_lbl, s.sensor_lbl, s.text_lbl, media_title_font, pad, row_span == 1);
     return;
   }
   if (mode == "position") {

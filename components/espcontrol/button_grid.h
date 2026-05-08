@@ -4646,9 +4646,12 @@ inline void setup_media_now_playing_layout(lv_obj_t *btn, lv_obj_t *icon_lbl,
     lv_obj_move_foreground(title_lbl);
   }
   if (artist_lbl) {
+    const lv_font_t *font = lv_obj_get_style_text_font(artist_lbl, LV_PART_MAIN);
     lv_label_set_text(artist_lbl, "--");
+    lv_label_set_long_mode(artist_lbl, LV_LABEL_LONG_DOT);
+    if (font && font->line_height > 0) lv_obj_set_size(artist_lbl, lv_pct(100), font->line_height);
+    else lv_obj_set_width(artist_lbl, lv_pct(100));
     lv_obj_align(artist_lbl, LV_ALIGN_BOTTOM_LEFT, 0, 0);
-    configure_button_label_wrap(artist_lbl);
     lv_obj_move_foreground(artist_lbl);
   }
 }

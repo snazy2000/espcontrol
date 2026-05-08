@@ -4150,8 +4150,6 @@ inline void media_volume_apply_percent(MediaVolumeCtx *ctx, int pct,
 
 inline void media_volume_hide_modal() {
   MediaVolumeModalUi &ui = media_volume_modal_ui();
-  std::function<void()> resume_home_idle;
-  if (ui.active) resume_home_idle = ui.active->resume_home_idle;
   if (ui.overlay) lv_obj_del(ui.overlay);
   ui.overlay = nullptr;
   ui.panel = nullptr;
@@ -4165,7 +4163,6 @@ inline void media_volume_hide_modal() {
   ui.plus_btn = nullptr;
   ui.active = nullptr;
   ui.updating_arc = false;
-  if (resume_home_idle) resume_home_idle();
 }
 
 inline lv_obj_t *media_volume_create_round_button(lv_obj_t *parent, lv_coord_t size,
@@ -4340,7 +4337,6 @@ inline void media_volume_set_modal_value(MediaVolumeCtx *ctx, int pct) {
 inline void media_volume_open_modal(MediaVolumeCtx *ctx) {
   if (!ctx) return;
   media_volume_hide_modal();
-  if (ctx->pause_home_idle) ctx->pause_home_idle();
   MediaVolumeModalUi &ui = media_volume_modal_ui();
   ui.active = ctx;
 

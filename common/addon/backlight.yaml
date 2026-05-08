@@ -331,6 +331,9 @@ script:
                 if (std::isnan(val) || val <= 0) val = 60;
                 return (int)(val * 1000);
             - lambda: |-
+                if (!id(home_screen_idle_suspended)) {
+                  media_volume_hide_modal();
+                }
                 if (!id(home_screen_idle_suspended) && lv_scr_act() != id(main_page)->obj) {
                   lv_scr_load_anim(id(main_page)->obj, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
                 }

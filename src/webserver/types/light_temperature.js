@@ -57,10 +57,10 @@ registerButtonType("light_temperature", {
     typeF.appendChild(typeSelect);
     panel.appendChild(typeF);
 
-    // Entity ID
+    // Entity
     var ef = document.createElement("div");
     ef.className = "sp-field";
-    ef.appendChild(helpers.fieldLabel("Entity ID", helpers.idPrefix + "entity"));
+    ef.appendChild(helpers.fieldLabel("Entity", helpers.idPrefix + "entity"));
     var entityInp = helpers.textInput(helpers.idPrefix + "entity", b.entity, "e.g. light.living_room");
     ef.appendChild(entityInp);
     panel.appendChild(ef);

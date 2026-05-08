@@ -1868,6 +1868,37 @@
     return b;
   }
 
+  function buttonConfigChangedByNormalize(raw) {
+    var before = {
+      entity: raw && raw.entity || "",
+      label: raw && raw.label || "",
+      icon: raw && raw.icon || "Auto",
+      icon_on: raw && raw.icon_on || "Auto",
+      sensor: raw && raw.sensor || "",
+      unit: raw && raw.unit || "",
+      type: raw && raw.type || "",
+      precision: raw && raw.precision || "",
+    };
+    var after = normalizeButtonConfig({
+      entity: before.entity,
+      label: before.label,
+      icon: before.icon,
+      icon_on: before.icon_on,
+      sensor: before.sensor,
+      unit: before.unit,
+      type: before.type,
+      precision: before.precision,
+    });
+    return before.entity !== after.entity ||
+      before.label !== after.label ||
+      before.icon !== after.icon ||
+      before.icon_on !== after.icon_on ||
+      before.sensor !== after.sensor ||
+      before.unit !== after.unit ||
+      before.type !== after.type ||
+      before.precision !== after.precision;
+  }
+
   function trimConfigFields(fields) {
     while (fields.length > 1 && !fields[fields.length - 1]) fields.pop();
     return fields;
@@ -1947,6 +1978,10 @@
 
   function buttonConfigHasLegacySliderDirection(str) {
     return hasLegacySliderDirection(parseRawButtonConfig(str || ""));
+  }
+
+  function buttonConfigNeedsMigration(str) {
+    return buttonConfigChangedByNormalize(parseRawButtonConfig(str || ""));
   }
 
   function parseSubpageConfig(str, raw) {
@@ -2063,6 +2098,14 @@
     return false;
   }
 
+  function subpageConfigNeedsMigration(str) {
+    var sp = parseSubpageConfig(str, true);
+    for (var i = 0; i < sp.buttons.length; i++) {
+      if (buttonConfigChangedByNormalize(sp.buttons[i])) return true;
+    }
+    return false;
+  }
+
   function serializeSubpageConfig(sp) {
     var legacy = legacySubpageConfigSafe(sp) ? serializeLegacySubpageConfig(sp) : "";
     var compact = serializeCompactSubpageConfig(sp);
@@ -2148,12 +2191,12 @@
       }
     }
     if (combined) {
-      var migrateSliderDirection = subpageConfigHasLegacySliderDirection(combined);
+      var migrateConfig = subpageConfigNeedsMigration(combined);
       var sp = parseSubpageConfig(combined);
       sp.sizes = sp.sizes || {};
       buildSubpageGrid(sp);
       state.subpages[slot] = sp;
-      if (migrateSliderDirection) scheduleSliderSubpageMigration(slot);
+      if (migrateConfig) scheduleSliderSubpageMigration(slot);
     } else {
       delete state.subpages[slot];
     }
@@ -4005,7 +4048,7 @@
       // Toggle fallback: entity, icons, sensor data
       var ef = document.createElement("div");
       ef.className = "sp-field";
-      ef.appendChild(fieldLabel("Entity ID", idPrefix + "entity"));
+      ef.appendChild(fieldLabel("Entity", idPrefix + "entity"));
       var entityInp = textInput(idPrefix + "entity", b.entity, "e.g. light.kitchen");
       ef.appendChild(entityInp);
       panel.appendChild(ef);
@@ -4023,7 +4066,7 @@
       var whenOnEnabled = hasIconOn || hasSensor || !!b._whenOnActive;
       var whenOnMode = b._whenOnMode || (hasSensor ? "sensor" : "icon");
 
-      var whenOnToggle = toggleRow("Show sensor data when on", idPrefix + "whenon-toggle", whenOnEnabled);
+      var whenOnToggle = toggleRow("Active Display", idPrefix + "whenon-toggle", whenOnEnabled);
       panel.appendChild(whenOnToggle.row);
 
       var whenOnCond = condField();
@@ -6296,7 +6339,7 @@
           var slot = parseInt(m[1], 10);
           if (slot < 1 || slot > NUM_SLOTS) return;
           var b = state.buttons[slot - 1];
-          var migrateSliderDirection = buttonConfigHasLegacySliderDirection(val || "");
+          var migrateConfig = buttonConfigNeedsMigration(val || "");
           var parsed = parseButtonConfig(val || "");
           b.entity = parsed.entity;
           b.label = parsed.label;
@@ -6306,7 +6349,7 @@
           b.unit = parsed.unit;
           b.type = parsed.type;
           b.precision = parsed.precision;
-          if (migrateSliderDirection) saveButtonConfig(slot);
+          if (migrateConfig) saveButtonConfig(slot);
           scheduleRender();
         },
       },
@@ -6468,6 +6511,8 @@
       parseSubpageConfig: parseSubpageConfig,
       serializeSubpageConfig: serializeSubpageConfig,
       subpageStateDisplayMode: subpageStateDisplayMode,
+      buttonConfigNeedsMigration: buttonConfigNeedsMigration,
+      subpageConfigNeedsMigration: subpageConfigNeedsMigration,
       normalizeTemperatureUnit: normalizeTemperatureUnit,
       previewHtmlValue: previewHtmlValue,
       importedButtonOrderFor: function (orderStr, existingSizes) {

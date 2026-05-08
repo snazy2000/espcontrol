@@ -11,7 +11,7 @@ A Lock card controls a Home Assistant `lock` entity and shows whether it is lock
 ## Setting Up a Lock
 
 1. Select a card and change its type to **Lock**.
-2. Enter an **Entity ID** - the Home Assistant lock entity, for example `lock.front_door`.
+2. Enter an **Entity** - the Home Assistant lock entity, for example `lock.front_door`.
 3. Choose the locked and unlocked icons. These default to **Lock** and **Lock Open**.
 4. Set a **Label** if you want custom text. If left blank, the friendly name from Home Assistant is used.
 

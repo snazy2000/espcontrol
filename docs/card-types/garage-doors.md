@@ -13,7 +13,7 @@ Unlike a **Cover** card, it does not show a slider. It normally shows your label
 ## Setting Up a Garage Door
 
 1. Select a card and change its type to **Garage Door**.
-2. Enter an **Entity ID** — the Home Assistant garage door cover entity, for example `cover.garage_door`.
+2. Enter an **Entity** — the Home Assistant garage door cover entity, for example `cover.garage_door`.
 3. Choose the closed and open icons. These default to **Garage** and **Garage Open**.
 4. Set a **Label** (optional). If left blank, the entity's friendly name from Home Assistant is used.
 

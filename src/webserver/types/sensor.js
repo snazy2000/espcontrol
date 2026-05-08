@@ -14,7 +14,7 @@ registerButtonType("sensor", {
 
     var modeField = document.createElement("div");
     modeField.className = "sp-field";
-    modeField.appendChild(helpers.fieldLabel("Mode"));
+    modeField.appendChild(helpers.fieldLabel("Display"));
     var modeSeg = document.createElement("div");
     modeSeg.className = "sp-segment";
     var numericBtn = document.createElement("button");

@@ -13,9 +13,9 @@ A slider card lets you control the brightness of a Home Assistant light entity o
 ## Setting Up a Slider
 
 1. Select a card and change its type to **Slider**.
-2. Enter an **Entity ID** — the Home Assistant light or fan entity you want to control (for example, `light.living_room` or `fan.office_fan`).
-3. Choose an **Off Icon** and **On Icon**. Existing sliders that only had one icon keep using that same icon for both states unless you change it.
-4. Set a **Label** (optional) — shown at the bottom of the card. If left blank, the entity's friendly name from Home Assistant is used.
+2. Enter an **Entity** — the Home Assistant light or fan entity you want to control (for example, `light.living_room` or `fan.office_fan`).
+3. Set a **Label** (optional) — shown at the bottom of the card. If left blank, the entity's friendly name from Home Assistant is used.
+4. Choose an **Off Icon** and **On Icon**. Existing sliders that only had one icon keep using that same icon for both states unless you change it.
 
 ## How It Works on the Panel
 

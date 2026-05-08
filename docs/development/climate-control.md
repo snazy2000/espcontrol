@@ -128,7 +128,7 @@ Show the card label using this priority:
 1. Active action label, when the climate is actively doing something.
 2. Configured card label.
 3. Home Assistant `friendly_name`.
-4. Entity ID.
+4. Entity.
 5. `Climate`.
 
 Active action labels:

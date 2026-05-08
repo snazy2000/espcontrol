@@ -20,8 +20,8 @@ A cover card lets you control a Home Assistant cover entity — blinds, shutters
    - **Open**, **Close**, and **Stop** send that exact cover command.
    - **Set Position** sends the cover to the fixed percentage you enter.
 3. Your Home Assistant cover entity needs to support tilt for **Slider: Tilt** mode to work.
-4. Set a **Label** (optional) — shown at the bottom of the card. If left blank, the entity's friendly name from Home Assistant is used.
-5. Enter an **Entity ID** — the Home Assistant cover entity you want to control (for example, `cover.office_blind`).
+4. Enter an **Entity** — the Home Assistant cover entity you want to control (for example, `cover.office_blind`).
+5. Set a **Label** (optional) — shown at the bottom of the card. If left blank, the entity's friendly name from Home Assistant is used.
 6. Choose icons:
    - Slider and Toggle modes use **Closed Icon** and **Open Icon**.
    - Open, Close, Stop, and Set Position use one **Icon**.

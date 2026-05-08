@@ -8,7 +8,7 @@ registerButtonType("", {
 
     var ef = document.createElement("div");
     ef.className = "sp-field";
-    ef.appendChild(helpers.fieldLabel("Entity ID", helpers.idPrefix + "entity"));
+    ef.appendChild(helpers.fieldLabel("Entity", helpers.idPrefix + "entity"));
     var entityInp = helpers.textInput(helpers.idPrefix + "entity", b.entity, "e.g. light.kitchen");
     ef.appendChild(entityInp);
     panel.appendChild(ef);
@@ -32,7 +32,7 @@ registerButtonType("", {
     ));
 
     var sensorToggle = helpers.toggleRow(
-      "Show sensor data when on",
+      "Active Display",
       helpers.idPrefix + "sensor-when-on-toggle",
       showSensor
     );
@@ -43,7 +43,7 @@ registerButtonType("", {
 
     var modeField = document.createElement("div");
     modeField.className = "sp-field";
-    modeField.appendChild(helpers.fieldLabel("Sensor Display"));
+    modeField.appendChild(helpers.fieldLabel("Display"));
     var modeSeg = document.createElement("div");
     modeSeg.className = "sp-segment";
     var numericBtn = document.createElement("button");

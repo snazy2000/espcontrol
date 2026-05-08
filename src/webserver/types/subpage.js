@@ -12,67 +12,23 @@ registerButtonType("subpage", {
     var showState = mode !== "off";
     var sensorEntity = b.sensor && b.sensor !== "indicator" ? b.sensor : "";
     var iconStateEntity = mode === "icon" ? (b.entity || "") : "";
-    var iconFields = [];
-    var labelInputs = [];
 
-    function syncLabelInputs(source) {
-      for (var i = 0; i < labelInputs.length; i++) {
-        if (labelInputs[i] !== source) labelInputs[i].value = b.label || "";
-      }
-    }
+    var labelSection = document.createElement("div");
+    labelSection.className = "sp-field";
+    labelSection.appendChild(helpers.fieldLabel("Label", helpers.idPrefix + "label"));
+    var labelInp = helpers.textInput(helpers.idPrefix + "label", b.label, "e.g. Lighting");
+    labelSection.appendChild(labelInp);
+    panel.appendChild(labelSection);
+    helpers.bindField(labelInp, "label", true);
 
-    function saveLabelInput(input) {
-      b.label = input.value;
-      helpers.saveField("label", b.label);
-      syncLabelInputs(input);
-    }
-
-    function makeSubpageLabelField(suffix) {
-      var field = document.createElement("div");
-      field.className = "sp-field";
-      field.appendChild(helpers.fieldLabel("Label", helpers.idPrefix + suffix));
-      var labelInp = helpers.textInput(helpers.idPrefix + suffix, b.label, "e.g. Lighting");
-      field.appendChild(labelInp);
-      labelInputs.push(labelInp);
-      labelInp.addEventListener("input", function () { saveLabelInput(labelInp); });
-      labelInp.addEventListener("change", function () { saveLabelInput(labelInp); });
-      labelInp.addEventListener("blur", function () { saveLabelInput(labelInp); });
-      labelInp.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") {
-          saveLabelInput(labelInp);
-          this.blur();
-        }
-      });
-      return field;
-    }
-
-    function syncIconFields(value) {
-      for (var i = 0; i < iconFields.length; i++) {
-        var preview = iconFields[i].querySelector(".sp-icon-picker-preview");
-        if (preview) preview.className = "sp-icon-picker-preview mdi mdi-" + iconSlug(value);
-        var input = iconFields[i].querySelector(".sp-icon-picker-input");
-        if (input) input.value = value;
-      }
-    }
-
-    function makeSubpageIconPicker(label, suffix) {
-      var field = helpers.makeIconPicker(
-        helpers.idPrefix + suffix + "-picker", helpers.idPrefix + suffix,
-        b.icon || "Auto", function (opt) {
-          b.icon = opt;
-          helpers.saveField("icon", opt);
-          syncIconFields(opt);
-        }, label
-      );
-      iconFields.push(field);
-      return field;
-    }
-
-    var singleLabelSection = makeSubpageLabelField("label");
-    panel.appendChild(singleLabelSection);
-
-    var singleIconSection = makeSubpageIconPicker("Icon", "icon");
-    panel.appendChild(singleIconSection);
+    var iconSectionMain = helpers.makeIconPicker(
+      helpers.idPrefix + "icon-picker", helpers.idPrefix + "icon",
+      b.icon || "Auto", function (opt) {
+        b.icon = opt;
+        helpers.saveField("icon", opt);
+      }, "Icon"
+    );
+    panel.appendChild(iconSectionMain);
 
     var showStateToggle = helpers.toggleRow("Show State", helpers.idPrefix + "state-toggle", showState);
     panel.appendChild(showStateToggle.row);
@@ -100,8 +56,7 @@ registerButtonType("subpage", {
     modeField.appendChild(modeSeg);
     stateCond.appendChild(modeField);
 
-    var iconSection = condField();
-    iconSection.appendChild(makeSubpageLabelField("icon-label"));
+    var stateIconSection = condField();
     var iconEntityField = document.createElement("div");
     iconEntityField.className = "sp-field";
     iconEntityField.appendChild(helpers.fieldLabel("State Entity", helpers.idPrefix + "icon-state-entity"));
@@ -111,8 +66,7 @@ registerButtonType("subpage", {
       "e.g. cover.office_blind"
     );
     iconEntityField.appendChild(iconEntityInp);
-    iconSection.appendChild(iconEntityField);
-    iconSection.appendChild(makeSubpageIconPicker("Off Icon", "icon-off"));
+    stateIconSection.appendChild(iconEntityField);
     var onIconSection = helpers.makeIconPicker(
       helpers.idPrefix + "icon-on-picker", helpers.idPrefix + "icon-on",
       b.icon_on || "Auto", function (opt) {
@@ -120,8 +74,8 @@ registerButtonType("subpage", {
         helpers.saveField("icon_on", opt);
       }, "On Icon"
     );
-    iconSection.appendChild(onIconSection);
-    stateCond.appendChild(iconSection);
+    stateIconSection.appendChild(onIconSection);
+    stateCond.appendChild(stateIconSection);
 
     var sensorField = condField();
     var sf = document.createElement("div");
@@ -169,7 +123,6 @@ registerButtonType("subpage", {
     });
 
     var numericSection = condField();
-    numericSection.appendChild(makeSubpageLabelField("numeric-label"));
 
     var uf = document.createElement("div");
     uf.className = "sp-field";
@@ -202,10 +155,7 @@ registerButtonType("subpage", {
     pf.appendChild(precisionSelect);
     numericSection.appendChild(pf);
 
-    var textSection = condField();
-    textSection.appendChild(makeSubpageIconPicker("Icon", "text-icon"));
     sensorField.appendChild(numericSection);
-    sensorField.appendChild(textSection);
     stateCond.appendChild(sensorField);
 
     panel.appendChild(stateCond);
@@ -214,16 +164,15 @@ registerButtonType("subpage", {
       mode = nextMode;
       showState = mode !== "off";
       showStateToggle.input.checked = showState;
-      singleLabelSection.style.display = showState ? "none" : "";
-      singleIconSection.style.display = showState ? "none" : "";
+      var iconLabel = iconSectionMain.querySelector(".sp-field-label");
+      if (iconLabel) iconLabel.textContent = mode === "icon" ? "Off Icon" : "Icon";
       stateCond.classList.toggle("sp-visible", showState);
       iconBtn.classList.toggle("active", mode === "icon");
       numericBtn.classList.toggle("active", mode === "numeric");
       textBtn.classList.toggle("active", mode === "text");
-      iconSection.classList.toggle("sp-visible", mode === "icon");
+      stateIconSection.classList.toggle("sp-visible", mode === "icon");
       sensorField.classList.toggle("sp-visible", mode === "numeric" || mode === "text");
       numericSection.classList.toggle("sp-visible", mode === "numeric");
-      textSection.classList.toggle("sp-visible", mode === "text");
       if (mode !== "numeric" && mode !== "text") helpers.clearFieldError(sensorInp);
       if (!persist) return;
 

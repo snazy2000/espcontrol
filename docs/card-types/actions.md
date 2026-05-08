@@ -15,7 +15,7 @@ Use Action cards for shortcuts such as running a scene, starting a script, trigg
 1. Select a card and change its type to **Action**.
 2. Set a **Label** - this is the text shown on the card.
 3. Choose an **Action**.
-4. Enter the **Entity ID** for the thing you want the action to use.
+4. Enter the **Entity** for the thing you want the action to use.
 5. If you choose **Set Number Helper** or **Select Option Helper**, enter the value or option.
 6. Choose an **Icon**.
 
@@ -27,7 +27,7 @@ For example, to run a script called `script.mettre_de_la_musique`:
 
 1. Set the card **Type** to **Action**.
 2. Set **Action** to **Run Script**.
-3. Set **Entity ID** to `script.mettre_de_la_musique`.
+3. Set **Entity** to `script.mettre_de_la_musique`.
 4. Set **Label** to the text you want on the panel, such as `Music`.
 5. Choose an icon.
 

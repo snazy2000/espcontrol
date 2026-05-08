@@ -30,9 +30,9 @@ Turn on **Show State** if you want the Subpage card on the home screen to show s
 
 Subpage cards can show state in three ways:
 
-- **Icon** shows separate Off Icon and On Icon choices. Enter a State Entity to track a specific Home Assistant entity, or leave it blank to keep the existing automatic behavior where the Subpage card lights up if any active-capable card inside it is on, open, playing, unlocked, or otherwise active.
-- **Numeric** shows a Home Assistant sensor value in the large number style used by Sensor cards.
-- **Text** shows a Home Assistant sensor state where the card label normally appears.
+- **Icon** uses the card's **Icon** as the off icon and shows an **On Icon** when active. Enter a **State Entity** to track a specific Home Assistant entity, or leave it blank to keep the existing automatic behavior where the Subpage card lights up if any active-capable card inside it is on, open, playing, unlocked, or otherwise active.
+- **Numeric** shows a Home Assistant sensor value in the large number style used by Sensor cards. Choose a **Sensor Entity**, **Unit**, and **Unit Precision**.
+- **Text** shows a Home Assistant sensor state where the card label normally appears. Choose a **Sensor Entity**.
 
 Read-only cards such as Sensor, Date, World Clock, and Weather do not affect Icon mode. Numeric and Text modes use the sensor entity you enter on the Subpage card. They do not automatically count the cards inside the subpage; use a Home Assistant helper or template sensor for that.
 

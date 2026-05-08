@@ -146,12 +146,30 @@ function assertButtonRoundTrip(hooks, name, button, expectCompact) {
   assert.deepStrictEqual(buttonShape(firmwareParseButtonConfig(encoded)), buttonShape(button), `${name}: firmware parse`);
 }
 
+function assertButtonMigration(hooks, name, encoded, expected) {
+  assert.strictEqual(hooks.buttonConfigNeedsMigration(encoded), true, `${name}: migration detected`);
+  const migrated = buttonShape(hooks.parseButtonConfig(encoded));
+  assert.deepStrictEqual(migrated, buttonShape(expected), `${name}: migrated shape`);
+  const canonical = hooks.serializeButtonConfig(migrated);
+  assert.strictEqual(hooks.buttonConfigNeedsMigration(canonical), false, `${name}: canonical is idempotent`);
+  assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig(canonical)), buttonShape(expected), `${name}: canonical round-trip`);
+}
+
 function assertSubpageRoundTrip(hooks, name, subpage, expectCompact) {
   const encoded = hooks.serializeSubpageConfig(subpage);
   assert.strictEqual(encoded[0] === "~", expectCompact, `${name}: compact marker`);
   assert.deepStrictEqual(subpageShape(hooks.parseSubpageConfig(encoded)), subpageShape(subpage), `${name}: web round-trip`);
   assert.deepStrictEqual(subpageShape(firmwareParseSubpageConfig(encoded)), subpageShape(subpage), `${name}: firmware parse`);
   return encoded;
+}
+
+function assertSubpageMigration(hooks, name, encoded, expected) {
+  assert.strictEqual(hooks.subpageConfigNeedsMigration(encoded), true, `${name}: migration detected`);
+  const migrated = subpageShape(hooks.parseSubpageConfig(encoded));
+  assert.deepStrictEqual(migrated, subpageShape(expected), `${name}: migrated shape`);
+  const canonical = hooks.serializeSubpageConfig(migrated);
+  assert.strictEqual(hooks.subpageConfigNeedsMigration(canonical), false, `${name}: canonical is idempotent`);
+  assert.deepStrictEqual(subpageShape(hooks.parseSubpageConfig(canonical)), subpageShape(expected), `${name}: canonical round-trip`);
 }
 
 const hooks = loadHooks();
@@ -397,27 +415,23 @@ assertButtonRoundTrip(hooks, "media next card", {
   precision: "",
 }, false);
 
-assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig(
-  "media_player.living_room;Skip Previous;Auto;Auto;previous;;media"
-)), buttonShape({
+assertButtonMigration(hooks, "legacy media previous label", "media_player.living_room;Skip Previous;Auto;Auto;previous;;media", {
   entity: "media_player.living_room",
   label: "Previous",
   icon: "Auto",
   icon_on: "Auto",
   sensor: "previous",
   type: "media",
-}), "legacy media previous label drops Skip");
+});
 
-assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig(
-  "media_player.living_room;Skip Next;Auto;Auto;next;;media"
-)), buttonShape({
+assertButtonMigration(hooks, "legacy media next label", "media_player.living_room;Skip Next;Auto;Auto;next;;media", {
   entity: "media_player.living_room",
   label: "Next",
   icon: "Auto",
   icon_on: "Auto",
   sensor: "next",
   type: "media",
-}), "legacy media next label drops Skip");
+});
 
 assertButtonRoundTrip(hooks, "media volume card", {
   entity: "media_player.kitchen",
@@ -430,16 +444,14 @@ assertButtonRoundTrip(hooks, "media volume card", {
   precision: "",
 }, false);
 
-assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig(
-  "media_player.kitchen;;Volume High;Auto;volume;;media"
-)), buttonShape({
+assertButtonMigration(hooks, "legacy media volume defaults", "media_player.kitchen;;Volume High;Auto;volume;;media", {
   entity: "media_player.kitchen",
   label: "Volume",
   icon: "Auto",
   icon_on: "Auto",
   sensor: "volume",
   type: "media",
-}), "media volume defaults to Volume label and fixed icon");
+});
 
 assertButtonRoundTrip(hooks, "media position card", {
   entity: "media_player.office",
@@ -452,16 +464,14 @@ assertButtonRoundTrip(hooks, "media position card", {
   precision: "",
 }, false);
 
-assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig(
-  "media_player.office;;Progress Clock;Auto;position;;media"
-)), buttonShape({
+assertButtonMigration(hooks, "legacy media position defaults", "media_player.office;;Progress Clock;Auto;position;;media", {
   entity: "media_player.office",
   label: "Position",
   icon: "Progress Clock",
   icon_on: "Auto",
   sensor: "position",
   type: "media",
-}), "media position defaults to Position label");
+});
 
 assertButtonRoundTrip(hooks, "media now playing card", {
   entity: "media_player.office",
@@ -541,7 +551,7 @@ assert.strictEqual(hooks.subpageStateDisplayMode(subpageStateIconEntity), "icon"
 assert.strictEqual(hooks.subpageStateDisplayMode(subpageStateNumeric), "numeric", "subpage numeric state");
 assert.strictEqual(hooks.subpageStateDisplayMode(subpageStateText), "text", "subpage text state");
 
-assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("weather.forecast_home;Weather;Auto;Auto;;;weather_forecast")), {
+assertButtonMigration(hooks, "legacy weather forecast card", "weather.forecast_home;Weather;Auto;Auto;;;weather_forecast", {
   entity: "weather.forecast_home",
   label: "",
   icon: "Auto",
@@ -550,7 +560,29 @@ assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("weather.forecast_hom
   unit: "",
   type: "weather",
   precision: "tomorrow",
-}, "legacy weather forecast card parse");
+});
+
+assertButtonMigration(hooks, "legacy text sensor card", "sensor.washer_state;Washer;Washer;Auto;;;text_sensor", {
+  entity: "",
+  label: "",
+  icon: "Washer",
+  icon_on: "Auto",
+  sensor: "",
+  unit: "",
+  type: "sensor",
+  precision: "text",
+});
+
+assertButtonMigration(hooks, "legacy media controls card", "media_player.living_room;Living Room;Speaker;Auto;controls;;media", {
+  entity: "media_player.living_room",
+  label: "Living Room",
+  icon: "Auto",
+  icon_on: "Auto",
+  sensor: "play_pause",
+  unit: "",
+  type: "media",
+  precision: "",
+});
 
 assertButtonRoundTrip(hooks, "scene action card", {
   entity: "scene.movie_mode",
@@ -662,7 +694,7 @@ assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("~light.compact,Compa
   precision: "2",
 }, "compact button parse");
 
-assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("light.strip;Strip;Lightbulb;Lightbulb On;h;;slider")), {
+assertButtonMigration(hooks, "legacy horizontal slider card", "light.strip;Strip;Lightbulb;Lightbulb On;h;;slider", {
   entity: "light.strip",
   label: "Strip",
   icon: "Lightbulb",
@@ -671,7 +703,7 @@ assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("light.strip;Strip;Li
   unit: "",
   type: "slider",
   precision: "",
-}, "legacy horizontal slider parse");
+});
 
 assert.deepStrictEqual(subpageShape(hooks.parseSubpageConfig("1,B,2|light.legacy:Legacy:Auto:Lightbulb:::|sensor.room:Room:Thermometer:Auto:sensor.room:deg C:sensor:1")), {
   order: ["1", "B", "2"],
@@ -687,6 +719,16 @@ assert.deepStrictEqual(subpageShape(hooks.parseSubpageConfig("1,B|cover.office_b
     buttonShape({ entity: "cover.office_blind", label: "Office Blind", icon: "Blinds", icon_on: "Blinds Open", sensor: "tilt", type: "cover" }),
   ],
 }, "legacy cover tilt subpage parse");
+
+assertSubpageMigration(hooks, "legacy mixed subpage migration", "1,B,2,3,4|weather.forecast_home:Weather:Auto:Auto:::weather_forecast|sensor.washer_state:Washer:Washer:Auto:::text_sensor|media_player.living_room:Living Room:Speaker:Auto:controls::media|light.strip:Strip:Lightbulb:Lightbulb On:h::slider", {
+  order: ["1", "B", "2", "3", "4"],
+  buttons: [
+    buttonShape({ entity: "weather.forecast_home", label: "", icon: "Auto", icon_on: "Auto", type: "weather", precision: "tomorrow" }),
+    buttonShape({ entity: "", label: "", icon: "Washer", icon_on: "Auto", type: "sensor", precision: "text" }),
+    buttonShape({ entity: "media_player.living_room", label: "Living Room", icon: "Auto", icon_on: "Auto", sensor: "play_pause", type: "media" }),
+    buttonShape({ entity: "light.strip", label: "Strip", icon: "Lightbulb", icon_on: "Lightbulb On", type: "slider" }),
+  ],
+});
 
 assertSubpageRoundTrip(hooks, "normal subpage", {
   order: ["1", "B", "2"],

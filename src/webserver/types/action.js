@@ -54,7 +54,7 @@ registerButtonType("action", {
 
     var ef = document.createElement("div");
     ef.className = "sp-field";
-    var entityLabel = helpers.fieldLabel("Entity ID", helpers.idPrefix + "entity");
+    var entityLabel = helpers.fieldLabel("Entity", helpers.idPrefix + "entity");
     ef.appendChild(entityLabel);
     var entityInp = helpers.textInput(helpers.idPrefix + "entity", b.entity, actionInfo(b.sensor).placeholder);
     ef.appendChild(entityInp);

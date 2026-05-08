@@ -17,11 +17,11 @@ Use a [Lock](/card-types/locks) card for door locks. Lock cards use Home Assista
 ## Setting Up a Switch Card
 
 1. Select a card and change its type to **Switch**. New cards use **Switch** by default.
-2. Enter an **Entity ID** - the Home Assistant entity you want to control, for example `light.kitchen` or `switch.garden_lights`.
+2. Enter an **Entity** - the Home Assistant entity you want to control, for example `light.kitchen` or `switch.garden_lights`.
 3. Set a **Label** if you want custom text on the card. If left blank, the friendly name from Home Assistant is used.
 4. Choose an **Off Icon**, or leave it as **Auto** so the panel picks an icon from the entity type.
 5. Choose an **On Icon** if you want a different icon while the entity is active.
-6. Optionally turn on **Show sensor data when on** if the card should show a live sensor value or text state while active.
+6. Optionally turn on **Active Display** if the card should show a live sensor value or text state while active.
 
 ## How It Works on the Panel
 
@@ -34,7 +34,7 @@ Use a [Lock](/card-types/locks) card for door locks. Lock cards use Home Assista
 
 Switch cards always have separate **Off Icon** and **On Icon** settings. The on icon is used while Home Assistant reports the entity as active.
 
-Switch cards can also show sensor data while the entity is active:
+Switch cards can also show an active display while the entity is active:
 
 - **Numeric** - show a live sensor value instead of the icon. You can set the sensor entity, unit, and decimal precision.
 - **Text** - show a live text state instead of the card label, capitalising each word and preserving line breaks.

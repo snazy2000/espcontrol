@@ -47,7 +47,7 @@ registerButtonType("garage", {
 
     var ef = document.createElement("div");
     ef.className = "sp-field";
-    ef.appendChild(helpers.fieldLabel("Entity ID", helpers.idPrefix + "entity"));
+    ef.appendChild(helpers.fieldLabel("Entity", helpers.idPrefix + "entity"));
     var entityInp = helpers.textInput(helpers.idPrefix + "entity", b.entity, "e.g. cover.garage_door");
     ef.appendChild(entityInp);
     panel.appendChild(ef);

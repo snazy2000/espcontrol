@@ -39,7 +39,7 @@ The **Type** dropdown uses these card names on the device:
 | **[Internal Switches](/card-types/internal-relays)** | Controls a built-in relay locally on panels that have relay hardware. | Choose a relay |
 | **[Subpage](/features/subpages)** | Opens a folder-like page of extra cards. | No |
 
-For cards that use Home Assistant, enter the entity name from Home Assistant, such as `light.living_room`, `switch.garden_lights`, `scene.movie_mode`, or `weather.forecast_home`. You can find entity names under **Settings > Devices & Services** in Home Assistant.
+For cards that use Home Assistant, enter the entity name from Home Assistant in the **Entity** field, such as `light.living_room`, `switch.garden_lights`, `scene.movie_mode`, or `weather.forecast_home`. Some card types use a more specific label, such as **Sensor Entity**, **Weather Entity**, or **Media Player Entity**. You can find entity names under **Settings > Devices & Services** in Home Assistant.
 
 Most cards also let you choose an icon and set a label. If the label is left blank, the panel uses the friendly name from Home Assistant when it can.
 
@@ -47,7 +47,7 @@ Most cards also let you choose an icon and set a label. If the label is left bla
 
 Each [Switch](/card-types/switches) card has separate **Off Icon** and **On Icon** settings. The on icon is used while the entity is active.
 
-You can also turn on **Show sensor data when on**:
+You can also turn on **Active Display**:
 
 - **Numeric** — show a live reading instead of the icon, for example temperature, power usage, or a percentage. Pick the **Sensor Entity**, **Unit**, and **Unit Precision**.
 - **Text** — show a live text state instead of the label, for example a machine status or current mode.

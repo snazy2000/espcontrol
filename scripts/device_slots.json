@@ -13,6 +13,7 @@
       "volume_label_font": "volume_modal_label_font_600",
       "climate_target_font": "climate_target_font",
       "color_correction": false,
+      "volume_width_compensation_percent": 95,
       "wrap_tall_labels": true
     },
     {

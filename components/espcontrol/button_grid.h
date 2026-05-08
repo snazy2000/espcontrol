@@ -5371,6 +5371,7 @@ struct GridConfig {
   bool color_correction;
   bool wrap_tall_labels;
   int width_compensation_percent = 100;
+  int volume_width_compensation_percent = 100;
   const lv_font_t *icon_font;
   const lv_font_t *climate_control_icon_font;
   const lv_font_t *sp_sensor_font;
@@ -5810,7 +5811,7 @@ inline void grid_phase2(
               ? cfg.volume_label_font
               : lv_obj_get_style_text_font(s.text_lbl, LV_PART_MAIN),
             cfg.icon_font,
-            cfg.width_compensation_percent,
+            cfg.volume_width_compensation_percent,
             s.sensor_lbl, s.unit_lbl,
             cfg.pause_home_idle, cfg.resume_home_idle);
           subscribe_media_volume_state(ctx);
@@ -6214,7 +6215,7 @@ inline void grid_phase2(
                 ? cfg.volume_label_font
                 : lv_obj_get_style_text_font(sub_slot.text_lbl, LV_PART_MAIN),
               cfg.icon_font,
-              cfg.width_compensation_percent,
+              cfg.volume_width_compensation_percent,
               sub_slot.sensor_lbl, sub_slot.unit_lbl,
               cfg.pause_home_idle, cfg.resume_home_idle);
             subscribe_media_volume_state(ctx);

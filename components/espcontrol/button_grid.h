@@ -4624,14 +4624,18 @@ inline void setup_media_now_playing_layout(lv_obj_t *btn, lv_obj_t *icon_lbl,
                                            const lv_font_t *title_font,
                                            lv_coord_t pad,
                                            bool limit_title_lines) {
+  constexpr lv_coord_t TITLE_LINE_SPACE = -4;
   lv_obj_clear_flag(btn, LV_OBJ_FLAG_CLICKABLE);
   if (icon_lbl) lv_obj_add_flag(icon_lbl, LV_OBJ_FLAG_HIDDEN);
   if (title_lbl) {
     if (title_font) lv_obj_set_style_text_font(title_lbl, title_font, LV_PART_MAIN);
+    lv_obj_set_style_text_line_space(title_lbl, TITLE_LINE_SPACE, LV_PART_MAIN);
     if (limit_title_lines) {
       const lv_font_t *font = title_font ? title_font : lv_obj_get_style_text_font(title_lbl, LV_PART_MAIN);
       lv_label_set_long_mode(title_lbl, LV_LABEL_LONG_DOT);
-      if (font && font->line_height > 0) lv_obj_set_size(title_lbl, lv_pct(100), font->line_height * 2);
+      if (font && font->line_height > 0) {
+        lv_obj_set_size(title_lbl, lv_pct(100), font->line_height * 2 + TITLE_LINE_SPACE);
+      }
       else lv_obj_set_width(title_lbl, lv_pct(100));
     } else {
       lv_label_set_long_mode(title_lbl, LV_LABEL_LONG_WRAP);

@@ -3509,7 +3509,7 @@ struct SliderCtx {
 constexpr uint32_t MEDIA_SEEK_PENDING_TIMEOUT_MS = 3000;
 constexpr float MEDIA_SEEK_MATCH_TOLERANCE_SECONDS = 2.0f;
 constexpr lv_coord_t MEDIA_VOLUME_REFERENCE_SIDE_PX = 480;
-constexpr lv_coord_t MEDIA_VOLUME_ARC_STROKE_PX = 18;
+constexpr lv_coord_t MEDIA_VOLUME_ARC_STROKE_REF_PX = 18;
 constexpr lv_coord_t MEDIA_VOLUME_BACK_BUTTON_REF_PX = 46;
 constexpr lv_coord_t MEDIA_VOLUME_BUTTON_REF_PX = 80;
 constexpr lv_coord_t MEDIA_VOLUME_INSET_REF_PX = 26;
@@ -4274,7 +4274,7 @@ inline void media_volume_layout_modal(MediaVolumeCtx *ctx) {
   lv_coord_t btn_size = media_volume_scaled_px(MEDIA_VOLUME_BUTTON_REF_PX, short_side);
   lv_coord_t inset = media_volume_scaled_px(MEDIA_VOLUME_INSET_REF_PX, short_side);
   if (inset < 8) inset = 8;
-  lv_coord_t arc_stroke = MEDIA_VOLUME_ARC_STROKE_PX;
+  lv_coord_t arc_stroke = media_volume_scaled_px(MEDIA_VOLUME_ARC_STROKE_REF_PX, short_side);
   lv_coord_t controls_gap = media_volume_scaled_px(MEDIA_VOLUME_CONTROLS_GAP_REF_PX, short_side);
   lv_coord_t arc_size = panel_w < panel_h ? panel_w : panel_h;
   arc_size -= inset * 2;

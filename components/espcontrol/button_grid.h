@@ -3277,6 +3277,7 @@ struct ClimateControlModalUi {
   lv_obj_t *panel = nullptr;
   lv_obj_t *back_btn = nullptr;
   lv_obj_t *mode_btn = nullptr;
+  lv_obj_t *preset_btn = nullptr;
   lv_obj_t *arc = nullptr;
   lv_obj_t *target_row = nullptr;
   lv_obj_t *target_lbl = nullptr;
@@ -3290,7 +3291,6 @@ struct ClimateControlModalUi {
   lv_obj_t *chips = nullptr;
   lv_obj_t *fan_chip = nullptr;
   lv_obj_t *swing_chip = nullptr;
-  lv_obj_t *preset_chip = nullptr;
   lv_obj_t *menu_overlay = nullptr;
   ClimateControlCtx *active = nullptr;
   bool updating_arc = false;
@@ -3737,7 +3737,10 @@ inline void climate_control_set_modal_value(ClimateControlCtx *ctx) {
   }
   climate_update_chip(ui.fan_chip, "Fan", ctx->fan_mode, !ctx->fan_modes.empty());
   climate_update_chip(ui.swing_chip, "Swing", ctx->swing_mode, !ctx->swing_modes.empty());
-  climate_update_chip(ui.preset_chip, "Preset", ctx->preset_mode, !ctx->preset_modes.empty());
+  if (ui.preset_btn) {
+    if (ctx->preset_modes.empty()) lv_obj_add_flag(ui.preset_btn, LV_OBJ_FLAG_HIDDEN);
+    else lv_obj_clear_flag(ui.preset_btn, LV_OBJ_FLAG_HIDDEN);
+  }
 }
 
 inline void climate_control_layout_modal(ClimateControlCtx *ctx) {
@@ -3761,15 +3764,16 @@ inline void climate_control_layout_modal(ClimateControlCtx *ctx) {
   lv_coord_t inset = media_volume_scaled_px(MEDIA_VOLUME_INSET_REF_PX, short_side);
   if (inset < 8) inset = 8;
   lv_coord_t arc_stroke = media_volume_scaled_px(MEDIA_VOLUME_ARC_STROKE_REF_PX, short_side);
+  lv_coord_t controls_gap = media_volume_scaled_px(MEDIA_VOLUME_CONTROLS_GAP_REF_PX, short_side);
   lv_coord_t arc_size = panel_w < panel_h ? panel_w : panel_h;
   arc_size -= inset * 2;
-  lv_coord_t chip_h = short_side < 520 ? 48 : 56;
-  lv_coord_t reserved_bottom = btn_size + chip_h + inset * 3;
-  if (panel_h > reserved_bottom) {
-    lv_coord_t fit_h = panel_h - reserved_bottom;
+  lv_coord_t reserved_bottom = btn_size / 3 + inset;
+  lv_coord_t available_h = panel_h - inset * 2;
+  if (available_h > reserved_bottom) {
+    lv_coord_t fit_h = available_h - reserved_bottom + arc_stroke;
     if (arc_size > fit_h) arc_size = fit_h;
   }
-  if (arc_size < 150) arc_size = 150;
+  if (arc_size < 74) arc_size = 74;
   int width_percent = normalize_width_compensation_percent(ctx->width_compensation_percent);
   lv_coord_t visible_arc_w = compensated_width(arc_size, width_percent);
   if (visible_arc_w > panel_w - inset * 2) {
@@ -3777,10 +3781,11 @@ inline void climate_control_layout_modal(ClimateControlCtx *ctx) {
     visible_arc_w = compensated_width(arc_size, width_percent);
   }
   lv_coord_t arc_center_x = (arc_size - visible_arc_w) / 2;
-  lv_coord_t arc_center_y = -inset / 2;
-  lv_coord_t value_center_y = arc_center_y;
-  lv_coord_t controls_y = arc_center_y + arc_size / 2 - btn_size / 2 - inset / 2;
-  lv_coord_t chips_y = panel_h / 2 - chip_h - inset;
+  lv_coord_t arc_center_y = 0;
+  lv_coord_t value_center_y = arc_stroke / 2;
+  lv_coord_t controls_y = arc_size / 2 - btn_size / 2 - inset +
+    media_volume_scaled_px(MEDIA_VOLUME_CONTROLS_DOWN_REF_PX, short_side);
+  lv_coord_t chip_h = short_side < 520 ? 48 : 56;
 
   lv_obj_set_size(ui.overlay, lv_pct(100), lv_pct(100));
   lv_obj_set_size(ui.panel, panel_w, panel_h);
@@ -3792,26 +3797,34 @@ inline void climate_control_layout_modal(ClimateControlCtx *ctx) {
   lv_obj_set_size(ui.mode_btn, back_size, back_size);
   lv_obj_set_style_radius(ui.mode_btn, back_size / 2, LV_PART_MAIN);
   lv_obj_align(ui.mode_btn, LV_ALIGN_TOP_RIGHT, -inset, inset);
+  if (ui.preset_btn) {
+    lv_obj_set_size(ui.preset_btn, back_size, back_size);
+    lv_obj_set_style_radius(ui.preset_btn, back_size / 2, LV_PART_MAIN);
+    lv_obj_align_to(ui.preset_btn, ui.mode_btn, LV_ALIGN_OUT_LEFT_MID, -2, 0);
+  }
   lv_obj_set_size(ui.arc, arc_size, arc_size);
   apply_width_compensation(ui.arc, ctx->width_compensation_percent);
   lv_obj_align(ui.arc, LV_ALIGN_CENTER, arc_center_x, arc_center_y);
   lv_obj_set_style_arc_width(ui.arc, arc_stroke, LV_PART_MAIN);
   lv_obj_set_style_arc_width(ui.arc, arc_stroke, LV_PART_INDICATOR);
+  lv_obj_set_style_pad_all(ui.arc, short_side < 520 ? 4 : 6, LV_PART_KNOB);
   lv_obj_align(ui.target_row, LV_ALIGN_CENTER, 0, value_center_y - 10);
   lv_obj_align(ui.status_lbl, LV_ALIGN_CENTER, 0, value_center_y + 54);
   lv_obj_align(ui.hint_lbl, LV_ALIGN_CENTER, 0, value_center_y + 80);
+  lv_obj_set_style_translate_y(ui.unit_lbl,
+    media_volume_scaled_px(MEDIA_VOLUME_UNIT_Y_REF_PX, short_side), LV_PART_MAIN);
   lv_obj_set_size(ui.minus_btn, btn_size, btn_size);
   lv_obj_set_style_radius(ui.minus_btn, btn_size / 2, LV_PART_MAIN);
   lv_obj_set_size(ui.plus_btn, btn_size, btn_size);
   lv_obj_set_style_radius(ui.plus_btn, btn_size / 2, LV_PART_MAIN);
-  lv_obj_align(ui.minus_btn, LV_ALIGN_CENTER, -(btn_size + 26) / 2, controls_y);
-  lv_obj_align(ui.plus_btn, LV_ALIGN_CENTER, (btn_size + 26) / 2, controls_y);
+  lv_obj_align(ui.minus_btn, LV_ALIGN_CENTER, -(btn_size + controls_gap) / 2, controls_y);
+  lv_obj_align(ui.plus_btn, LV_ALIGN_CENTER, (btn_size + controls_gap) / 2, controls_y);
   lv_obj_align(ui.low_btn, LV_ALIGN_CENTER, -46, controls_y - btn_size / 2 - 24);
   lv_obj_align(ui.high_btn, LV_ALIGN_CENTER, 46, controls_y - btn_size / 2 - 24);
   lv_obj_set_height(ui.chips, chip_h);
   lv_obj_align(ui.chips, LV_ALIGN_BOTTOM_MID, 0, -inset);
-  (void)chips_y;
   lv_obj_move_foreground(ui.back_btn);
+  if (ui.preset_btn) lv_obj_move_foreground(ui.preset_btn);
   lv_obj_move_foreground(ui.mode_btn);
 }
 
@@ -3855,6 +3868,15 @@ inline void climate_control_open_modal(ClimateControlCtx *ctx) {
   lv_obj_add_event_cb(ui.mode_btn, [](lv_event_t *) {
     ClimateControlModalUi &ui = climate_control_modal_ui();
     if (ui.active) climate_open_option_menu(ui.active, "hvac");
+  }, LV_EVENT_CLICKED, nullptr);
+
+  ui.preset_btn = media_volume_create_round_button(ui.panel, 32, find_icon("Thermostat Auto"), ctx->icon_font,
+    0x454545, CLIMATE_PANEL_COLOR, ctx->width_compensation_percent);
+  lv_obj_set_style_bg_opa(ui.preset_btn, LV_OPA_TRANSP, LV_PART_MAIN);
+  lv_obj_set_style_border_width(ui.preset_btn, 0, LV_PART_MAIN);
+  lv_obj_add_event_cb(ui.preset_btn, [](lv_event_t *) {
+    ClimateControlModalUi &ui = climate_control_modal_ui();
+    if (ui.active) climate_open_option_menu(ui.active, "preset");
   }, LV_EVENT_CLICKED, nullptr);
 
   ui.arc = lv_arc_create(ui.panel);
@@ -3904,6 +3926,7 @@ inline void climate_control_open_modal(ClimateControlCtx *ctx) {
   lv_obj_set_style_text_color(ui.unit_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
   lv_obj_set_style_text_align(ui.unit_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
   if (ctx->unit_font) lv_obj_set_style_text_font(ui.unit_lbl, ctx->unit_font, LV_PART_MAIN);
+  lv_obj_set_style_translate_y(ui.unit_lbl, MEDIA_VOLUME_UNIT_Y_REF_PX, LV_PART_MAIN);
   apply_width_compensation(ui.unit_lbl, ctx->width_compensation_percent);
 
   ui.status_lbl = lv_label_create(ui.panel);
@@ -3956,7 +3979,6 @@ inline void climate_control_open_modal(ClimateControlCtx *ctx) {
 
   ui.fan_chip = climate_create_chip(ui.chips, "Fan\nNone", ctx->label_font, 0x333333, ctx->width_compensation_percent);
   ui.swing_chip = climate_create_chip(ui.chips, "Swing\nNone", ctx->label_font, 0x333333, ctx->width_compensation_percent);
-  ui.preset_chip = climate_create_chip(ui.chips, "Preset\nNone", ctx->label_font, 0x333333, ctx->width_compensation_percent);
   lv_obj_add_event_cb(ui.fan_chip, [](lv_event_t *) {
     ClimateControlModalUi &ui = climate_control_modal_ui();
     if (ui.active) climate_open_option_menu(ui.active, "fan");
@@ -3964,10 +3986,6 @@ inline void climate_control_open_modal(ClimateControlCtx *ctx) {
   lv_obj_add_event_cb(ui.swing_chip, [](lv_event_t *) {
     ClimateControlModalUi &ui = climate_control_modal_ui();
     if (ui.active) climate_open_option_menu(ui.active, "swing");
-  }, LV_EVENT_CLICKED, nullptr);
-  lv_obj_add_event_cb(ui.preset_chip, [](lv_event_t *) {
-    ClimateControlModalUi &ui = climate_control_modal_ui();
-    if (ui.active) climate_open_option_menu(ui.active, "preset");
   }, LV_EVENT_CLICKED, nullptr);
 
   climate_control_layout_modal(ctx);

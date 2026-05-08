@@ -48,7 +48,7 @@ font:
     size: 120
     bpp: 4
     glyphs:
-      - "0123456789.-"
+      - "0123456789.-°"
 
   # Volume/climate modal labels: 22px on the 480px S3 reference scaled to this 600px short side
   - file: "gfonts://Roboto"
@@ -56,7 +56,7 @@ font:
     size: 28
     bpp: 4
     glyphs:
-      - "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz/"
+      - "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz/°"
 
   # Setup screen icons: 61px on the 480px S3 reference scaled to this 600px short side
   - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'

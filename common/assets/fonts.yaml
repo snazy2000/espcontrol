@@ -18,7 +18,7 @@ font:
     size: 96
     bpp: 4
     glyphs:
-      - "0123456789.-"
+      - "0123456789.-°"
 
   # Main page: media now-playing titles (sensor value size, full text glyph coverage)
   - file: "gfonts://Roboto@Light"

@@ -49,7 +49,7 @@ font:
     size: 144
     bpp: 4
     glyphs:
-      - "0123456789.-"
+      - "0123456789.-°"
 
   # Volume/climate modal labels: 22px on the 480px S3 reference scaled to this 720px short side
   - file: "gfonts://Roboto"
@@ -57,7 +57,7 @@ font:
     size: 33
     bpp: 4
     glyphs:
-      - "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz/"
+      - "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz/°"
 
   # Top bar clock and temperature (28px)
   - file: "gfonts://Roboto"

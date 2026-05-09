@@ -14,7 +14,7 @@ online_image:
     url: "http://127.0.0.1/"
     format: jpeg
     type: RGB565
-    resize: 320x180
+    resize: 240x135
     update_interval: never
 
 # A hidden LVGL image widget ensures ESPHome enables LVGL's image widget support.
@@ -32,7 +32,9 @@ interval:
   - interval: 5s
     then:
       - lambda: |-
-          refresh_due_camera_snapshots(id(camera_ha_base_url));
+          if (camera_card_count() > 0) {
+            refresh_due_camera_snapshots(id(camera_ha_base_url));
+          }
 
 text_sensor:
   - platform: homeassistant

@@ -57,7 +57,6 @@ esphome:
             apply_width_compensation(id(display_time), cfg.width_compensation_percent);
             apply_width_compensation(id(temperatures), cfg.width_compensation_percent);
             apply_width_compensation(id(clock_label), cfg.width_compensation_percent);
-            register_camera_online_image_viewer(id(camera_snapshot_viewer));
             // END GENERATED PHASE 1 GRID WIRING
             grid_phase1(slots, cfg,
               id(button_order).state,
@@ -134,7 +133,6 @@ esphome:
             apply_width_compensation(id(display_time), cfg.width_compensation_percent);
             apply_width_compensation(id(temperatures), cfg.width_compensation_percent);
             apply_width_compensation(id(clock_label), cfg.width_compensation_percent);
-            register_camera_online_image_viewer(id(camera_snapshot_viewer));
             // END GENERATED PHASE 2 GRID WIRING
             grid_phase2(slots, cfg, sp_cfgs, sp_ext, sp_ext2, sp_ext3,
               id(button_order).state,
@@ -142,6 +140,8 @@ esphome:
               id(button_off_color).state,
               id(sensor_card_color).state,
               id(main_page)->obj);
+        - lambda: |-
+            if (camera_card_count() > 0) register_camera_online_image_viewer(id(camera_snapshot_viewer));
         - script.execute: time_update
         - delay: 100ms
 

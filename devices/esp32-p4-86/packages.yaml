@@ -35,7 +35,6 @@ substitutions:
   disable_updates: "false"
   network_package_suffix: ${ "_ethernet" if network_transport == "ethernet" else "" }
   firmware_update_package_suffix: ${ "_disabled" if disable_updates == "true" else "" }
-  bluetooth_proxy_package_suffix: "_disabled"
   backlight_pwm_frequency: ${ "20000Hz" if network_transport == "ethernet" else "100Hz" }
 
 packages:
@@ -75,7 +74,6 @@ packages:
   backlight:       !include ../../common/addon/backlight.yaml
   bl_schedule:     !include ../../common/addon/backlight_schedule.yaml
   network:         !include ../../common/addon/network${network_package_suffix}.yaml
-  bluetooth:       !include ../../common/addon/bluetooth_proxy${bluetooth_proxy_package_suffix}.yaml
   fw_update:       !include ../../common/addon/firmware_update${firmware_update_package_suffix}.yaml
 
   # ---------------------------------------------------------------------------

@@ -397,7 +397,6 @@ export default defineConfig({
           { text: 'Screensaver', link: '/features/screensaver' },
           { text: 'Backlight', link: '/features/backlight' },
           { text: 'Screen Schedule', link: '/features/screen-schedule' },
-          { text: 'Bluetooth Proxy', link: '/features/bluetooth-proxy' },
           { text: 'Built-in Relays', link: '/features/relays' },
           { text: 'Backup', link: '/features/backup' },
           { text: 'Firmware Updates', link: '/features/firmware-updates' },

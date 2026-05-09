@@ -1255,7 +1255,7 @@ inline void update_camera_image_display(int camera_idx, lv_obj_t *img_obj) {
   img_dsc.data = snap.decoded_pixels;
   img_dsc.data_size = snap.width * snap.height * 3;
 
-  lv_image_set_src(img_obj, &img_dsc);
+  lv_img_set_src(img_obj, &img_dsc);
 
   ESP_LOGI("camera_grid", "Updated camera display: %dx%d",
            snap.width, snap.height);
@@ -1304,7 +1304,7 @@ inline void process_camera_http_response(int camera_idx, const uint8_t *data,
 inline lv_obj_t *create_camera_image_widget(lv_obj_t *parent, int camera_idx) {
   if (!parent || camera_idx < 0) return nullptr;
 
-  lv_obj_t *img = lv_image_create(parent);
+  lv_obj_t *img = lv_img_create(parent);
 
   if (!img) {
     ESP_LOGE("camera_grid", "Failed to create LVGL image object");

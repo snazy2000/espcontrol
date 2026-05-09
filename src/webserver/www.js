@@ -38,6 +38,7 @@
     GRID_ROWS = layout.rows || Math.ceil(NUM_SLOTS / GRID_COLS);
 
     var r = document.documentElement.style;
+    r.setProperty("--app-max-w", layout.appMaxWidth || CFG.appMaxWidth || "960px");
     r.setProperty("--screen-w", screen.width || CFG.screen.width);
     r.setProperty("--screen-aspect", screen.aspect || CFG.screen.aspect);
     r.setProperty("--grid-cols", "repeat(" + GRID_COLS + "," + CFG.grid.fr + ")");
@@ -207,7 +208,7 @@
     "--shadow-3:0 12px 32px rgba(0,0,0,.35),0 2px 6px rgba(0,0,0,.24)}" +
 
     "#sp-app{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;" +
-    "color:var(--text);max-width:960px;margin:0 auto;-webkit-font-smoothing:antialiased;" +
+    "color:var(--text);max-width:var(--app-max-w,960px);margin:0 auto;-webkit-font-smoothing:antialiased;" +
     "font-optical-sizing:auto}" +
     "body{background:var(--bg);margin:0}" +
     "esp-app{display:none !important}" +

@@ -1272,6 +1272,7 @@ inline void process_camera_http_response(int camera_idx, const uint8_t *data,
   } else {
     ESP_LOGE("camera_grid", "Camera [%d] JPEG decode failed", camera_idx);
   }
+}
 
 // Create LVGL image object for camera snapshot display
 inline lv_obj_t *create_camera_image_widget(lv_obj_t *parent, int camera_idx) {
@@ -1324,31 +1325,6 @@ inline void update_camera_image_display(int camera_idx, lv_obj_t *img_obj) {
 inline void setup_camera_refresh_timer() {
   // Timer would be configured in device YAML using lambda
   // Periodically calls fetch_camera_snapshot for active cameras
-}
-
-// Initialize camera image widgets after grid layout is complete
-inline void initialize_camera_image_widgets() {
-  CameraCardRef *refs = camera_card_refs();
-  for (int i = 0; i < camera_card_count(); i++) {
-    if (!refs[i].btn || !refs[i].entity_id.empty()) {
-      if (!refs[i].img_obj) {
-        refs[i].img_obj = create_camera_image_widget(refs[i].btn, i);
-      }
-    }
-  }
-}
-
-// Trigger manual snapshot fetch for camera (called from HA action)
-inline void trigger_camera_snapshot_update(const std::string &camera_entity_id) {
-  CameraCardRef *refs = camera_card_refs();
-  for (int i = 0; i < camera_card_count(); i++) {
-    if (refs[i].entity_id == camera_entity_id && !refs[i].entity_id.empty()) {
-      // Will be picked up by next interval check
-      refs[i].last_update_ms = 0;  // Force immediate fetch
-      ESP_LOGI("camera_grid", "Triggered manual refresh for %s", camera_entity_id.c_str());
-      break;
-    }
-  }
 }
 
 struct CalendarCardRef {

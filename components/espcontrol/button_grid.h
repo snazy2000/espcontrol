@@ -23,7 +23,6 @@
 #include "esphome/components/api/homeassistant_service.h"
 #include "esphome/core/string_ref.h"
 #include "esphome/components/http_request/http_request.h"
-#include "esphome/components/lvgl/lvgl_esphome.h"
 #include "esphome/components/online_image/online_image.h"
 #include "icons.h"
 #include "backlight.h"

@@ -21,7 +21,6 @@
 #include <functional>
 #include <memory>
 #include "lvgl.h"
-#include "lvgl/src/widgets/lv_img.h"
 #include "esphome/components/api/homeassistant_service.h"
 #include "esphome/core/string_ref.h"
 #include "esphome/components/http_request/http_request.h"

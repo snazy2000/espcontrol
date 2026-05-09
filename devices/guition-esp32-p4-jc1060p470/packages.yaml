@@ -80,6 +80,7 @@ packages:
   time_sync:       !include ../../common/addon/time.yaml
   backlight:       !include ../../common/addon/backlight.yaml
   bl_schedule:     !include ../../common/addon/backlight_schedule.yaml
+  cameras:         !include ../../common/addon/camera_snapshots.yaml
   network:         !include ../../common/addon/network${network_package_suffix}.yaml
   bluetooth:       !include ../../common/addon/bluetooth_proxy${bluetooth_proxy_package_suffix}.yaml
   fw_update:       !include ../../common/addon/firmware_update${firmware_update_package_suffix}.yaml

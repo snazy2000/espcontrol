@@ -7,6 +7,7 @@
 //   - LVGL visual setup for toggle buttons, sensor/time cards, and slider widgets
 //   - Home Assistant state subscriptions and action dispatch
 //   - Subpage creation (nested grid screens with back button)
+//   - Camera snapshot fetching, JPEG decoding, and display
 // =============================================================================
 #pragma once
 #include <string>
@@ -18,8 +19,11 @@
 #include <cmath>
 #include <vector>
 #include <functional>
+#include <memory>
 #include "esphome/components/api/homeassistant_service.h"
 #include "esphome/core/string_ref.h"
+#include "esphome/components/http_request/http_request.h"
+#include "esphome/components/online_image/online_image.h"
 #include "icons.h"
 #include "backlight.h"
 
@@ -102,7 +106,7 @@ struct ParsedCfg {
   std::string icon_on;     // 3  icon name for on state (blank = no swap)
   std::string sensor;      // 4  sensor entity, cover mode, or action name for Action cards
   std::string unit;        // 5  unit suffix for sensor display
-  std::string type;        // 6  button type: "" (toggle), action, sensor, calendar, timezone, weather_forecast, slider, cover, garage, lock, media, climate, push, internal, subpage
+  std::string type;        // 6  button type: "" (toggle), action, sensor, calendar, timezone, weather_forecast, slider, cover, garage, lock, media, climate, camera, push, internal, subpage
   std::string precision;   // 7  decimal places for sensors; "text" = text sensor mode
 };
 
@@ -1085,6 +1089,349 @@ inline void setup_sensor_card(BtnSlot &s, const ParsedCfg &p,
   if (!p.label.empty()) {
     lv_label_set_text(s.text_lbl, p.label.c_str());
   }
+}
+
+struct CameraCardRef {
+  lv_obj_t *btn;
+  lv_obj_t *icon_lbl;
+  lv_obj_t *text_lbl;
+  std::string entity_id;
+  std::string label;
+  std::string access_token;
+  int refresh_interval;  // 0 = manual, >0 = seconds between fetches
+  std::string scaling;   // "fit" or "fill"
+  uint32_t last_update_ms = 0;       // Timestamp of last successful update
+  uint32_t last_request_ms = 0;      // Timestamp of last fetch request
+  bool fetching = false;             // Currently fetching snapshot
+};
+
+inline CameraCardRef *camera_card_refs() {
+  static CameraCardRef refs[MAX_GRID_SLOTS];
+  return refs;
+}
+
+inline int &camera_card_count() {
+  static int count = 0;
+  return count;
+}
+
+inline void reset_camera_cards() {
+  camera_card_count() = 0;
+}
+
+struct CameraViewerUi {
+  esphome::online_image::OnlineImage *image = nullptr;
+  bool callbacks_registered = false;
+  lv_obj_t *overlay = nullptr;
+  lv_obj_t *panel = nullptr;
+  lv_obj_t *image_obj = nullptr;
+  lv_obj_t *title_lbl = nullptr;
+  lv_obj_t *status_lbl = nullptr;
+  lv_obj_t *back_btn = nullptr;
+  lv_obj_t *refresh_btn = nullptr;
+  int active_camera_idx = -1;
+  bool fetching = false;
+};
+
+inline CameraViewerUi &camera_viewer_ui() {
+  static CameraViewerUi ui;
+  return ui;
+}
+
+inline std::string &camera_ha_base_url_store() {
+  static std::string url;
+  return url;
+}
+
+inline void set_camera_ha_base_url(const std::string &base_url) {
+  camera_ha_base_url_store() = base_url;
+}
+
+inline int find_camera_card_ref(const std::string &entity_id) {
+  if (entity_id.empty()) return -1;
+  CameraCardRef *refs = camera_card_refs();
+  int count = camera_card_count();
+  for (int i = 0; i < count; i++) {
+    if (refs[i].entity_id == entity_id) return i;
+  }
+  return -1;
+}
+
+inline void camera_viewer_hide() {
+  CameraViewerUi &ui = camera_viewer_ui();
+  if (ui.active_camera_idx >= 0 && ui.active_camera_idx < camera_card_count()) {
+    camera_card_refs()[ui.active_camera_idx].fetching = false;
+  }
+  if (ui.overlay) lv_obj_del(ui.overlay);
+  ui.overlay = nullptr;
+  ui.panel = nullptr;
+  ui.image_obj = nullptr;
+  ui.title_lbl = nullptr;
+  ui.status_lbl = nullptr;
+  ui.back_btn = nullptr;
+  ui.refresh_btn = nullptr;
+  ui.active_camera_idx = -1;
+  ui.fetching = false;
+}
+
+inline void camera_viewer_set_status(const char *status) {
+  CameraViewerUi &ui = camera_viewer_ui();
+  if (ui.status_lbl) lv_label_set_text(ui.status_lbl, status ? status : "");
+}
+
+inline void camera_viewer_apply_image() {
+  CameraViewerUi &ui = camera_viewer_ui();
+  if (ui.active_camera_idx < 0) return;
+  CameraCardRef &ref = camera_card_refs()[ui.active_camera_idx];
+  ref.fetching = false;
+  ref.last_update_ms = esphome::millis();
+  ui.fetching = false;
+}
+
+inline int parse_camera_refresh_interval(const std::string &value) {
+  if (value.empty()) return 0;
+  int seconds = std::atoi(value.c_str());
+  if (seconds < 0) return 0;
+  if (seconds > 300) return 300;
+  return seconds;
+}
+
+inline std::string camera_snapshot_url(const std::string &base_url,
+                                       const std::string &entity_id,
+                                       const std::string &access_token) {
+  if (base_url.empty() || entity_id.empty()) return "";
+  std::string url = base_url;
+  while (!url.empty() && url.back() == '/') url.pop_back();
+  url += "/api/camera_proxy/" + entity_id;
+  if (!access_token.empty()) url += "?token=" + access_token;
+  return url;
+}
+
+inline lv_obj_t *camera_create_round_button(lv_obj_t *parent, const char *text) {
+  lv_obj_t *btn = lv_btn_create(parent);
+  lv_obj_set_size(btn, 32, 32);
+  lv_obj_set_style_radius(btn, 16, LV_PART_MAIN);
+  lv_obj_set_style_bg_color(btn, lv_color_hex(0x111111), LV_PART_MAIN);
+  lv_obj_set_style_bg_opa(btn, LV_OPA_TRANSP, LV_PART_MAIN);
+  lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN);
+  lv_obj_set_style_shadow_width(btn, 0, LV_PART_MAIN);
+  lv_obj_t *label = lv_label_create(btn);
+  lv_label_set_text(label, text);
+  lv_obj_set_style_text_color(label, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+  lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+  lv_obj_center(label);
+  return btn;
+}
+
+inline void camera_viewer_layout() {
+  CameraViewerUi &ui = camera_viewer_ui();
+  if (!ui.overlay || !ui.panel) return;
+  lv_disp_t *disp = lv_disp_get_default();
+  lv_coord_t sw = disp ? lv_disp_get_hor_res(disp) : 480;
+  lv_coord_t sh = disp ? lv_disp_get_ver_res(disp) : 480;
+  lv_coord_t short_side = sw < sh ? sw : sh;
+  lv_coord_t inset = 28 * short_side / 480;
+  if (inset < 8) inset = 8;
+  lv_coord_t back_size = 40 * short_side / 480;
+  lv_coord_t title_h = 36 * short_side / 480;
+  lv_coord_t panel_x = 4;
+  lv_coord_t panel_y = 0;
+  lv_coord_t panel_w = sw - 8;
+  lv_coord_t panel_h = sh;
+
+  lv_obj_set_size(ui.overlay, lv_pct(100), lv_pct(100));
+  lv_obj_set_size(ui.panel, panel_w, panel_h);
+  lv_obj_set_pos(ui.panel, panel_x, panel_y);
+  lv_obj_set_style_radius(ui.panel, 18, LV_PART_MAIN);
+  lv_obj_set_size(ui.back_btn, back_size, back_size);
+  lv_obj_set_style_radius(ui.back_btn, back_size / 2, LV_PART_MAIN);
+  lv_obj_align(ui.back_btn, LV_ALIGN_TOP_LEFT, inset, inset);
+  lv_obj_set_size(ui.refresh_btn, back_size, back_size);
+  lv_obj_set_style_radius(ui.refresh_btn, back_size / 2, LV_PART_MAIN);
+  lv_obj_align(ui.refresh_btn, LV_ALIGN_TOP_RIGHT, -inset, inset);
+  lv_obj_set_width(ui.title_lbl, panel_w - (inset * 2 + back_size * 2));
+  lv_obj_set_height(ui.title_lbl, title_h);
+  lv_obj_align(ui.title_lbl, LV_ALIGN_TOP_MID, 0, inset + (back_size - title_h) / 2);
+  lv_coord_t image_y = inset + back_size + inset;
+  lv_coord_t image_h = panel_h - image_y - inset;
+  if (image_h < 40) image_h = 40;
+  if (ui.image_obj) {
+    lv_obj_set_size(ui.image_obj, panel_w - inset * 2, image_h);
+    lv_obj_align(ui.image_obj, LV_ALIGN_TOP_MID, 0, image_y);
+  }
+  lv_obj_set_width(ui.status_lbl, panel_w - inset * 2);
+  lv_obj_align(ui.status_lbl, LV_ALIGN_CENTER, 0, 0);
+}
+
+inline bool request_camera_snapshot(int camera_idx, const std::string &base_url) {
+  if (camera_idx < 0 || camera_idx >= camera_card_count()) return false;
+  CameraCardRef *refs = camera_card_refs();
+  CameraCardRef &ref = refs[camera_idx];
+  if (ref.entity_id.empty() || ref.fetching) return false;
+  CameraViewerUi &ui = camera_viewer_ui();
+  esphome::online_image::OnlineImage *image = ui.image;
+  if (!image) {
+    camera_viewer_set_status("Camera image unavailable");
+    return false;
+  }
+  std::string url = camera_snapshot_url(base_url, ref.entity_id, ref.access_token);
+  if (url.empty()) return false;
+  ref.fetching = true;
+  ref.last_request_ms = esphome::millis();
+  ui.active_camera_idx = camera_idx;
+  ui.fetching = true;
+  camera_viewer_set_status("Loading camera");
+  image->set_url(url);
+  image->update();
+  ESP_LOGI("camera_grid", "Refreshing camera [%d]: %s", camera_idx, ref.entity_id.c_str());
+  return true;
+}
+
+inline void camera_viewer_open(int camera_idx) {
+  if (camera_idx < 0 || camera_idx >= camera_card_count()) return;
+  CameraCardRef &ref = camera_card_refs()[camera_idx];
+  camera_viewer_hide();
+  CameraViewerUi &ui = camera_viewer_ui();
+  ui.active_camera_idx = camera_idx;
+
+  ui.overlay = lv_obj_create(lv_layer_top());
+  lv_obj_set_size(ui.overlay, lv_pct(100), lv_pct(100));
+  lv_obj_set_style_bg_opa(ui.overlay, LV_OPA_TRANSP, LV_PART_MAIN);
+  lv_obj_set_style_border_width(ui.overlay, 0, LV_PART_MAIN);
+  lv_obj_set_style_pad_all(ui.overlay, 0, LV_PART_MAIN);
+  lv_obj_clear_flag(ui.overlay, LV_OBJ_FLAG_SCROLLABLE);
+
+  ui.panel = lv_obj_create(ui.overlay);
+  lv_obj_set_style_bg_color(ui.panel, lv_color_hex(0x111111), LV_PART_MAIN);
+  lv_obj_set_style_bg_opa(ui.panel, LV_OPA_COVER, LV_PART_MAIN);
+  lv_obj_set_style_border_width(ui.panel, 0, LV_PART_MAIN);
+  lv_obj_set_style_shadow_width(ui.panel, 0, LV_PART_MAIN);
+  lv_obj_set_style_pad_all(ui.panel, 0, LV_PART_MAIN);
+  lv_obj_clear_flag(ui.panel, LV_OBJ_FLAG_SCROLLABLE);
+
+  ui.back_btn = camera_create_round_button(ui.panel, "\U000F0141");
+  lv_obj_add_event_cb(ui.back_btn, [](lv_event_t *) {
+    camera_viewer_hide();
+  }, LV_EVENT_CLICKED, nullptr);
+
+  ui.refresh_btn = camera_create_round_button(ui.panel, find_icon("Refresh"));
+  lv_obj_add_event_cb(ui.refresh_btn, [](lv_event_t *) {
+    CameraViewerUi &ui = camera_viewer_ui();
+    request_camera_snapshot(ui.active_camera_idx, camera_ha_base_url_store());
+  }, LV_EVENT_CLICKED, nullptr);
+
+  ui.title_lbl = lv_label_create(ui.panel);
+  lv_label_set_text(ui.title_lbl, ref.label.empty() ? ref.entity_id.c_str() : ref.label.c_str());
+  lv_obj_set_style_text_color(ui.title_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+  lv_obj_set_style_text_align(ui.title_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+  lv_label_set_long_mode(ui.title_lbl, LV_LABEL_LONG_DOT);
+
+  ui.image_obj = nullptr;
+
+  ui.status_lbl = lv_label_create(ui.panel);
+  lv_label_set_text(ui.status_lbl, "Loading camera");
+  lv_obj_set_style_text_color(ui.status_lbl, lv_color_hex(0xD0D0D0), LV_PART_MAIN);
+  lv_obj_set_style_text_align(ui.status_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+
+  camera_viewer_layout();
+  lv_obj_move_foreground(ui.overlay);
+  if (!request_camera_snapshot(camera_idx, camera_ha_base_url_store())) {
+    camera_viewer_set_status(camera_ha_base_url_store().empty() ? "Waiting for Home Assistant URL" : "Camera unavailable");
+  }
+}
+
+inline void camera_viewer_open_for_entity(const std::string &entity_id) {
+  int idx = find_camera_card_ref(entity_id);
+  if (idx >= 0) camera_viewer_open(idx);
+}
+
+inline void refresh_due_camera_snapshots(const std::string &base_url) {
+  if (!base_url.empty()) set_camera_ha_base_url(base_url);
+  if (camera_ha_base_url_store().empty()) return;
+  CameraViewerUi &ui = camera_viewer_ui();
+  if (!ui.overlay || ui.active_camera_idx < 0) return;
+  if (ui.active_camera_idx >= camera_card_count()) return;
+  uint32_t now = esphome::millis();
+  CameraCardRef &ref = camera_card_refs()[ui.active_camera_idx];
+  if (ref.entity_id.empty() || ref.refresh_interval <= 0 || ref.fetching) return;
+  uint32_t interval_ms = (uint32_t) ref.refresh_interval * 1000UL;
+  if (ref.last_request_ms == 0 || now - ref.last_request_ms >= interval_ms) {
+    request_camera_snapshot(ui.active_camera_idx, camera_ha_base_url_store());
+  }
+}
+
+inline void register_camera_online_image_viewer(esphome::online_image::OnlineImage *image) {
+  CameraViewerUi &ui = camera_viewer_ui();
+  ui.image = image;
+  if (ui.image && !ui.callbacks_registered) {
+    ui.image->add_on_finished_callback([](bool) {
+      camera_viewer_apply_image();
+    });
+    ui.image->add_on_error_callback([]() {
+      CameraViewerUi &ui = camera_viewer_ui();
+      if (ui.active_camera_idx >= 0 && ui.active_camera_idx < camera_card_count()) {
+        camera_card_refs()[ui.active_camera_idx].fetching = false;
+      }
+      ui.fetching = false;
+      camera_viewer_set_status("Camera failed to load");
+    });
+    ui.callbacks_registered = true;
+  }
+}
+
+inline void setup_camera_card(BtnSlot &s, const ParsedCfg &p) {
+  lv_obj_add_flag(s.sensor_container, LV_OBJ_FLAG_HIDDEN);
+
+  const char *icon_cp = find_icon("Camera");
+  lv_label_set_text(s.icon_lbl, icon_cp);
+  lv_obj_clear_flag(s.icon_lbl, LV_OBJ_FLAG_HIDDEN);
+  set_wrapped_button_label_text(s.text_lbl, p.label.empty() ? "Camera" : p.label);
+
+  int idx = camera_card_count();
+  if (idx < MAX_GRID_SLOTS) {
+    CameraCardRef &ref = camera_card_refs()[idx];
+    ref.btn = s.btn;
+    ref.icon_lbl = s.icon_lbl;
+    ref.text_lbl = s.text_lbl;
+    ref.entity_id = p.entity;
+    ref.label = p.label;
+    ref.access_token.clear();
+    ref.refresh_interval = parse_camera_refresh_interval(p.sensor);
+    ref.scaling = p.precision.empty() ? "fit" : p.precision;
+    ref.last_update_ms = 0;
+    ref.last_request_ms = 0;
+    ref.fetching = false;
+    camera_card_count()++;
+  }
+}
+
+inline void subscribe_camera_state(const std::string &entity_id) {
+  if (entity_id.empty()) return;
+  static std::vector<std::string> subscribed;
+  for (const auto &existing : subscribed) {
+    if (existing == entity_id) return;
+  }
+  subscribed.push_back(entity_id);
+
+  esphome::api::global_api_server->subscribe_home_assistant_state(
+    entity_id, std::string("access_token"),
+    std::function<void(esphome::StringRef)>([entity_id](esphome::StringRef token) {
+      std::string token_text = string_ref_limited(token, 128);
+      CameraCardRef *refs = camera_card_refs();
+      int count = camera_card_count();
+      for (int i = 0; i < count; i++) {
+        if (refs[i].entity_id == entity_id) refs[i].access_token = token_text;
+      }
+    })
+  );
+
+  esphome::api::global_api_server->subscribe_home_assistant_state(
+    entity_id, {},
+    std::function<void(esphome::StringRef)>([entity_id](esphome::StringRef state) {
+      ESP_LOGD("camera_grid", "Camera %s state: %s", entity_id.c_str(),
+               std::string(state.begin(), state.end()).c_str());
+    })
+  );
 }
 
 struct CalendarCardRef {
@@ -2176,6 +2523,7 @@ struct MediaVolumeCtx;
 inline void media_volume_open_modal(MediaVolumeCtx *ctx);
 struct ClimateControlCtx;
 inline void climate_control_open_modal(ClimateControlCtx *ctx);
+inline void camera_viewer_open_for_entity(const std::string &entity_id);
 
 // Handle a main-grid button press: dispatch push event, subpage nav,
 // slider toggle, or entity toggle based on the config string.
@@ -2239,6 +2587,8 @@ inline void handle_button_click(const std::string &cfg, int slot_num,
     } else if (media_playback_button_mode(mode)) {
       send_media_playback_action(p.entity, mode);
     }
+  } else if (p.type == "camera") {
+    camera_viewer_open_for_entity(p.entity);
   } else if (p.type == "climate") {
     ClimateControlCtx *ctx = (ClimateControlCtx *)lv_obj_get_user_data(btn_obj);
     if (ctx) climate_control_open_modal(ctx);
@@ -5065,6 +5415,7 @@ inline std::string compact_subpage_type(const std::string &code) {
   if (code == "R") return "garage";
   if (code == "K") return "lock";
   if (code == "M") return "media";
+  if (code == "Q") return "camera";
   if (code == "H") return "climate";
   if (code == "P") return "push";
   if (code == "I") return "internal";
@@ -5492,6 +5843,10 @@ inline void setup_card_visual(BtnSlot &s, const ParsedCfg &p,
     setup_action_card(s, p);
     return;
   }
+  if (p.type == "camera") {
+    setup_camera_card(s, p);
+    return;
+  }
   if (p.type == "media") {
     setup_media_card(s, p,
       palette.has_on ? palette.on_val : DEFAULT_SLIDER_COLOR,
@@ -5576,6 +5931,7 @@ inline void grid_phase1(
   reset_calendar_cards();
   reset_timezone_cards();
   reset_weather_forecast_cards();
+  reset_camera_cards();
   reset_climate_control_refs();
 
   for (int i = 0; i < NS; i++)
@@ -5799,6 +6155,12 @@ inline void grid_phase2(
       continue;
     }
     if (p.type == "action") {
+      continue;
+    }
+    if (p.type == "camera") {
+      if (!p.entity.empty()) {
+        subscribe_camera_state(p.entity);
+      }
       continue;
     }
     if (p.type == "media") {

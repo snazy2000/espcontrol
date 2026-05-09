@@ -7,7 +7,7 @@
 //
 // Per-device config (grid size, styling) is injected between __DEVICE_CONFIG__
 // markers by scripts/build.py. Button type plugins (switch, sensor, weather,
-// action, calendar, timezone, slider, cover, garage, lock, media, push, subpage) are injected between __BUTTON_TYPES__ markers.
+// action, calendar, timezone, slider, cover, garage, lock, media, camera, push, subpage) are injected between __BUTTON_TYPES__ markers.
 // Icon data is generated between GENERATED:ICONS / GENERATED:DOMAIN_ICONS.
 // =============================================================================
 
@@ -2215,6 +2215,7 @@
       garage: "R",
       lock: "K",
       media: "M",
+      camera: "Q",
       climate: "H",
       push: "P",
       internal: "I",
@@ -2237,6 +2238,7 @@
       R: "garage",
       K: "lock",
       M: "media",
+      Q: "camera",
       H: "climate",
       P: "push",
       I: "internal",

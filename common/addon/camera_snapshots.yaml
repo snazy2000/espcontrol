@@ -1,0 +1,50 @@
+# Camera snapshot fetching and display addon.
+#
+# Uses ESPHome online_image so JPEG download and decode are handled by ESPHome
+# instead of hand-written HTTP/LVGL buffer code. Camera cards share one viewer
+# image because only one camera popup is shown at a time.
+
+globals:
+  - id: camera_ha_base_url
+    type: std::string
+    initial_value: '""'
+
+online_image:
+  - id: camera_snapshot_viewer
+    url: "http://127.0.0.1/"
+    format: jpeg
+    type: RGB565
+    resize: 320x180
+    update_interval: never
+
+# A hidden LVGL image widget ensures ESPHome enables LVGL's image widget support.
+lvgl:
+  top_layer:
+    widgets:
+      - image:
+          id: camera_snapshot_enable_widget
+          src: camera_snapshot_viewer
+          hidden: true
+          width: 1
+          height: 1
+
+interval:
+  - interval: 5s
+    then:
+      - lambda: |-
+          refresh_due_camera_snapshots(id(camera_ha_base_url));
+
+text_sensor:
+  - platform: homeassistant
+    id: camera_homeassistant_internal_url
+    internal: true
+    entity_id: sensor.internal_url
+    on_value:
+      then:
+        - lambda: |-
+            std::string url_str = x;
+            while (!url_str.empty() && url_str.back() == '/') url_str.pop_back();
+            id(camera_ha_base_url) = url_str;
+            set_camera_ha_base_url(id(camera_ha_base_url));
+            ESP_LOGI("camera_grid", "Updated HA camera base URL: %s", id(camera_ha_base_url).c_str());
+            refresh_due_camera_snapshots(id(camera_ha_base_url));

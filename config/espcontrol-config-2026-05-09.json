@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "device": "guition-esp32-s3-4848s040",
+  "exported_at": "2026-05-09T15:19:32.610Z",
+  "button_order": "1,,,4,2,3,5",
+  "button_on_color": "4D7BD5",
+  "button_off_color": "313131",
+  "sensor_card_color": "212121",
+  "buttons": [
+    {
+      "entity": "sensor.date",
+      "label": "",
+      "icon": "Auto",
+      "icon_on": "Auto",
+      "sensor": "",
+      "unit": "",
+      "type": "calendar",
+      "precision": "datetime"
+    },
+    {
+      "entity": "switch.backdoor_light",
+      "label": "Garden",
+      "icon": "Lightbulb Off",
+      "icon_on": "Lightbulb",
+      "sensor": "",
+      "unit": "",
+      "type": "",
+      "precision": ""
+    },
+    {
+      "entity": "switch.office",
+      "label": "Office",
+      "icon": "Lightbulb Off",
+      "icon_on": "Lightbulb",
+      "sensor": "",
+      "unit": "",
+      "type": "",
+      "precision": ""
+    },
+    {
+      "entity": "",
+      "label": "",
+      "icon": "Auto",
+      "icon_on": "Auto",
+      "sensor": "",
+      "unit": "",
+      "type": "",
+      "precision": ""
+    },
+    {
+      "entity": "switch.officepowerstrip",
+      "label": "Desk Power",
+      "icon": "Power Socket UK",
+      "icon_on": "Power Socket UK",
+      "sensor": "",
+      "unit": "",
+      "type": "",
+      "precision": ""
+    },
+    {
+      "entity": "",
+      "label": "",
+      "icon": "Auto",
+      "icon_on": "Auto",
+      "sensor": "",
+      "unit": "",
+      "type": "",
+      "precision": ""
+    },
+    {
+      "entity": "",
+      "label": "",
+      "icon": "Auto",
+      "icon_on": "Auto",
+      "sensor": "",
+      "unit": "",
+      "type": "",
+      "precision": ""
+    },
+    {
+      "entity": "",
+      "label": "",
+      "icon": "Auto",
+      "icon_on": "Auto",
+      "sensor": "",
+      "unit": "",
+      "type": "",
+      "precision": ""
+    },
+    {
+      "entity": "",
+      "label": "",
+      "icon": "Auto",
+      "icon_on": "Auto",
+      "sensor": "",
+      "unit": "",
+      "type": "",
+      "precision": ""
+    }
+  ],
+  "subpages": {},
+  "settings": {
+    "indoor_temp_enable": false,
+    "outdoor_temp_enable": false,
+    "indoor_temp_entity": "",
+    "outdoor_temp_entity": "",
+    "temperature_unit": "Auto",
+    "clock_bar": false,
+    "temperature_degree_symbol": true,
+    "timezone": "UTC (GMT+0)",
+    "clock_format": "24h",
+    "ntp_server_1": "0.pool.ntp.org",
+    "ntp_server_2": "1.pool.ntp.org",
+    "ntp_server_3": "2.pool.ntp.org",
+    "screensaver_mode": "disabled",
+    "presence_sensor_entity": "",
+    "clock_screensaver": true,
+    "clock_brightness": 35,
+    "clock_brightness_day": 35,
+    "clock_brightness_night": 35,
+    "screensaver_timeout": 1800,
+    "home_screen_timeout": 60,
+    "screen_rotation": "0",
+    "developer_experimental_features": false,
+    "bluetooth_proxy": false
+  },
+  "screen": {
+    "brightness_day": 100,
+    "brightness_night": 75,
+    "schedule_enabled": true,
+    "schedule_on_hour": 6,
+    "schedule_off_hour": 0,
+    "schedule_mode": "screen_off",
+    "schedule_wake_timeout": 60,
+    "schedule_wake_brightness": 10,
+    "schedule_dimmed_brightness": 10,
+    "schedule_clock_brightness": 10
+  }
+}

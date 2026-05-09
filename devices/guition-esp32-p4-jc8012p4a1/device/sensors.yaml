@@ -71,6 +71,7 @@ script:
           apply_width_compensation(id(display_time), cfg.width_compensation_percent);
           apply_width_compensation(id(temperatures), cfg.width_compensation_percent);
           apply_width_compensation(id(clock_label), cfg.width_compensation_percent);
+          register_camera_online_image_viewer(id(camera_snapshot_viewer));
           // END GENERATED REFRESH GRID WIRING
           grid_phase1(slots, cfg,
             id(button_order).state,
@@ -137,7 +138,8 @@ esphome:
             set_width_compensation_vertical_axis(cfg.width_compensation_vertical);
             apply_width_compensation(id(display_time), cfg.width_compensation_percent);
             apply_width_compensation(id(temperatures), cfg.width_compensation_percent);
-            apply_width_compensation(id(clock_label), cfg.width_compensation_percent);            // END GENERATED PHASE 1 GRID WIRING
+            apply_width_compensation(id(clock_label), cfg.width_compensation_percent);
+            // END GENERATED PHASE 1 GRID WIRING
             grid_phase1(slots, cfg,
               id(button_order).state,
               id(button_on_color).state,
@@ -235,7 +237,8 @@ esphome:
             set_width_compensation_vertical_axis(cfg.width_compensation_vertical);
             apply_width_compensation(id(display_time), cfg.width_compensation_percent);
             apply_width_compensation(id(temperatures), cfg.width_compensation_percent);
-            apply_width_compensation(id(clock_label), cfg.width_compensation_percent);            // END GENERATED PHASE 2 GRID WIRING
+            apply_width_compensation(id(clock_label), cfg.width_compensation_percent);
+            // END GENERATED PHASE 2 GRID WIRING
             grid_phase2(slots, cfg, sp_cfgs, sp_ext, sp_ext2, sp_ext3,
               id(button_order).state,
               id(button_on_color).state,

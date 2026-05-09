@@ -3407,6 +3407,38 @@ inline std::string climate_option_label(const std::string &raw) {
   return sentence_cap_text(value);
 }
 
+inline std::string climate_clean_option_token(std::string v) {
+  v = climate_trim(v);
+  while (!v.empty() && (v.front() == '\'' || v.front() == '"' ||
+                        v.front() == '[' || v.front() == '<')) v.erase(v.begin());
+  while (!v.empty() && (v.back() == '\'' || v.back() == '"' ||
+                        v.back() == ']' || v.back() == '>')) v.pop_back();
+  v = climate_trim(v);
+
+  size_t colon = v.find(':');
+  if (colon != std::string::npos) {
+    std::string left = climate_trim(v.substr(0, colon));
+    size_t dot = left.rfind('.');
+    if (dot != std::string::npos && dot + 1 < left.size()) {
+      v = climate_trim(left.substr(dot + 1));
+    } else {
+      v = climate_trim(v.substr(colon + 1));
+    }
+  } else {
+    size_t dot = v.rfind('.');
+    if (dot != std::string::npos && dot + 1 < v.size()) {
+      std::string prefix = climate_lower(v.substr(0, dot));
+      if (prefix.find("mode") != std::string::npos) v = climate_trim(v.substr(dot + 1));
+    }
+  }
+
+  while (!v.empty() && (v.front() == '\'' || v.front() == '"' ||
+                        v.front() == '<')) v.erase(v.begin());
+  while (!v.empty() && (v.back() == '\'' || v.back() == '"' ||
+                        v.back() == '>')) v.pop_back();
+  return climate_trim(v);
+}
+
 inline std::string climate_action_label(ClimateControlCtx *ctx) {
   if (!ctx || !ctx->available) return "Unavailable";
   if (ctx->hvac_action == "heating") return "Heating";
@@ -3555,11 +3587,8 @@ inline std::vector<std::string> climate_parse_options(esphome::StringRef value) 
   std::vector<std::string> out;
   std::string token;
   auto flush = [&]() {
-    std::string v = climate_trim(token);
+    std::string v = climate_clean_option_token(token);
     token.clear();
-    while (!v.empty() && (v.front() == '\'' || v.front() == '"' || v.front() == '[')) v.erase(v.begin());
-    while (!v.empty() && (v.back() == '\'' || v.back() == '"' || v.back() == ']')) v.pop_back();
-    v = climate_trim(v);
     if (v.empty()) return;
     std::string lower = climate_lower(v);
     if (lower == "hvacmode" || lower == "fanmode" || lower == "swingmode" || lower == "presetmode") return;

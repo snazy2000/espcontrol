@@ -1,0 +1,102 @@
+# Camera snapshot fetching and display addon
+# Fetches snapshots from Home Assistant camera proxy endpoint and displays them
+# on camera card buttons. Requires http_request component.
+#
+# Usage in device config:
+#   packages:
+#     camera_snapshots: !include ../../common/addon/camera_snapshots.yaml
+
+globals:
+  - id: camera_ha_host
+    type: std::string
+    initial_value: '""'
+  - id: camera_ha_port
+    type: int
+    initial_value: "8123"
+  - id: camera_fetch_in_progress
+    type: bool
+    initial_value: "false"
+  - id: camera_last_fetch_idx
+    type: int
+    initial_value: "-1"
+
+# Interval timer for periodic camera snapshot fetches
+interval:
+  - interval: 5s
+    then:
+      - lambda: |-
+          // Check each camera card for scheduled refresh
+          for (int i = 0; i < camera_card_count(); i++) {
+            CameraCardRef &ref = camera_card_refs()[i];
+            if (ref.entity_id.empty()) continue;
+            
+            // Skip if manual-only (refresh_interval == 0)
+            if (ref.refresh_interval <= 0) continue;
+            
+            // Skip if already fetching
+            if (id(camera_fetch_in_progress)) continue;
+            
+            // Check if refresh interval has elapsed
+            uint32_t now_ms = esp_log_timestamp();
+            uint32_t interval_ms = ref.refresh_interval * 1000;
+            
+            if (now_ms - ref.last_update_ms >= interval_ms) {
+              // Time to fetch new snapshot
+              id(camera_last_fetch_idx) = i;
+              id(camera_fetch_in_progress) = true;
+              
+              // Build URL
+              std::string url = "http://" + id(camera_ha_host) + ":" + 
+                               std::to_string(id(camera_ha_port)) + 
+                               "/api/camera_proxy/" + ref.entity_id;
+              
+              ESP_LOGI("camera_grid", "Fetching [%d]: %s", i, url.c_str());
+              
+              // Make HTTP request
+              id(http_req).get(url);
+              break;  // Only one concurrent request
+            }
+          }
+
+# Text sensor to track HA internal URL
+text_sensor:
+  - platform: homeassistant
+    name: "HA Host for Camera"
+    entity_id: sensor.internal_url
+    on_value:
+      then:
+        - lambda: |-
+            // Extract hostname from URL like http://192.168.1.100:8123
+            std::string url_str = x;
+            if (url_str.find("http://") == 0) {
+              url_str = url_str.substr(7);
+            } else if (url_str.find("https://") == 0) {
+              url_str = url_str.substr(8);
+            }
+            
+            // Remove port if present
+            size_t colon_pos = url_str.find(':');
+            if (colon_pos != std::string::npos) {
+              url_str = url_str.substr(0, colon_pos);
+            }
+            
+            id(camera_ha_host) = url_str;
+            ESP_LOGI("camera_grid", "Updated HA host: %s", id(camera_ha_host).c_str());
+
+# Configure the http_request component callback
+http_request:
+  on_response:
+    then:
+      - lambda: |-
+          int idx = id(camera_last_fetch_idx);
+          id(camera_fetch_in_progress) = false;
+          
+          if (idx >= 0 && idx < camera_card_count()) {
+            // Extract response body
+            const uint8_t *resp_body = (const uint8_t *)response->body.data();
+            size_t resp_len = response->body.length();
+            
+            process_camera_http_response(idx, resp_body, resp_len, status_code);
+          }
+          
+          id(camera_last_fetch_idx) = -1;

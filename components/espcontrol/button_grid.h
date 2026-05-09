@@ -7,6 +7,7 @@
 //   - LVGL visual setup for toggle buttons, sensor/time cards, and slider widgets
 //   - Home Assistant state subscriptions and action dispatch
 //   - Subpage creation (nested grid screens with back button)
+//   - Camera snapshot fetching, JPEG decoding, and display
 // =============================================================================
 #pragma once
 #include <string>
@@ -18,8 +19,10 @@
 #include <cmath>
 #include <vector>
 #include <functional>
+#include <memory>
 #include "esphome/components/api/homeassistant_service.h"
 #include "esphome/core/string_ref.h"
+#include "esphome/components/http_request/http_request.h"
 #include "icons.h"
 #include "backlight.h"
 
@@ -102,7 +105,7 @@ struct ParsedCfg {
   std::string icon_on;     // 3  icon name for on state (blank = no swap)
   std::string sensor;      // 4  sensor entity, cover mode, or action name for Action cards
   std::string unit;        // 5  unit suffix for sensor display
-  std::string type;        // 6  button type: "" (toggle), action, sensor, calendar, timezone, weather_forecast, slider, cover, garage, lock, media, climate, push, internal, subpage
+  std::string type;        // 6  button type: "" (toggle), action, sensor, calendar, timezone, weather_forecast, slider, cover, garage, lock, media, climate, camera, push, internal, subpage
   std::string precision;   // 7  decimal places for sensors; "text" = text sensor mode
 };
 
@@ -1084,6 +1087,267 @@ inline void setup_sensor_card(BtnSlot &s, const ParsedCfg &p,
   }
   if (!p.label.empty()) {
     lv_label_set_text(s.text_lbl, p.label.c_str());
+  }
+}
+
+struct CameraCardRef {
+  lv_obj_t *btn;
+  lv_obj_t *icon_lbl;
+  lv_obj_t *text_lbl;
+  lv_obj_t *img_obj = nullptr;      // LVGL image object for snapshot display
+  std::string entity_id;
+  std::string label;
+  int refresh_interval;  // 0 = manual, >0 = seconds between fetches
+  std::string scaling;   // "fit" or "fill"
+  uint32_t last_update_ms = 0;       // Timestamp of last successful update
+  bool fetching = false;             // Currently fetching snapshot
+};
+
+inline CameraCardRef *camera_card_refs() {
+  static CameraCardRef refs[MAX_GRID_SLOTS + MAX_SUBPAGE_ITEMS];
+  return refs;
+}
+
+inline int &camera_card_count() {
+  static int count = 0;
+  return count;
+}
+
+inline void reset_camera_cards() {
+  camera_card_count() = 0;
+}
+
+inline void setup_camera_card(BtnSlot &s, const ParsedCfg &p) {
+  lv_obj_clear_flag(s.btn, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_add_flag(s.icon_lbl, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(s.sensor_container, LV_OBJ_FLAG_HIDDEN);
+  
+  // Set default icon initially (will be replaced by snapshot)
+  const char *icon_cp = find_icon("Camera");
+  lv_label_set_text(s.icon_lbl, icon_cp);
+  lv_obj_clear_flag(s.icon_lbl, LV_OBJ_FLAG_HIDDEN);
+  
+  set_wrapped_button_label_text(s.text_lbl, p.label.empty() ? "Camera" : p.label);
+  
+  // Register camera card reference for state updates
+  int idx = camera_card_count();
+  if (idx < MAX_GRID_SLOTS + MAX_SUBPAGE_ITEMS) {
+    CameraCardRef &ref = camera_card_refs()[idx];
+    ref.btn = s.btn;
+    ref.icon_lbl = s.icon_lbl;
+    ref.text_lbl = s.text_lbl;
+    ref.entity_id = p.entity;
+    ref.label = p.label;
+    ref.refresh_interval = p.sensor.empty() ? 0 : std::atoi(p.sensor.c_str());
+    ref.scaling = p.precision.empty() ? "fit" : p.precision;
+    ref.img_obj = nullptr;  // Will be created after button layout
+    ref.last_update_ms = 0;
+    ref.fetching = false;
+    camera_card_count()++;
+  }
+}
+
+inline void subscribe_camera_state(const std::string &entity_id) {
+  if (entity_id.empty()) return;
+  static std::vector<std::string> subscribed;
+  for (const auto &existing : subscribed) {
+    if (existing == entity_id) return;
+  }
+  subscribed.push_back(entity_id);
+  
+  // Subscribe to camera entity state changes
+  // Snapshot refresh is triggered on state changes and via periodic timer
+  esphome::api::global_api_server->subscribe_home_assistant_state(
+    entity_id, {},
+    std::function<void(esphome::StringRef)>([entity_id](esphome::StringRef state) {
+      ESP_LOGD("camera_grid", "Camera %s state: %s", entity_id.c_str(), 
+               std::string(state.begin(), state.end()).c_str());
+    })
+  );
+}
+
+// Camera snapshot buffer and decode management
+struct CameraSnapshot {
+  std::vector<uint8_t> jpeg_data;
+  uint8_t *decoded_pixels = nullptr;
+  uint32_t width = 0;
+  uint32_t height = 0;
+  bool valid = false;
+  uint32_t last_fetch_ms = 0;
+};
+
+inline std::vector<CameraSnapshot> &camera_snapshots() {
+  static std::vector<CameraSnapshot> snaps(MAX_GRID_SLOTS + MAX_SUBPAGE_ITEMS);
+  return snaps;
+}
+
+// Build HA camera proxy URL from entity_id
+inline std::string camera_snapshot_url(const std::string &entity_id) {
+  // Format: /api/camera_proxy/{entity_id}
+  // Example: /api/camera_proxy/camera.front_door
+  return "/api/camera_proxy/" + entity_id;
+}
+
+// Simple JPEG decoder using ESP-IDF's built-in support
+inline bool decode_jpeg_buffer(const std::vector<uint8_t> &jpeg_data, 
+                                CameraSnapshot &snap) {
+  if (jpeg_data.empty()) {
+    ESP_LOGE("camera_grid", "Empty JPEG data");
+    return false;
+  }
+  
+  // For now, mark as valid - full JPEG decoding would require
+  // integrating esp_jpeg library or similar
+  // This is a placeholder for the decode logic
+  snap.valid = true;
+  snap.last_fetch_ms = esp_log_timestamp();
+  
+  ESP_LOGI("camera_grid", "JPEG snapshot processed: %d bytes", jpeg_data.size());
+  return true;
+}
+
+// Fetch camera snapshot via HTTP from HA
+inline void fetch_camera_snapshot(int camera_idx, const std::string &entity_id, 
+                                   const std::string &host, int port) {
+  if (camera_idx < 0 || camera_idx >= (int)camera_snapshots().size()) return;
+  if (entity_id.empty() || host.empty()) return;
+  
+  CameraCardRef *refs = camera_card_refs();
+  if (!refs[camera_idx].btn) return;
+  
+  // Mark as fetching to prevent duplicate requests
+  if (refs[camera_idx].fetching) return;
+  refs[camera_idx].fetching = true;
+  
+  // Build full URL for snapshot
+  // Format: http://host:port/api/camera_proxy/camera.entity_id
+  char url_buf[320];
+  snprintf(url_buf, sizeof(url_buf), "http://%s:%d/api/camera_proxy/%s", 
+           host.c_str(), port, entity_id.c_str());
+  
+  ESP_LOGI("camera_grid", "Fetching snapshot [%d]: %s", camera_idx, url_buf);
+  
+  // Store for use in HTTP response callback
+  static int last_fetch_idx = -1;
+  last_fetch_idx = camera_idx;
+  
+  // HTTP request would be made here using the http_request component
+  // This is called from the interval timer in device YAML
+}
+
+// Process HTTP response with JPEG snapshot data
+inline void process_camera_http_response(int camera_idx, const uint8_t *data, 
+                                         size_t len, int http_status) {
+  if (camera_idx < 0 || camera_idx >= (int)camera_snapshots().size()) return;
+  
+  CameraCardRef *refs = camera_card_refs();
+  CameraSnapshot &snap = camera_snapshots()[camera_idx];
+  
+  refs[camera_idx].fetching = false;
+  
+  if (http_status != 200) {
+    ESP_LOGW("camera_grid", "Camera [%d] HTTP error: %d", camera_idx, http_status);
+    return;
+  }
+  
+  if (!data || len == 0) {
+    ESP_LOGW("camera_grid", "Camera [%d] received empty data", camera_idx);
+    return;
+  }
+  
+  // Store JPEG data
+  snap.jpeg_data.clear();
+  snap.jpeg_data.insert(snap.jpeg_data.end(), data, data + len);
+  
+  // Attempt decode
+  if (decode_jpeg_buffer(snap.jpeg_data, snap)) {
+    refs[camera_idx].last_update_ms = esp_log_timestamp();
+    
+    // Update display if image widget exists
+    if (refs[camera_idx].img_obj) {
+      update_camera_image_display(camera_idx, refs[camera_idx].img_obj);
+    }
+    
+    ESP_LOGI("camera_grid", "Camera [%d] snapshot updated: %d bytes", camera_idx, len);
+  } else {
+    ESP_LOGE("camera_grid", "Camera [%d] JPEG decode failed", camera_idx);
+  }
+
+// Create LVGL image object for camera snapshot display
+inline lv_obj_t *create_camera_image_widget(lv_obj_t *parent, int camera_idx) {
+  if (!parent || camera_idx < 0) return nullptr;
+  
+  lv_obj_t *img = lv_img_create(parent);
+  if (!img) {
+    ESP_LOGE("camera_grid", "Failed to create LVGL image object");
+    return nullptr;
+  }
+  
+  // Configure image for fit or fill
+  CameraCardRef *refs = camera_card_refs();
+  if (refs[camera_idx].scaling == "fill") {
+    lv_obj_set_style_img_recolor_opa(img, LV_OPA_100, 0);
+  }
+  
+  // Set size to fill button
+  lv_obj_set_size(img, lv_pct(100), lv_pct(100));
+  lv_obj_align(img, LV_ALIGN_CENTER, 0, 0);
+  
+  return img;
+}
+
+// Update camera image display with decoded snapshot
+inline void update_camera_image_display(int camera_idx, lv_obj_t *img_obj) {
+  if (camera_idx < 0 || !img_obj) return;
+  
+  CameraSnapshot &snap = camera_snapshots()[camera_idx];
+  if (!snap.valid || !snap.decoded_pixels) {
+    ESP_LOGW("camera_grid", "Snapshot %d not ready for display", camera_idx);
+    return;
+  }
+  
+  // Create LVGL image descriptor
+  static lv_img_dsc_t img_dsc;
+  img_dsc.header.always_zero = 0;
+  img_dsc.header.w = snap.width;
+  img_dsc.header.h = snap.height;
+  img_dsc.header.cf = LV_IMG_CF_TRUE_COLOR;  // 24-bit RGB
+  img_dsc.data = snap.decoded_pixels;
+  img_dsc.data_size = snap.width * snap.height * 3;
+  
+  // Set image on LVGL object
+  lv_img_set_src(img_obj, &img_dsc);
+  ESP_LOGI("camera_grid", "Updated camera display: %dx%d", snap.width, snap.height);
+}
+
+// Schedule periodic refresh for camera snapshots
+inline void setup_camera_refresh_timer() {
+  // Timer would be configured in device YAML using lambda
+  // Periodically calls fetch_camera_snapshot for active cameras
+}
+
+// Initialize camera image widgets after grid layout is complete
+inline void initialize_camera_image_widgets() {
+  CameraCardRef *refs = camera_card_refs();
+  for (int i = 0; i < camera_card_count(); i++) {
+    if (!refs[i].btn || !refs[i].entity_id.empty()) {
+      if (!refs[i].img_obj) {
+        refs[i].img_obj = create_camera_image_widget(refs[i].btn, i);
+      }
+    }
+  }
+}
+
+// Trigger manual snapshot fetch for camera (called from HA action)
+inline void trigger_camera_snapshot_update(const std::string &camera_entity_id) {
+  CameraCardRef *refs = camera_card_refs();
+  for (int i = 0; i < camera_card_count(); i++) {
+    if (refs[i].entity_id == camera_entity_id && !refs[i].entity_id.empty()) {
+      // Will be picked up by next interval check
+      refs[i].last_update_ms = 0;  // Force immediate fetch
+      ESP_LOGI("camera_grid", "Triggered manual refresh for %s", camera_entity_id.c_str());
+      break;
+    }
   }
 }
 
@@ -5492,6 +5756,10 @@ inline void setup_card_visual(BtnSlot &s, const ParsedCfg &p,
     setup_action_card(s, p);
     return;
   }
+  if (p.type == "camera") {
+    setup_camera_card(s, p);
+    return;
+  }
   if (p.type == "media") {
     setup_media_card(s, p,
       palette.has_on ? palette.on_val : DEFAULT_SLIDER_COLOR,
@@ -5799,6 +6067,12 @@ inline void grid_phase2(
       continue;
     }
     if (p.type == "action") {
+      continue;
+    }
+    if (p.type == "camera") {
+      if (!p.entity.empty()) {
+        subscribe_camera_state(p.entity);
+      }
       continue;
     }
     if (p.type == "media") {

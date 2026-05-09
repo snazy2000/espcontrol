@@ -1106,7 +1106,7 @@ struct CameraCardRef {
 };
 
 inline CameraCardRef *camera_card_refs() {
-  static CameraCardRef refs[MAX_GRID_SLOTS + MAX_SUBPAGE_ITEMS];
+  static CameraCardRef refs[MAX_GRID_SLOTS];
   return refs;
 }
 
@@ -1388,7 +1388,7 @@ inline void setup_camera_card(BtnSlot &s, const ParsedCfg &p) {
   set_wrapped_button_label_text(s.text_lbl, p.label.empty() ? "Camera" : p.label);
 
   int idx = camera_card_count();
-  if (idx < MAX_GRID_SLOTS + MAX_SUBPAGE_ITEMS) {
+  if (idx < MAX_GRID_SLOTS) {
     CameraCardRef &ref = camera_card_refs()[idx];
     ref.btn = s.btn;
     ref.icon_lbl = s.icon_lbl;

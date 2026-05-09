@@ -3218,7 +3218,6 @@ inline void media_volume_open_modal(MediaVolumeCtx *ctx) {
 
 constexpr uint32_t CLIMATE_HEATING_COLOR = 0xA44A1C;
 constexpr uint32_t CLIMATE_COOLING_COLOR = 0x1565C0;
-constexpr uint32_t CLIMATE_PANEL_COLOR = 0x252525;
 constexpr uint32_t CLIMATE_POPUP_COLOR = 0x242424;
 constexpr uint32_t CLIMATE_TEXT_COLOR = 0xD8D8D8;
 constexpr uint32_t CLIMATE_NEUTRAL_COLOR = 0xBDBDBD;
@@ -3785,12 +3784,20 @@ inline void climate_control_layout_modal(ClimateControlCtx *ctx) {
   lv_coord_t value_center_y = arc_stroke / 2;
   lv_coord_t controls_y = arc_size / 2 - btn_size / 2 - inset +
     media_volume_scaled_px(MEDIA_VOLUME_CONTROLS_DOWN_REF_PX, short_side);
+  if (ui.status_lbl) lv_obj_update_layout(ui.status_lbl);
+  if (ui.target_row) lv_obj_update_layout(ui.target_row);
+  lv_coord_t title_h = ui.status_lbl ? lv_obj_get_height(ui.status_lbl) : 0;
+  lv_coord_t value_h = ui.target_row ? lv_obj_get_height(ui.target_row) : 0;
+  lv_coord_t title_gap = media_volume_scaled_px(MEDIA_VOLUME_TITLE_GAP_REF_PX, short_side);
+  lv_coord_t title_center_y = value_center_y -
+    (value_h / 2 + title_gap + title_h / 2);
   lv_coord_t chip_h = short_side < 520 ? 48 : 56;
 
   lv_obj_set_size(ui.overlay, lv_pct(100), lv_pct(100));
   lv_obj_set_size(ui.panel, panel_w, panel_h);
   lv_obj_set_pos(ui.panel, panel_x, panel_y);
-  lv_obj_set_style_radius(ui.panel, 18, LV_PART_MAIN);
+  lv_obj_set_style_radius(ui.panel,
+    ctx->btn ? lv_obj_get_style_radius(ctx->btn, LV_PART_MAIN) : 18, LV_PART_MAIN);
   lv_obj_set_size(ui.back_btn, back_size, back_size);
   lv_obj_set_style_radius(ui.back_btn, back_size / 2, LV_PART_MAIN);
   lv_obj_align(ui.back_btn, LV_ALIGN_TOP_LEFT, inset, inset);
@@ -3808,9 +3815,9 @@ inline void climate_control_layout_modal(ClimateControlCtx *ctx) {
   lv_obj_set_style_arc_width(ui.arc, arc_stroke, LV_PART_MAIN);
   lv_obj_set_style_arc_width(ui.arc, arc_stroke, LV_PART_INDICATOR);
   lv_obj_set_style_pad_all(ui.arc, short_side < 520 ? 4 : 6, LV_PART_KNOB);
-  lv_obj_align(ui.target_row, LV_ALIGN_CENTER, 0, value_center_y - 10);
-  lv_obj_align(ui.status_lbl, LV_ALIGN_CENTER, 0, value_center_y + 54);
-  lv_obj_align(ui.hint_lbl, LV_ALIGN_CENTER, 0, value_center_y + 80);
+  lv_obj_align(ui.status_lbl, LV_ALIGN_CENTER, 0, title_center_y);
+  lv_obj_align(ui.target_row, LV_ALIGN_CENTER, 0, value_center_y);
+  lv_obj_align(ui.hint_lbl, LV_ALIGN_CENTER, 0, controls_y - btn_size / 2 - 50);
   lv_obj_set_style_translate_y(ui.unit_lbl,
     media_volume_scaled_px(MEDIA_VOLUME_UNIT_Y_REF_PX, short_side), LV_PART_MAIN);
   lv_obj_set_size(ui.minus_btn, btn_size, btn_size);
@@ -3848,21 +3855,23 @@ inline void climate_control_open_modal(ClimateControlCtx *ctx) {
   lv_obj_clear_flag(ui.overlay, LV_OBJ_FLAG_SCROLLABLE);
 
   ui.panel = lv_obj_create(ui.overlay);
-  lv_obj_set_style_bg_color(ui.panel, lv_color_hex(CLIMATE_PANEL_COLOR), LV_PART_MAIN);
+  lv_obj_set_style_bg_color(ui.panel, lv_color_hex(ctx->tertiary_color), LV_PART_MAIN);
   lv_obj_set_style_bg_opa(ui.panel, LV_OPA_COVER, LV_PART_MAIN);
   lv_obj_set_style_border_width(ui.panel, 0, LV_PART_MAIN);
   lv_obj_set_style_shadow_width(ui.panel, 0, LV_PART_MAIN);
+  lv_obj_set_style_radius(ui.panel,
+    ctx->btn ? lv_obj_get_style_radius(ctx->btn, LV_PART_MAIN) : 18, LV_PART_MAIN);
   lv_obj_set_style_pad_all(ui.panel, 0, LV_PART_MAIN);
   lv_obj_clear_flag(ui.panel, LV_OBJ_FLAG_SCROLLABLE);
 
   ui.back_btn = media_volume_create_round_button(ui.panel, 32, "\U000F0141", ctx->icon_font,
-    0x454545, CLIMATE_PANEL_COLOR, ctx->width_compensation_percent);
+    0x454545, ctx->tertiary_color, ctx->width_compensation_percent);
   lv_obj_set_style_bg_opa(ui.back_btn, LV_OPA_TRANSP, LV_PART_MAIN);
   lv_obj_set_style_border_width(ui.back_btn, 0, LV_PART_MAIN);
   lv_obj_add_event_cb(ui.back_btn, [](lv_event_t *) { climate_control_hide_modal(); }, LV_EVENT_CLICKED, nullptr);
 
   ui.mode_btn = media_volume_create_round_button(ui.panel, 32, find_icon("Dots Horizontal"), ctx->icon_font,
-    0x454545, CLIMATE_PANEL_COLOR, ctx->width_compensation_percent);
+    0x454545, ctx->tertiary_color, ctx->width_compensation_percent);
   lv_obj_set_style_bg_opa(ui.mode_btn, LV_OPA_TRANSP, LV_PART_MAIN);
   lv_obj_set_style_border_width(ui.mode_btn, 0, LV_PART_MAIN);
   lv_obj_add_event_cb(ui.mode_btn, [](lv_event_t *) {
@@ -3871,7 +3880,7 @@ inline void climate_control_open_modal(ClimateControlCtx *ctx) {
   }, LV_EVENT_CLICKED, nullptr);
 
   ui.preset_btn = media_volume_create_round_button(ui.panel, 32, find_icon("Thermostat Auto"), ctx->icon_font,
-    0x454545, CLIMATE_PANEL_COLOR, ctx->width_compensation_percent);
+    0x454545, ctx->tertiary_color, ctx->width_compensation_percent);
   lv_obj_set_style_bg_opa(ui.preset_btn, LV_OPA_TRANSP, LV_PART_MAIN);
   lv_obj_set_style_border_width(ui.preset_btn, 0, LV_PART_MAIN);
   lv_obj_add_event_cb(ui.preset_btn, [](lv_event_t *) {
@@ -3951,9 +3960,9 @@ inline void climate_control_open_modal(ClimateControlCtx *ctx) {
   }, LV_EVENT_CLICKED, nullptr);
 
   ui.minus_btn = media_volume_create_round_button(ui.panel, 72, find_icon("Minus"), ctx->icon_font,
-    CLIMATE_NEUTRAL_COLOR, CLIMATE_PANEL_COLOR, ctx->width_compensation_percent);
+    CLIMATE_NEUTRAL_COLOR, ctx->tertiary_color, ctx->width_compensation_percent);
   ui.plus_btn = media_volume_create_round_button(ui.panel, 72, find_icon("Plus"), ctx->icon_font,
-    CLIMATE_NEUTRAL_COLOR, CLIMATE_PANEL_COLOR, ctx->width_compensation_percent);
+    CLIMATE_NEUTRAL_COLOR, ctx->tertiary_color, ctx->width_compensation_percent);
   lv_obj_add_event_cb(ui.minus_btn, [](lv_event_t *) {
     ClimateControlModalUi &ui = climate_control_modal_ui();
     if (ui.active) climate_apply_selected_target(ui.active,
@@ -3988,6 +3997,7 @@ inline void climate_control_open_modal(ClimateControlCtx *ctx) {
     if (ui.active) climate_open_option_menu(ui.active, "swing");
   }, LV_EVENT_CLICKED, nullptr);
 
+  climate_control_set_modal_value(ctx);
   climate_control_layout_modal(ctx);
   climate_control_set_modal_value(ctx);
   lv_obj_move_foreground(ui.overlay);

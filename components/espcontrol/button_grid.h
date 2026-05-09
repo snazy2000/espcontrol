@@ -3329,6 +3329,7 @@ struct ClimateControlModalUi {
   lv_obj_t *menu_overlay = nullptr;
   ClimateControlCtx *active = nullptr;
   bool updating_arc = false;
+  bool dragging_arc = false;
   bool action_menu_open = false;
 };
 
@@ -3658,7 +3659,8 @@ inline void climate_apply_selected_target(ClimateControlCtx *ctx, int value, boo
     ctx->target_tenths = value;
     ctx->has_target = true;
   }
-  climate_update_card(ctx);
+  ClimateControlModalUi &ui = climate_control_modal_ui();
+  if (!ui.dragging_arc) climate_update_card(ctx);
   climate_control_set_modal_value(ctx);
   if (send_now) climate_send_temperature(ctx);
   else if (debounce) climate_schedule_temperature_send(ctx);
@@ -4059,7 +4061,7 @@ inline void climate_control_set_modal_value(ClimateControlCtx *ctx) {
   int target = climate_selected_target(ctx);
   if (ui.arc) {
     climate_set_obj_visible(ui.arc, temp_enabled);
-    if (temp_enabled) {
+    if (temp_enabled && !ui.dragging_arc) {
       ui.updating_arc = true;
       lv_arc_set_range(ui.arc, ctx->min_tenths, ctx->max_tenths);
       lv_arc_set_value(ui.arc, climate_clamp_tenths(ctx, target));
@@ -4400,6 +4402,7 @@ inline void climate_control_open_modal(ClimateControlCtx *ctx) {
   lv_obj_add_event_cb(ui.arc, [](lv_event_t *e) {
     ClimateControlModalUi &ui = climate_control_modal_ui();
     if (ui.updating_arc || !ui.active) return;
+    ui.dragging_arc = true;
     lv_obj_t *arc = static_cast<lv_obj_t *>(lv_event_get_target(e));
     climate_apply_selected_target(ui.active, lv_arc_get_value(arc), false, false);
   }, LV_EVENT_VALUE_CHANGED, nullptr);
@@ -4407,6 +4410,7 @@ inline void climate_control_open_modal(ClimateControlCtx *ctx) {
     ClimateControlModalUi &ui = climate_control_modal_ui();
     if (ui.updating_arc || !ui.active) return;
     lv_obj_t *arc = static_cast<lv_obj_t *>(lv_event_get_target(e));
+    ui.dragging_arc = false;
     climate_apply_selected_target(ui.active, lv_arc_get_value(arc), true, false);
   }, LV_EVENT_RELEASED, nullptr);
 

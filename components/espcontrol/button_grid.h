@@ -3439,6 +3439,17 @@ inline std::string climate_clean_option_token(std::string v) {
   return climate_trim(v);
 }
 
+inline std::string climate_hvac_service_value(const std::string &raw) {
+  std::string value = climate_lower(climate_clean_option_token(raw));
+  for (char &ch : value) {
+    if (ch == ' ' || ch == '-' || ch == '/') ch = '_';
+  }
+  if (value == "heatcool") return "heat_cool";
+  if (value == "heat__cool") return "heat_cool";
+  if (value == "fan" || value == "fanonly") return "fan_only";
+  return value;
+}
+
 inline std::string climate_action_label(ClimateControlCtx *ctx) {
   if (!ctx || !ctx->available) return "Unavailable";
   if (ctx->hvac_action == "heating") return "Heating";
@@ -3637,8 +3648,9 @@ inline void climate_update_chip(lv_obj_t *chip, const char *title, const std::st
 inline void climate_send_option(ClimateControlCtx *ctx, const std::string &kind, const std::string &value) {
   if (!ctx || value.empty()) return;
   if (kind == "hvac") {
-    ctx->hvac_mode = value;
-    climate_send_action(ctx->entity_id, "climate.set_hvac_mode", {{"hvac_mode", value}});
+    std::string service_value = climate_hvac_service_value(value);
+    ctx->hvac_mode = service_value;
+    climate_send_action(ctx->entity_id, "climate.set_hvac_mode", {{"hvac_mode", service_value}});
   } else if (kind == "fan") {
     ctx->fan_mode = value;
     climate_send_action(ctx->entity_id, "climate.set_fan_mode", {{"fan_mode", value}});
@@ -4229,7 +4241,7 @@ inline void subscribe_climate_control_state(ClimateControlCtx *ctx) {
     ctx->entity_id, {},
     std::function<void(esphome::StringRef)>(
       [ctx, refresh](esphome::StringRef state) {
-        ctx->hvac_mode = climate_lower(climate_trim(string_ref_limited(state, HA_SHORT_STATE_MAX_LEN)));
+        ctx->hvac_mode = climate_hvac_service_value(string_ref_limited(state, HA_SHORT_STATE_MAX_LEN));
         ctx->available = !climate_unavailable_value(ctx->hvac_mode);
         if (!ctx->available) ctx->hvac_mode = "off";
         refresh();

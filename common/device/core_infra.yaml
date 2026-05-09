@@ -11,6 +11,7 @@ esphome:
   platformio_options:
     build_flags:
       - "-DLV_USE_BIDI=1"
+      - "-DLV_DRAW_SW_SUPPORT_RGB565=1"
 
 api:
   reboot_timeout: 0s

@@ -20,7 +20,7 @@ font:
     size: 55
     bpp: 4
     glyphs:
-      - "0123456789.-°/%kWhVA "
+      - "0123456789.-°/%kWhVA Of"
       - ":"
 
   # Button labels (22px)
@@ -48,7 +48,7 @@ font:
     size: 120
     bpp: 4
     glyphs:
-      - "0123456789.-°"
+      - "0123456789.-°Of"
 
   # Volume/climate modal labels: 22px on the 480px S3 reference scaled to this 600px short side
   - file: "gfonts://Roboto"

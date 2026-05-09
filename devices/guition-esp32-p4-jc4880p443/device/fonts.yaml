@@ -30,7 +30,7 @@ font:
     size: 62
     bpp: 4
     glyphs:
-      - "0123456789.-°/%kWhVA "
+      - "0123456789.-°/%kWhVA Of"
       - ":"
 
   # Media now-playing titles (sensor value size, full text glyph coverage)
@@ -49,7 +49,7 @@ font:
     size: 135
     bpp: 4
     glyphs:
-      - "0123456789.-°"
+      - "0123456789.-°Of"
 
   # Top bar clock and temperature (25px)
   - file: "gfonts://Roboto"

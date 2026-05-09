@@ -13,7 +13,7 @@ font:
     size: 52
     bpp: 4
     glyphs:
-      - "0123456789.-°/%kWhVA "
+      - "0123456789.-°/%kWhVA Of"
       - ":"
 
   # Media now-playing titles (sensor value size, full text glyph coverage)
@@ -32,7 +32,7 @@ font:
     size: 160
     bpp: 4
     glyphs:
-      - "0123456789.-°"
+      - "0123456789.-°Of"
 
   # Volume/climate modal labels: 22px on the 480px S3 reference scaled to this 800px short side
   - file: "gfonts://Roboto"

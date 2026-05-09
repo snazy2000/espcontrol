@@ -3944,18 +3944,13 @@ inline void climate_open_inline_option_list(ClimateControlCtx *ctx, const std::s
       lv_obj_set_style_bg_opa(btn, LV_OPA_TRANSP, LV_PART_MAIN);
       lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN);
       lv_obj_set_style_shadow_width(btn, 0, LV_PART_MAIN);
-      lv_obj_set_style_pad_left(btn, 34, LV_PART_MAIN);
+      lv_obj_set_style_pad_left(btn, 0, LV_PART_MAIN);
       lv_obj_set_style_pad_right(btn, 26, LV_PART_MAIN);
-      lv_obj_set_style_pad_column(btn, 34, LV_PART_MAIN);
+      lv_obj_set_style_pad_column(btn, 0, LV_PART_MAIN);
       lv_obj_set_layout(btn, LV_LAYOUT_FLEX);
       lv_obj_set_style_flex_flow(btn, LV_FLEX_FLOW_ROW, LV_PART_MAIN);
       lv_obj_set_style_flex_main_place(btn, LV_FLEX_ALIGN_START, LV_PART_MAIN);
       lv_obj_set_style_flex_cross_place(btn, LV_FLEX_ALIGN_CENTER, LV_PART_MAIN);
-
-      lv_obj_t *icon_lbl = lv_label_create(btn);
-      lv_label_set_text(icon_lbl, climate_option_icon(section_kind, option));
-      lv_obj_set_style_text_color(icon_lbl, lv_color_hex(selected ? ctx->accent_color : 0xA8A8A8), LV_PART_MAIN);
-      if (ctx->icon_font) lv_obj_set_style_text_font(icon_lbl, ctx->icon_font, LV_PART_MAIN);
 
       lv_obj_t *label = lv_label_create(btn);
       lv_label_set_text(label, climate_option_label(option).c_str());

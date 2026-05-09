@@ -20,10 +20,10 @@
 #include <vector>
 #include <functional>
 #include <memory>
-#include "lvgl.h"
 #include "esphome/components/api/homeassistant_service.h"
 #include "esphome/core/string_ref.h"
 #include "esphome/components/http_request/http_request.h"
+#include "esphome/components/lvgl/lvgl.h"
 #include "icons.h"
 #include "backlight.h"
 

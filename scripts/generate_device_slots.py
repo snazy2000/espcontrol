@@ -113,6 +113,7 @@ def cfg_lines(device: dict) -> list[str]:
     lines.append("            apply_width_compensation(id(display_time), cfg.width_compensation_percent);")
     lines.append("            apply_width_compensation(id(temperatures), cfg.width_compensation_percent);")
     lines.append("            apply_width_compensation(id(clock_label), cfg.width_compensation_percent);")
+    lines.append("            register_camera_online_image_viewer(id(camera_snapshot_viewer));")
     return lines
 
 

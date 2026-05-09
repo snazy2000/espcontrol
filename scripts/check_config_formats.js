@@ -60,6 +60,7 @@ function subpageTypeFromCode(code) {
     R: "garage",
     K: "lock",
     M: "media",
+    Q: "camera",
     H: "climate",
     P: "push",
     I: "internal",
@@ -511,6 +512,17 @@ assertButtonRoundTrip(hooks, "media now playing card", {
   precision: "",
 }, false);
 
+assertButtonRoundTrip(hooks, "camera card", {
+  entity: "camera.front_door",
+  label: "Front Door",
+  icon: "Camera",
+  icon_on: "Auto",
+  sensor: "10",
+  unit: "16:9",
+  type: "camera",
+  precision: "fill",
+}, false);
+
 assertButtonRoundTrip(hooks, "climate card", {
   entity: "climate.living_room",
   label: "Living Room",
@@ -878,6 +890,13 @@ assertSubpageRoundTrip(hooks, "media subpage", {
   ],
 }, true);
 
+assertSubpageRoundTrip(hooks, "camera subpage", {
+  order: ["1", "B"],
+  buttons: [
+    buttonShape({ entity: "camera.front_door", label: "Front Door", icon: "Camera", sensor: "10", unit: "16:9", type: "camera", precision: "fill" }),
+  ],
+}, true);
+
 assertSubpageRoundTrip(hooks, "climate subpage", {
   order: ["1", "B"],
   buttons: [
@@ -1045,6 +1064,13 @@ assert.deepStrictEqual(subpageShape(hooks.parseSubpageConfig("~1,B|M,media_playe
     buttonShape({ entity: "media_player.living_room", label: "Living Room", icon: "Auto", icon_on: "Auto", sensor: "play_pause", type: "media" }),
   ],
 }, "legacy media controls subpage parse");
+
+assert.deepStrictEqual(subpageShape(hooks.parseSubpageConfig("~1,B|Q,camera.front_door,Front%20Door,Camera,,10,16%3A9,fill")), {
+  order: ["1", "B"],
+  buttons: [
+    buttonShape({ entity: "camera.front_door", label: "Front Door", icon: "Camera", icon_on: "Auto", sensor: "10", unit: "16:9", type: "camera", precision: "fill" }),
+  ],
+}, "compact camera subpage parse");
 
 assert.deepStrictEqual(subpageShape(hooks.parseSubpageConfig("~1,B|H,climate.living_room,Living%20Room,,,,,1")), {
   order: ["1", "B"],

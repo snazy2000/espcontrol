@@ -3510,6 +3510,7 @@ inline uint32_t climate_active_color(ClimateControlCtx *ctx) {
 
 inline std::string climate_card_value(ClimateControlCtx *ctx) {
   if (!ctx || !ctx->available) return "--";
+  if (ctx->hvac_mode == "off") return "Off";
   if (ctx->has_low && ctx->has_high)
     return climate_format_tenths(ctx->low_tenths, ctx->precision) + "-" +
            climate_format_tenths(ctx->high_tenths, ctx->precision);
@@ -3532,7 +3533,7 @@ inline void climate_update_card(ClimateControlCtx *ctx) {
   if (!ctx) return;
   std::string value = climate_card_value(ctx);
   if (ctx->value_lbl) lv_label_set_text(ctx->value_lbl, value.c_str());
-  if (ctx->unit_lbl) lv_label_set_text(ctx->unit_lbl, value == "--" ? "" : display_temperature_unit_symbol());
+  if (ctx->unit_lbl) lv_label_set_text(ctx->unit_lbl, (value == "--" || value == "Off") ? "" : display_temperature_unit_symbol());
   if (ctx->label_lbl) lv_label_set_text(ctx->label_lbl, climate_card_label(ctx).c_str());
   if (ctx->btn) {
     if (climate_is_active(ctx)) lv_obj_add_state(ctx->btn, LV_STATE_CHECKED);

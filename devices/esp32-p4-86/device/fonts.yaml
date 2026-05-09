@@ -57,7 +57,7 @@ font:
     size: 33
     bpp: 4
     glyphs:
-      - "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz/°"
+      - " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz/°"
 
   # Top bar clock and temperature (28px)
   - file: "gfonts://Roboto"

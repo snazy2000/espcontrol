@@ -3996,15 +3996,15 @@ inline void climate_open_option_menu(ClimateControlCtx *ctx, const std::string &
   lv_obj_t *box = lv_obj_create(ui.menu_overlay);
   lv_obj_set_width(box, kind == "hvac" ? 190 : 220);
   lv_obj_set_height(box, LV_SIZE_CONTENT);
-  lv_obj_set_style_bg_color(box, lv_color_hex(CLIMATE_POPUP_COLOR), LV_PART_MAIN);
+  lv_obj_set_style_bg_color(box, lv_color_hex(ctx->tertiary_color), LV_PART_MAIN);
   lv_obj_set_style_bg_opa(box, LV_OPA_COVER, LV_PART_MAIN);
   lv_obj_set_style_border_width(box, 0, LV_PART_MAIN);
   lv_obj_set_style_radius(box, kind == "hvac" ? 8 : 14, LV_PART_MAIN);
-  lv_obj_set_style_pad_all(box, kind == "hvac" ? 8 : 10, LV_PART_MAIN);
-  lv_obj_set_style_pad_row(box, kind == "hvac" ? 2 : 6, LV_PART_MAIN);
+  lv_obj_set_style_pad_all(box, kind == "hvac" ? 12 : 10, LV_PART_MAIN);
+  lv_obj_set_style_pad_row(box, kind == "hvac" ? 6 : 6, LV_PART_MAIN);
   lv_obj_set_layout(box, LV_LAYOUT_FLEX);
   lv_obj_set_style_flex_flow(box, LV_FLEX_FLOW_COLUMN, LV_PART_MAIN);
-  if (kind == "hvac") lv_obj_align(box, LV_ALIGN_TOP_RIGHT, -10, 52);
+  if (kind == "hvac") lv_obj_align(box, LV_ALIGN_TOP_RIGHT, -10, 64);
   else lv_obj_align(box, LV_ALIGN_CENTER, 0, 0);
   lv_obj_clear_flag(box, LV_OBJ_FLAG_SCROLLABLE);
 
@@ -4012,11 +4012,13 @@ inline void climate_open_option_menu(ClimateControlCtx *ctx, const std::string &
     bool selected = climate_option_selected(ctx, kind, option);
     lv_obj_t *btn = lv_btn_create(box);
     lv_obj_set_width(btn, lv_pct(100));
-    lv_obj_set_height(btn, kind == "hvac" ? 36 : 42);
+    lv_obj_set_height(btn, kind == "hvac" ? 52 : 42);
     lv_obj_set_style_radius(btn, 0, LV_PART_MAIN);
     lv_obj_set_style_bg_opa(btn, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN);
     lv_obj_set_style_shadow_width(btn, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_top(btn, kind == "hvac" ? 8 : 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_bottom(btn, kind == "hvac" ? 8 : 0, LV_PART_MAIN);
     lv_obj_t *label = lv_label_create(btn);
     lv_label_set_text(label, climate_option_label(option).c_str());
     lv_obj_set_style_text_color(label, lv_color_hex(selected ? ctx->accent_color : 0xFFFFFF), LV_PART_MAIN);

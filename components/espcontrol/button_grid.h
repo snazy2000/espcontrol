@@ -3312,6 +3312,7 @@ struct ClimateControlModalUi {
   lv_obj_t *menu_close_btn = nullptr;
   lv_obj_t *menu_mode_btn = nullptr;
   lv_obj_t *menu_preset_btn = nullptr;
+  lv_obj_t *option_list_view = nullptr;
   lv_obj_t *arc = nullptr;
   lv_obj_t *target_row = nullptr;
   lv_obj_t *target_lbl = nullptr;
@@ -3695,10 +3696,20 @@ inline std::vector<std::string> climate_parse_options(esphome::StringRef value) 
   return out;
 }
 
+inline void climate_set_obj_visible(lv_obj_t *obj, bool visible);
+
 inline void climate_hide_option_menu() {
   ClimateControlModalUi &ui = climate_control_modal_ui();
   if (ui.menu_overlay) lv_obj_del(ui.menu_overlay);
   ui.menu_overlay = nullptr;
+}
+
+inline void climate_hide_inline_option_list() {
+  ClimateControlModalUi &ui = climate_control_modal_ui();
+  if (ui.option_list_view) lv_obj_del(ui.option_list_view);
+  ui.option_list_view = nullptr;
+  climate_set_obj_visible(ui.menu_mode_btn, ui.action_menu_open);
+  climate_set_obj_visible(ui.menu_preset_btn, ui.action_menu_open);
 }
 
 inline void climate_update_chip(lv_obj_t *chip, const char *title, const std::string &value,
@@ -3733,6 +3744,36 @@ inline void climate_send_option(ClimateControlCtx *ctx, const std::string &kind,
   }
   climate_update_card(ctx);
   climate_control_set_modal_value(ctx);
+}
+
+inline std::string climate_option_current_value(ClimateControlCtx *ctx, const std::string &kind) {
+  if (!ctx) return "";
+  if (kind == "hvac") return ctx->hvac_mode;
+  if (kind == "fan") return ctx->fan_mode;
+  if (kind == "swing") return ctx->swing_mode;
+  if (kind == "preset") return ctx->preset_mode;
+  return "";
+}
+
+inline bool climate_option_selected(ClimateControlCtx *ctx,
+                                    const std::string &kind,
+                                    const std::string &value) {
+  if (!ctx) return false;
+  if (kind == "hvac") return climate_hvac_service_value(value) == ctx->hvac_mode;
+  return value == climate_option_current_value(ctx, kind);
+}
+
+inline const char *climate_option_icon(const std::string &kind, const std::string &value) {
+  if (kind == "preset") return find_icon("Air Filter");
+  if (kind == "fan") return find_icon("Fan");
+  std::string mode = kind == "hvac" ? climate_hvac_service_value(value) : climate_lower(value);
+  if (mode == "off") return find_icon("Power");
+  if (mode == "heat") return find_icon("Fire");
+  if (mode == "cool") return find_icon("Snowflake");
+  if (mode == "heat_cool" || mode == "auto") return find_icon("Thermostat Auto");
+  if (mode == "dry") return find_icon("Water");
+  if (mode == "fan_only" || mode == "fan") return find_icon("Fan");
+  return find_icon("Thermostat");
 }
 
 inline lv_obj_t *climate_create_chip(lv_obj_t *parent, const char *title,
@@ -3823,13 +3864,101 @@ inline void climate_update_menu_tile(lv_obj_t *btn, const char *title,
   lv_label_set_text(label, text.c_str());
 }
 
-inline void climate_show_action_menu(ClimateControlCtx *ctx);
 inline void climate_hide_action_menu();
+inline void climate_control_layout_modal(ClimateControlCtx *ctx);
+
+inline void climate_open_inline_option_list(ClimateControlCtx *ctx, const std::string &kind) {
+  if (!ctx) return;
+  ClimateControlModalUi &ui = climate_control_modal_ui();
+  const std::vector<std::string> *options = nullptr;
+  const char *title = nullptr;
+  if (kind == "hvac") {
+    options = &ctx->hvac_modes;
+    title = "Mode";
+  } else if (kind == "preset") {
+    options = &ctx->preset_modes;
+    title = "Preset";
+  }
+  if (!options || options->empty() || !ui.menu_view) return;
+
+  climate_hide_inline_option_list();
+  climate_set_obj_visible(ui.menu_mode_btn, false);
+  climate_set_obj_visible(ui.menu_preset_btn, false);
+
+  ui.option_list_view = lv_obj_create(ui.menu_view);
+  lv_obj_set_size(ui.option_list_view, lv_pct(100), lv_pct(100));
+  lv_obj_set_style_bg_opa(ui.option_list_view, LV_OPA_TRANSP, LV_PART_MAIN);
+  lv_obj_set_style_border_width(ui.option_list_view, 0, LV_PART_MAIN);
+  lv_obj_set_style_shadow_width(ui.option_list_view, 0, LV_PART_MAIN);
+  lv_obj_set_style_pad_top(ui.option_list_view, 58, LV_PART_MAIN);
+  lv_obj_set_style_pad_left(ui.option_list_view, 10, LV_PART_MAIN);
+  lv_obj_set_style_pad_right(ui.option_list_view, 10, LV_PART_MAIN);
+  lv_obj_set_style_pad_bottom(ui.option_list_view, 10, LV_PART_MAIN);
+  lv_obj_set_style_pad_row(ui.option_list_view, 14, LV_PART_MAIN);
+  lv_obj_set_layout(ui.option_list_view, LV_LAYOUT_FLEX);
+  lv_obj_set_style_flex_flow(ui.option_list_view, LV_FLEX_FLOW_COLUMN, LV_PART_MAIN);
+  lv_obj_clear_flag(ui.option_list_view, LV_OBJ_FLAG_SCROLLABLE);
+
+  lv_obj_t *title_lbl = lv_label_create(ui.option_list_view);
+  lv_label_set_text(title_lbl, title);
+  lv_obj_set_style_text_color(title_lbl, lv_color_hex(CLIMATE_TEXT_COLOR), LV_PART_MAIN);
+  lv_obj_set_style_text_align(title_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+  if (ctx->label_font) lv_obj_set_style_text_font(title_lbl, ctx->label_font, LV_PART_MAIN);
+  lv_obj_set_width(title_lbl, lv_pct(100));
+
+  for (const auto &option : *options) {
+    bool selected = climate_option_selected(ctx, kind, option);
+    lv_obj_t *btn = lv_btn_create(ui.option_list_view);
+    lv_obj_set_width(btn, lv_pct(100));
+    lv_obj_set_height(btn, 82);
+    lv_obj_set_style_radius(btn, 20, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(btn, lv_color_hex(selected ? ctx->accent_color : ctx->tertiary_color), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(btn, selected ? LV_OPA_COVER : LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(btn, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_left(btn, 34, LV_PART_MAIN);
+    lv_obj_set_style_pad_right(btn, 26, LV_PART_MAIN);
+    lv_obj_set_style_pad_column(btn, 34, LV_PART_MAIN);
+    lv_obj_set_layout(btn, LV_LAYOUT_FLEX);
+    lv_obj_set_style_flex_flow(btn, LV_FLEX_FLOW_ROW, LV_PART_MAIN);
+    lv_obj_set_style_flex_main_place(btn, LV_FLEX_ALIGN_START, LV_PART_MAIN);
+    lv_obj_set_style_flex_cross_place(btn, LV_FLEX_ALIGN_CENTER, LV_PART_MAIN);
+
+    lv_obj_t *icon_lbl = lv_label_create(btn);
+    lv_label_set_text(icon_lbl, climate_option_icon(kind, option));
+    lv_obj_set_style_text_color(icon_lbl, lv_color_hex(selected ? 0xFFFFFF : 0xA8A8A8), LV_PART_MAIN);
+    if (ctx->icon_font) lv_obj_set_style_text_font(icon_lbl, ctx->icon_font, LV_PART_MAIN);
+
+    lv_obj_t *label = lv_label_create(btn);
+    lv_label_set_text(label, climate_option_label(option).c_str());
+    lv_obj_set_style_text_color(label, lv_color_hex(selected ? 0xFFFFFF : 0xE8E8E8), LV_PART_MAIN);
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
+    if (ctx->label_font) lv_obj_set_style_text_font(label, ctx->label_font, LV_PART_MAIN);
+
+    ClimateOptionClick *click = new ClimateOptionClick();
+    click->ctx = ctx;
+    click->kind = kind;
+    click->value = option;
+    lv_obj_add_event_cb(btn, [](lv_event_t *e) {
+      ClimateOptionClick *click = (ClimateOptionClick *)lv_event_get_user_data(e);
+      if (click) climate_send_option(click->ctx, click->kind, click->value);
+      climate_hide_action_menu();
+    }, LV_EVENT_CLICKED, click);
+  }
+  lv_obj_move_foreground(ui.option_list_view);
+  climate_control_layout_modal(ctx);
+}
+
+inline void climate_show_action_menu(ClimateControlCtx *ctx);
 
 inline void climate_open_option_menu(ClimateControlCtx *ctx, const std::string &kind) {
   if (!ctx) return;
   climate_hide_option_menu();
   ClimateControlModalUi &ui = climate_control_modal_ui();
+  if (ui.action_menu_open && (kind == "hvac" || kind == "preset")) {
+    climate_open_inline_option_list(ctx, kind);
+    return;
+  }
   const std::vector<std::string> *options = nullptr;
   if (kind == "hvac") options = &ctx->hvac_modes;
   else if (kind == "fan") options = &ctx->fan_modes;
@@ -3946,6 +4075,10 @@ inline void climate_control_set_modal_value(ClimateControlCtx *ctx) {
   climate_set_obj_visible(ui.chips, temp_enabled);
   climate_update_menu_tile(ui.menu_mode_btn, "Mode", ctx->hvac_mode, !ctx->hvac_modes.empty());
   climate_update_menu_tile(ui.menu_preset_btn, "Preset", ctx->preset_mode, !ctx->preset_modes.empty());
+  if (ui.option_list_view) {
+    climate_set_obj_visible(ui.menu_mode_btn, false);
+    climate_set_obj_visible(ui.menu_preset_btn, false);
+  }
   if (ui.action_menu_open) climate_set_dial_controls_visible(false);
 }
 
@@ -4050,6 +4183,19 @@ inline void climate_control_layout_modal(ClimateControlCtx *ctx) {
     apply_width_compensation(ui.menu_preset_btn, ctx->width_compensation_percent);
     lv_obj_align(ui.menu_mode_btn, LV_ALIGN_CENTER, 0, -(tile_h + menu_gap) / 2);
     lv_obj_align(ui.menu_preset_btn, LV_ALIGN_CENTER, 0, (tile_h + menu_gap) / 2);
+    if (ui.option_list_view) {
+      lv_obj_set_size(ui.option_list_view, panel_w, panel_h);
+      lv_obj_set_style_pad_top(ui.option_list_view, inset + back_size + 8, LV_PART_MAIN);
+      lv_obj_set_style_pad_left(ui.option_list_view, inset, LV_PART_MAIN);
+      lv_obj_set_style_pad_right(ui.option_list_view, inset, LV_PART_MAIN);
+      lv_obj_set_style_pad_bottom(ui.option_list_view, inset, LV_PART_MAIN);
+      uint32_t child_count = lv_obj_get_child_count(ui.option_list_view);
+      for (uint32_t i = 1; i < child_count; i++) {
+        lv_obj_t *row = lv_obj_get_child(ui.option_list_view, i);
+        lv_obj_set_height(row, short_side < 520 ? 74 : 88);
+        lv_obj_set_style_radius(row, short_side < 520 ? 18 : 22, LV_PART_MAIN);
+      }
+    }
   }
   lv_obj_move_foreground(ui.back_btn);
   lv_obj_move_foreground(ui.mode_btn);
@@ -4062,6 +4208,7 @@ inline void climate_show_action_menu(ClimateControlCtx *ctx) {
   climate_hide_option_menu();
   ClimateControlModalUi &ui = climate_control_modal_ui();
   ui.action_menu_open = true;
+  climate_hide_inline_option_list();
   climate_set_dial_controls_visible(false);
   climate_set_obj_visible(ui.menu_view, true);
   climate_set_obj_visible(ui.menu_close_btn, true);
@@ -4074,6 +4221,7 @@ inline void climate_hide_action_menu() {
   climate_hide_option_menu();
   ClimateControlModalUi &ui = climate_control_modal_ui();
   ui.action_menu_open = false;
+  climate_hide_inline_option_list();
   climate_set_obj_visible(ui.menu_view, false);
   climate_set_obj_visible(ui.menu_close_btn, false);
   climate_set_dial_controls_visible(true);

@@ -75,6 +75,8 @@ script:
             id(button_off_color).state,
             id(sensor_card_color).state,
             id(main_page)->obj);
+        - lambda: |-
+            if (camera_card_count() > 0) register_camera_online_image_viewer(id(camera_snapshot_viewer));
 esphome:
   on_boot:
     - priority: -100
@@ -137,6 +139,8 @@ esphome:
               id(button_off_color).state,
               id(sensor_card_color).state,
               id(main_page)->obj);
+        - lambda: |-
+            if (camera_card_count() > 0) register_camera_online_image_viewer(id(camera_snapshot_viewer));
         - delay: 100ms
 
         # Phase 2: HA subscriptions + subpage creation
@@ -229,6 +233,8 @@ esphome:
               id(button_off_color).state,
               id(sensor_card_color).state,
               id(main_page)->obj);
+        - lambda: |-
+            if (camera_card_count() > 0) register_camera_online_image_viewer(id(camera_snapshot_viewer));
         - script.execute: time_update
         - delay: 100ms
 

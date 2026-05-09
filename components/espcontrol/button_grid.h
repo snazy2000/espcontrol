@@ -3921,10 +3921,9 @@ inline void climate_open_inline_option_list(ClimateControlCtx *ctx, const std::s
       bool selected = climate_option_selected(ctx, section_kind, option);
       lv_obj_t *btn = lv_btn_create(ui.option_list_view);
       lv_obj_set_width(btn, lv_pct(100));
-      lv_obj_set_height(btn, 82);
-      lv_obj_set_style_radius(btn, 20, LV_PART_MAIN);
-      lv_obj_set_style_bg_color(btn, lv_color_hex(selected ? ctx->accent_color : ctx->tertiary_color), LV_PART_MAIN);
-      lv_obj_set_style_bg_opa(btn, selected ? LV_OPA_COVER : LV_OPA_TRANSP, LV_PART_MAIN);
+      lv_obj_set_height(btn, 70);
+      lv_obj_set_style_radius(btn, 0, LV_PART_MAIN);
+      lv_obj_set_style_bg_opa(btn, LV_OPA_TRANSP, LV_PART_MAIN);
       lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN);
       lv_obj_set_style_shadow_width(btn, 0, LV_PART_MAIN);
       lv_obj_set_style_pad_left(btn, 34, LV_PART_MAIN);
@@ -3937,12 +3936,12 @@ inline void climate_open_inline_option_list(ClimateControlCtx *ctx, const std::s
 
       lv_obj_t *icon_lbl = lv_label_create(btn);
       lv_label_set_text(icon_lbl, climate_option_icon(section_kind, option));
-      lv_obj_set_style_text_color(icon_lbl, lv_color_hex(selected ? 0xFFFFFF : 0xA8A8A8), LV_PART_MAIN);
+      lv_obj_set_style_text_color(icon_lbl, lv_color_hex(selected ? ctx->accent_color : 0xA8A8A8), LV_PART_MAIN);
       if (ctx->icon_font) lv_obj_set_style_text_font(icon_lbl, ctx->icon_font, LV_PART_MAIN);
 
       lv_obj_t *label = lv_label_create(btn);
       lv_label_set_text(label, climate_option_label(option).c_str());
-      lv_obj_set_style_text_color(label, lv_color_hex(selected ? 0xFFFFFF : 0xE8E8E8), LV_PART_MAIN);
+      lv_obj_set_style_text_color(label, lv_color_hex(selected ? ctx->accent_color : 0xE8E8E8), LV_PART_MAIN);
       lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
       if (ctx->label_font) lv_obj_set_style_text_font(label, ctx->label_font, LV_PART_MAIN);
 
@@ -4217,8 +4216,8 @@ inline void climate_control_layout_modal(ClimateControlCtx *ctx) {
       for (uint32_t i = 0; i < child_count; i++) {
         lv_obj_t *row = lv_obj_get_child(ui.option_list_view, i);
         if (!lv_obj_has_flag(row, LV_OBJ_FLAG_CLICKABLE)) continue;
-        lv_obj_set_height(row, short_side < 520 ? 74 : 88);
-        lv_obj_set_style_radius(row, short_side < 520 ? 18 : 22, LV_PART_MAIN);
+        lv_obj_set_height(row, short_side < 520 ? 60 : 74);
+        lv_obj_set_style_radius(row, 0, LV_PART_MAIN);
       }
     }
   }

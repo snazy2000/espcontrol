@@ -3901,16 +3901,34 @@ inline void climate_open_inline_option_list(ClimateControlCtx *ctx, const std::s
   lv_obj_set_style_pad_right(ui.option_list_view, 10, LV_PART_MAIN);
   lv_obj_set_style_pad_bottom(ui.option_list_view, 10, LV_PART_MAIN);
   lv_obj_set_style_pad_row(ui.option_list_view, 14, LV_PART_MAIN);
+  lv_obj_set_style_pad_column(ui.option_list_view, 10, LV_PART_MAIN);
   lv_obj_set_layout(ui.option_list_view, LV_LAYOUT_FLEX);
-  lv_obj_set_style_flex_flow(ui.option_list_view, LV_FLEX_FLOW_COLUMN, LV_PART_MAIN);
+  lv_obj_set_style_flex_flow(ui.option_list_view,
+    combined ? LV_FLEX_FLOW_ROW : LV_FLEX_FLOW_COLUMN, LV_PART_MAIN);
   lv_obj_set_scroll_dir(ui.option_list_view, LV_DIR_VER);
 
-  auto add_section = [&](const char *section_title,
+  auto create_section_parent = [&](bool half_width) {
+    lv_obj_t *section = lv_obj_create(ui.option_list_view);
+    lv_obj_set_width(section, half_width ? lv_pct(50) : lv_pct(100));
+    lv_obj_set_height(section, lv_pct(100));
+    lv_obj_set_style_bg_opa(section, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_width(section, 0, LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(section, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(section, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_row(section, 14, LV_PART_MAIN);
+    lv_obj_set_layout(section, LV_LAYOUT_FLEX);
+    lv_obj_set_style_flex_flow(section, LV_FLEX_FLOW_COLUMN, LV_PART_MAIN);
+    lv_obj_set_scroll_dir(section, LV_DIR_VER);
+    return section;
+  };
+
+  auto add_section = [&](lv_obj_t *parent,
+                         const char *section_title,
                          const std::string &section_kind,
                          const std::vector<std::string> &section_options) {
     if (section_options.empty()) return;
 
-    lv_obj_t *title_lbl = lv_label_create(ui.option_list_view);
+    lv_obj_t *title_lbl = lv_label_create(parent);
     lv_label_set_text(title_lbl, section_title);
     lv_obj_set_style_text_color(title_lbl, lv_color_hex(CLIMATE_TEXT_COLOR), LV_PART_MAIN);
     lv_obj_set_style_text_align(title_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
@@ -3919,7 +3937,7 @@ inline void climate_open_inline_option_list(ClimateControlCtx *ctx, const std::s
 
     for (const auto &option : section_options) {
       bool selected = climate_option_selected(ctx, section_kind, option);
-      lv_obj_t *btn = lv_btn_create(ui.option_list_view);
+      lv_obj_t *btn = lv_btn_create(parent);
       lv_obj_set_width(btn, lv_pct(100));
       lv_obj_set_height(btn, 70);
       lv_obj_set_style_radius(btn, 0, LV_PART_MAIN);
@@ -3958,10 +3976,13 @@ inline void climate_open_inline_option_list(ClimateControlCtx *ctx, const std::s
   };
 
   if (combined) {
-    add_section("Mode", "hvac", ctx->hvac_modes);
-    add_section("Preset", "preset", ctx->preset_modes);
+    bool has_mode = !ctx->hvac_modes.empty();
+    bool has_preset = !ctx->preset_modes.empty();
+    bool split = has_mode && has_preset;
+    if (has_mode) add_section(create_section_parent(split), "Mode", "hvac", ctx->hvac_modes);
+    if (has_preset) add_section(create_section_parent(split), "Preset", "preset", ctx->preset_modes);
   } else {
-    add_section(title, kind, *options);
+    add_section(ui.option_list_view, title, kind, *options);
   }
   lv_obj_move_foreground(ui.option_list_view);
   climate_control_layout_modal(ctx);
@@ -4215,9 +4236,18 @@ inline void climate_control_layout_modal(ClimateControlCtx *ctx) {
       uint32_t child_count = lv_obj_get_child_count(ui.option_list_view);
       for (uint32_t i = 0; i < child_count; i++) {
         lv_obj_t *row = lv_obj_get_child(ui.option_list_view, i);
-        if (!lv_obj_has_flag(row, LV_OBJ_FLAG_CLICKABLE)) continue;
-        lv_obj_set_height(row, short_side < 520 ? 60 : 74);
-        lv_obj_set_style_radius(row, 0, LV_PART_MAIN);
+        if (lv_obj_has_flag(row, LV_OBJ_FLAG_CLICKABLE)) {
+          lv_obj_set_height(row, short_side < 520 ? 60 : 74);
+          lv_obj_set_style_radius(row, 0, LV_PART_MAIN);
+          continue;
+        }
+        uint32_t row_child_count = lv_obj_get_child_count(row);
+        for (uint32_t j = 0; j < row_child_count; j++) {
+          lv_obj_t *nested = lv_obj_get_child(row, j);
+          if (!lv_obj_has_flag(nested, LV_OBJ_FLAG_CLICKABLE)) continue;
+          lv_obj_set_height(nested, short_side < 520 ? 60 : 74);
+          lv_obj_set_style_radius(nested, 0, LV_PART_MAIN);
+        }
       }
     }
   }

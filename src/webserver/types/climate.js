@@ -35,14 +35,14 @@ registerButtonType("climate", {
 
     var pf = document.createElement("div");
     pf.className = "sp-field";
-    pf.appendChild(helpers.fieldLabel("Precision", helpers.idPrefix + "climate-precision"));
+    pf.appendChild(helpers.fieldLabel("Unit Precision", helpers.idPrefix + "climate-precision"));
     var precision = document.createElement("select");
     precision.className = "sp-select";
     precision.id = helpers.idPrefix + "climate-precision";
     [
-      ["", "Whole numbers"],
-      ["1", "1 decimal place"],
-      ["2", "2 decimal places"],
+      ["", "10"],
+      ["1", "10.2"],
+      ["2", "10.21"],
     ].forEach(function (entry) {
       var opt = document.createElement("option");
       opt.value = entry[0];

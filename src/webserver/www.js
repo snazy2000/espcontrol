@@ -3673,7 +3673,7 @@
         backBtn.className = "sp-btn sp-back-btn" + (bkSz === 4 ? " sp-btn-big" : bkSz === 2 ? " sp-btn-double" : bkSz === 3 ? " sp-btn-wide" : "") +
           (c.selected.indexOf(-2) !== -1 ? " sp-selected" : "");
         backBtn.innerHTML =
-          '<span class="sp-btn-icon mdi mdi-chevron-left"></span>' +
+          '<span class="sp-btn-icon sp-back-hit mdi mdi-chevron-left"></span>' +
           '<span class="sp-btn-label">' + escHtml(backLabel) + '</span>';
         backBtn.style.backgroundColor = "#" + (state.offColor.length === 6 ? state.offColor : "313131");
         backBtn.style.cursor = "pointer";
@@ -4751,6 +4751,17 @@
     var container = els.previewMain;
     var pendingCellIdx = -1;
 
+    function isBackExitTarget(e, target) {
+      var icon = target.querySelector(".sp-back-hit");
+      if (!icon) return false;
+      var rect = icon.getBoundingClientRect();
+      var pad = 12;
+      return e.clientX >= rect.left - pad &&
+        e.clientX <= rect.right + pad &&
+        e.clientY >= rect.top - pad &&
+        e.clientY <= rect.bottom + pad;
+    }
+
     container.addEventListener("mousedown", function (e) {
       if (!e.target.closest("[data-pos]")) return;
       if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault();
@@ -4774,7 +4785,11 @@
         handleBtnClick(e, slot, pos);
       } else if (slot === -2) {
         if (didDrag) { didDrag = false; return; }
-        exitSubpage();
+        if (isBackExitTarget(e, target)) {
+          exitSubpage();
+        } else {
+          handleBtnClick(e, slot, pos);
+        }
       } else if (slot === 0) {
         if (state.clipboard) {
           e.preventDefault();

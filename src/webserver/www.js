@@ -6407,6 +6407,9 @@
       "text_sensor-firmware__version": function (val) {
         setFirmwareVersion(val);
       },
+      "text_sensor-firmware_version": function (val) {
+        setFirmwareVersion(val);
+      },
       "update-firmware__update": function (val, d) {
         setFirmwareUpdateInfo(d);
       },

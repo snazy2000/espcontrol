@@ -3872,6 +3872,7 @@ inline void climate_open_inline_option_list(ClimateControlCtx *ctx, const std::s
   ClimateControlModalUi &ui = climate_control_modal_ui();
   const std::vector<std::string> *options = nullptr;
   const char *title = nullptr;
+  bool combined = kind == "all";
   if (kind == "hvac") {
     options = &ctx->hvac_modes;
     title = "Mode";
@@ -3879,7 +3880,12 @@ inline void climate_open_inline_option_list(ClimateControlCtx *ctx, const std::s
     options = &ctx->preset_modes;
     title = "Preset";
   }
-  if (!options || options->empty() || !ui.menu_view) return;
+  if (!ui.menu_view) return;
+  if (combined) {
+    if (ctx->hvac_modes.empty() && ctx->preset_modes.empty()) return;
+  } else if (!options || options->empty()) {
+    return;
+  }
 
   climate_hide_inline_option_list();
   climate_set_obj_visible(ui.menu_mode_btn, false);
@@ -3897,53 +3903,66 @@ inline void climate_open_inline_option_list(ClimateControlCtx *ctx, const std::s
   lv_obj_set_style_pad_row(ui.option_list_view, 14, LV_PART_MAIN);
   lv_obj_set_layout(ui.option_list_view, LV_LAYOUT_FLEX);
   lv_obj_set_style_flex_flow(ui.option_list_view, LV_FLEX_FLOW_COLUMN, LV_PART_MAIN);
-  lv_obj_clear_flag(ui.option_list_view, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_set_scroll_dir(ui.option_list_view, LV_DIR_VER);
 
-  lv_obj_t *title_lbl = lv_label_create(ui.option_list_view);
-  lv_label_set_text(title_lbl, title);
-  lv_obj_set_style_text_color(title_lbl, lv_color_hex(CLIMATE_TEXT_COLOR), LV_PART_MAIN);
-  lv_obj_set_style_text_align(title_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-  if (ctx->label_font) lv_obj_set_style_text_font(title_lbl, ctx->label_font, LV_PART_MAIN);
-  lv_obj_set_width(title_lbl, lv_pct(100));
+  auto add_section = [&](const char *section_title,
+                         const std::string &section_kind,
+                         const std::vector<std::string> &section_options) {
+    if (section_options.empty()) return;
 
-  for (const auto &option : *options) {
-    bool selected = climate_option_selected(ctx, kind, option);
-    lv_obj_t *btn = lv_btn_create(ui.option_list_view);
-    lv_obj_set_width(btn, lv_pct(100));
-    lv_obj_set_height(btn, 82);
-    lv_obj_set_style_radius(btn, 20, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(btn, lv_color_hex(selected ? ctx->accent_color : ctx->tertiary_color), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(btn, selected ? LV_OPA_COVER : LV_OPA_TRANSP, LV_PART_MAIN);
-    lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN);
-    lv_obj_set_style_shadow_width(btn, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_left(btn, 34, LV_PART_MAIN);
-    lv_obj_set_style_pad_right(btn, 26, LV_PART_MAIN);
-    lv_obj_set_style_pad_column(btn, 34, LV_PART_MAIN);
-    lv_obj_set_layout(btn, LV_LAYOUT_FLEX);
-    lv_obj_set_style_flex_flow(btn, LV_FLEX_FLOW_ROW, LV_PART_MAIN);
-    lv_obj_set_style_flex_main_place(btn, LV_FLEX_ALIGN_START, LV_PART_MAIN);
-    lv_obj_set_style_flex_cross_place(btn, LV_FLEX_ALIGN_CENTER, LV_PART_MAIN);
+    lv_obj_t *title_lbl = lv_label_create(ui.option_list_view);
+    lv_label_set_text(title_lbl, section_title);
+    lv_obj_set_style_text_color(title_lbl, lv_color_hex(CLIMATE_TEXT_COLOR), LV_PART_MAIN);
+    lv_obj_set_style_text_align(title_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    if (ctx->label_font) lv_obj_set_style_text_font(title_lbl, ctx->label_font, LV_PART_MAIN);
+    lv_obj_set_width(title_lbl, lv_pct(100));
 
-    lv_obj_t *icon_lbl = lv_label_create(btn);
-    lv_label_set_text(icon_lbl, climate_option_icon(kind, option));
-    lv_obj_set_style_text_color(icon_lbl, lv_color_hex(selected ? 0xFFFFFF : 0xA8A8A8), LV_PART_MAIN);
-    if (ctx->icon_font) lv_obj_set_style_text_font(icon_lbl, ctx->icon_font, LV_PART_MAIN);
+    for (const auto &option : section_options) {
+      bool selected = climate_option_selected(ctx, section_kind, option);
+      lv_obj_t *btn = lv_btn_create(ui.option_list_view);
+      lv_obj_set_width(btn, lv_pct(100));
+      lv_obj_set_height(btn, 82);
+      lv_obj_set_style_radius(btn, 20, LV_PART_MAIN);
+      lv_obj_set_style_bg_color(btn, lv_color_hex(selected ? ctx->accent_color : ctx->tertiary_color), LV_PART_MAIN);
+      lv_obj_set_style_bg_opa(btn, selected ? LV_OPA_COVER : LV_OPA_TRANSP, LV_PART_MAIN);
+      lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN);
+      lv_obj_set_style_shadow_width(btn, 0, LV_PART_MAIN);
+      lv_obj_set_style_pad_left(btn, 34, LV_PART_MAIN);
+      lv_obj_set_style_pad_right(btn, 26, LV_PART_MAIN);
+      lv_obj_set_style_pad_column(btn, 34, LV_PART_MAIN);
+      lv_obj_set_layout(btn, LV_LAYOUT_FLEX);
+      lv_obj_set_style_flex_flow(btn, LV_FLEX_FLOW_ROW, LV_PART_MAIN);
+      lv_obj_set_style_flex_main_place(btn, LV_FLEX_ALIGN_START, LV_PART_MAIN);
+      lv_obj_set_style_flex_cross_place(btn, LV_FLEX_ALIGN_CENTER, LV_PART_MAIN);
 
-    lv_obj_t *label = lv_label_create(btn);
-    lv_label_set_text(label, climate_option_label(option).c_str());
-    lv_obj_set_style_text_color(label, lv_color_hex(selected ? 0xFFFFFF : 0xE8E8E8), LV_PART_MAIN);
-    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
-    if (ctx->label_font) lv_obj_set_style_text_font(label, ctx->label_font, LV_PART_MAIN);
+      lv_obj_t *icon_lbl = lv_label_create(btn);
+      lv_label_set_text(icon_lbl, climate_option_icon(section_kind, option));
+      lv_obj_set_style_text_color(icon_lbl, lv_color_hex(selected ? 0xFFFFFF : 0xA8A8A8), LV_PART_MAIN);
+      if (ctx->icon_font) lv_obj_set_style_text_font(icon_lbl, ctx->icon_font, LV_PART_MAIN);
 
-    ClimateOptionClick *click = new ClimateOptionClick();
-    click->ctx = ctx;
-    click->kind = kind;
-    click->value = option;
-    lv_obj_add_event_cb(btn, [](lv_event_t *e) {
-      ClimateOptionClick *click = (ClimateOptionClick *)lv_event_get_user_data(e);
-      if (click) climate_send_option(click->ctx, click->kind, click->value);
-      climate_hide_action_menu();
-    }, LV_EVENT_CLICKED, click);
+      lv_obj_t *label = lv_label_create(btn);
+      lv_label_set_text(label, climate_option_label(option).c_str());
+      lv_obj_set_style_text_color(label, lv_color_hex(selected ? 0xFFFFFF : 0xE8E8E8), LV_PART_MAIN);
+      lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
+      if (ctx->label_font) lv_obj_set_style_text_font(label, ctx->label_font, LV_PART_MAIN);
+
+      ClimateOptionClick *click = new ClimateOptionClick();
+      click->ctx = ctx;
+      click->kind = section_kind;
+      click->value = option;
+      lv_obj_add_event_cb(btn, [](lv_event_t *e) {
+        ClimateOptionClick *click = (ClimateOptionClick *)lv_event_get_user_data(e);
+        if (click) climate_send_option(click->ctx, click->kind, click->value);
+        climate_hide_action_menu();
+      }, LV_EVENT_CLICKED, click);
+    }
+  };
+
+  if (combined) {
+    add_section("Mode", "hvac", ctx->hvac_modes);
+    add_section("Preset", "preset", ctx->preset_modes);
+  } else {
+    add_section(title, kind, *options);
   }
   lv_obj_move_foreground(ui.option_list_view);
   climate_control_layout_modal(ctx);
@@ -4195,8 +4214,9 @@ inline void climate_control_layout_modal(ClimateControlCtx *ctx) {
       lv_obj_set_style_pad_right(ui.option_list_view, inset, LV_PART_MAIN);
       lv_obj_set_style_pad_bottom(ui.option_list_view, inset, LV_PART_MAIN);
       uint32_t child_count = lv_obj_get_child_count(ui.option_list_view);
-      for (uint32_t i = 1; i < child_count; i++) {
+      for (uint32_t i = 0; i < child_count; i++) {
         lv_obj_t *row = lv_obj_get_child(ui.option_list_view, i);
+        if (!lv_obj_has_flag(row, LV_OBJ_FLAG_CLICKABLE)) continue;
         lv_obj_set_height(row, short_side < 520 ? 74 : 88);
         lv_obj_set_style_radius(row, short_side < 520 ? 18 : 22, LV_PART_MAIN);
       }
@@ -4219,6 +4239,7 @@ inline void climate_show_action_menu(ClimateControlCtx *ctx) {
   climate_set_obj_visible(ui.menu_close_btn, true);
   climate_update_menu_tile(ui.menu_mode_btn, "Mode", ctx->hvac_mode, !ctx->hvac_modes.empty());
   climate_update_menu_tile(ui.menu_preset_btn, "Preset", ctx->preset_mode, !ctx->preset_modes.empty());
+  climate_open_inline_option_list(ctx, "all");
   climate_control_layout_modal(ctx);
 }
 

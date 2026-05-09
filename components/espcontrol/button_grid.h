@@ -1235,6 +1235,32 @@ inline void fetch_camera_snapshot(int camera_idx, const std::string &entity_id,
   // This is called from the interval timer in device YAML
 }
 
+// Update camera image display with decoded snapshot
+inline void update_camera_image_display(int camera_idx, lv_obj_t *img_obj) {
+  if (camera_idx < 0 || !img_obj) return;
+
+  CameraSnapshot &snap = camera_snapshots()[camera_idx];
+
+  if (!snap.valid || !snap.decoded_pixels) {
+    ESP_LOGW("camera_grid", "Snapshot %d not ready for display", camera_idx);
+    return;
+  }
+
+  static lv_img_dsc_t img_dsc;
+
+  img_dsc.header.w = snap.width;
+  img_dsc.header.h = snap.height;
+  img_dsc.header.cf = LV_COLOR_FORMAT_RGB888;
+
+  img_dsc.data = snap.decoded_pixels;
+  img_dsc.data_size = snap.width * snap.height * 3;
+
+  lv_image_set_src(img_obj, &img_dsc);
+
+  ESP_LOGI("camera_grid", "Updated camera display: %dx%d",
+           snap.width, snap.height);
+}
+
 // Process HTTP response with JPEG snapshot data
 inline void process_camera_http_response(int camera_idx, const uint8_t *data, 
                                          size_t len, int http_status) {
@@ -1277,48 +1303,18 @@ inline void process_camera_http_response(int camera_idx, const uint8_t *data,
 // Create LVGL image object for camera snapshot display
 inline lv_obj_t *create_camera_image_widget(lv_obj_t *parent, int camera_idx) {
   if (!parent || camera_idx < 0) return nullptr;
-  
-  lv_obj_t *img = lv_img_create(parent);
+
+  lv_obj_t *img = lv_image_create(parent);
+
   if (!img) {
     ESP_LOGE("camera_grid", "Failed to create LVGL image object");
     return nullptr;
   }
-  
-  // Configure image for fit or fill
-  CameraCardRef *refs = camera_card_refs();
-  if (refs[camera_idx].scaling == "fill") {
-    lv_obj_set_style_img_recolor_opa(img, LV_OPA_100, 0);
-  }
-  
-  // Set size to fill button
+
   lv_obj_set_size(img, lv_pct(100), lv_pct(100));
   lv_obj_align(img, LV_ALIGN_CENTER, 0, 0);
-  
-  return img;
-}
 
-// Update camera image display with decoded snapshot
-inline void update_camera_image_display(int camera_idx, lv_obj_t *img_obj) {
-  if (camera_idx < 0 || !img_obj) return;
-  
-  CameraSnapshot &snap = camera_snapshots()[camera_idx];
-  if (!snap.valid || !snap.decoded_pixels) {
-    ESP_LOGW("camera_grid", "Snapshot %d not ready for display", camera_idx);
-    return;
-  }
-  
-  // Create LVGL image descriptor
-  static lv_img_dsc_t img_dsc;
-  img_dsc.header.always_zero = 0;
-  img_dsc.header.w = snap.width;
-  img_dsc.header.h = snap.height;
-  img_dsc.header.cf = LV_IMG_CF_TRUE_COLOR;  // 24-bit RGB
-  img_dsc.data = snap.decoded_pixels;
-  img_dsc.data_size = snap.width * snap.height * 3;
-  
-  // Set image on LVGL object
-  lv_img_set_src(img_obj, &img_dsc);
-  ESP_LOGI("camera_grid", "Updated camera display: %dx%d", snap.width, snap.height);
+  return img;
 }
 
 // Schedule periodic refresh for camera snapshots

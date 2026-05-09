@@ -3875,14 +3875,14 @@ inline void climate_open_inline_option_list(ClimateControlCtx *ctx, const std::s
   bool combined = kind == "all";
   if (kind == "hvac") {
     options = &ctx->hvac_modes;
-    title = "Mode";
+    title = "";
   } else if (kind == "preset") {
     options = &ctx->preset_modes;
     title = "Preset";
   }
   if (!ui.menu_view) return;
   if (combined) {
-    if (ctx->hvac_modes.empty() && ctx->preset_modes.empty()) return;
+    if (ctx->hvac_modes.empty()) return;
   } else if (!options || options->empty()) {
     return;
   }
@@ -3903,24 +3903,8 @@ inline void climate_open_inline_option_list(ClimateControlCtx *ctx, const std::s
   lv_obj_set_style_pad_row(ui.option_list_view, 8, LV_PART_MAIN);
   lv_obj_set_style_pad_column(ui.option_list_view, 10, LV_PART_MAIN);
   lv_obj_set_layout(ui.option_list_view, LV_LAYOUT_FLEX);
-  lv_obj_set_style_flex_flow(ui.option_list_view,
-    combined ? LV_FLEX_FLOW_ROW : LV_FLEX_FLOW_COLUMN, LV_PART_MAIN);
+  lv_obj_set_style_flex_flow(ui.option_list_view, LV_FLEX_FLOW_COLUMN, LV_PART_MAIN);
   lv_obj_clear_flag(ui.option_list_view, LV_OBJ_FLAG_SCROLLABLE);
-
-  auto create_section_parent = [&](bool half_width) {
-    lv_obj_t *section = lv_obj_create(ui.option_list_view);
-    lv_obj_set_width(section, half_width ? lv_pct(50) : lv_pct(100));
-    lv_obj_set_height(section, lv_pct(100));
-    lv_obj_set_style_bg_opa(section, LV_OPA_TRANSP, LV_PART_MAIN);
-    lv_obj_set_style_border_width(section, 0, LV_PART_MAIN);
-    lv_obj_set_style_shadow_width(section, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(section, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_row(section, 8, LV_PART_MAIN);
-    lv_obj_set_layout(section, LV_LAYOUT_FLEX);
-    lv_obj_set_style_flex_flow(section, LV_FLEX_FLOW_COLUMN, LV_PART_MAIN);
-    lv_obj_clear_flag(section, LV_OBJ_FLAG_SCROLLABLE);
-    return section;
-  };
 
   auto add_section = [&](lv_obj_t *parent,
                          const char *section_title,
@@ -3928,12 +3912,14 @@ inline void climate_open_inline_option_list(ClimateControlCtx *ctx, const std::s
                          const std::vector<std::string> &section_options) {
     if (section_options.empty()) return;
 
-    lv_obj_t *title_lbl = lv_label_create(parent);
-    lv_label_set_text(title_lbl, section_title);
-    lv_obj_set_style_text_color(title_lbl, lv_color_hex(0xA0A0A0), LV_PART_MAIN);
-    lv_obj_set_style_text_align(title_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-    if (ctx->label_font) lv_obj_set_style_text_font(title_lbl, ctx->label_font, LV_PART_MAIN);
-    lv_obj_set_width(title_lbl, lv_pct(100));
+    if (section_title && section_title[0]) {
+      lv_obj_t *title_lbl = lv_label_create(parent);
+      lv_label_set_text(title_lbl, section_title);
+      lv_obj_set_style_text_color(title_lbl, lv_color_hex(0xA0A0A0), LV_PART_MAIN);
+      lv_obj_set_style_text_align(title_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+      if (ctx->label_font) lv_obj_set_style_text_font(title_lbl, ctx->label_font, LV_PART_MAIN);
+      lv_obj_set_width(title_lbl, lv_pct(100));
+    }
 
     for (const auto &option : section_options) {
       bool selected = climate_option_selected(ctx, section_kind, option);
@@ -3971,11 +3957,7 @@ inline void climate_open_inline_option_list(ClimateControlCtx *ctx, const std::s
   };
 
   if (combined) {
-    bool has_mode = !ctx->hvac_modes.empty();
-    bool has_preset = !ctx->preset_modes.empty();
-    bool split = has_mode && has_preset;
-    if (has_mode) add_section(create_section_parent(split), "Mode", "hvac", ctx->hvac_modes);
-    if (has_preset) add_section(create_section_parent(split), "Preset", "preset", ctx->preset_modes);
+    add_section(ui.option_list_view, "", "hvac", ctx->hvac_modes);
   } else {
     add_section(ui.option_list_view, title, kind, *options);
   }

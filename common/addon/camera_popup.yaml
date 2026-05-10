@@ -42,6 +42,7 @@ online_image:
   - id: camera_popup_image
     url: "http://placeholder"
     format: JPEG
+    type: RGB565
     update_interval: never
     resize: "${camera_popup_resize}"
     buffer_size: 65536

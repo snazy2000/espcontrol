@@ -15,3 +15,4 @@ esp32_hosted:
   d2_pin: GPIO16
   d3_pin: GPIO17
   active_high: true
+  sdio_frequency: 20MHz

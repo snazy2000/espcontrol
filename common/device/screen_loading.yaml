@@ -93,16 +93,21 @@ esphome:
             then:
               - lambda: |-
                   lv_label_set_text(id(loading_status_label), "Connecting to WiFi");
-              - delay: 15s
+              - delay: 60s
               - lambda: 'id(boot_grace_period) = false;'
               - if:
                   condition:
                     not:
                       wifi.connected:
                   then:
-                    - lvgl.page.show: wifi_setup_page
-                    - script.execute: setup_screen_dim
+                    - script.execute: wifi_show_reconnecting
+                    - delay: 30s
+                    - if:
+                        condition:
+                          not:
+                            wifi.connected:
+                        then:
+                          - script.execute: wifi_show_hotspot_setup
             else:
               - lambda: 'id(boot_grace_period) = false;'
-              - lvgl.page.show: wifi_setup_page
-              - script.execute: setup_screen_dim
+              - script.execute: wifi_show_hotspot_setup

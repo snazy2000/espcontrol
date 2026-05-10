@@ -27,7 +27,7 @@ The panel's built-in web page loads some visual resources from the internet. If 
 - Make sure you're connecting to a **2.4 GHz** network. The panel does not support 5 GHz WiFi.
 - Double-check your **WiFi password** — it's easy to mistype on a small screen.
 - Move the panel **closer to your router** during initial setup. You can move it to its final location afterwards.
-- If the panel previously connected but can't anymore (e.g. you changed your WiFi password), it will create a hotspot so you can enter the new details. Look for a network called **espcontrol-xxxxxx**.
+- If the panel previously connected but can't anymore (e.g. you changed your WiFi password), it will first try to reconnect. If that does not work, it will create a hotspot so you can enter the new details. Look for a network called **ESP_xxxxxx**; it can take up to **90 seconds** to appear.
 
 ## How Do I Reset the Device?
 
@@ -102,6 +102,7 @@ EspControl is built specifically for Home Assistant. It does not support other p
 ## The Display Is Stuck on the Loading Screen
 
 - Give it up to **60 seconds** on first boot. It needs time to connect to WiFi and download resources.
+- If the display shows a WiFi reconnecting message, wait a little longer. Short WiFi outages can recover by themselves before setup mode starts.
 - If it stays on the loading screen, **power-cycle** the panel (unplug and re-plug the USB-C cable).
 - If the WiFi hotspot appears after restarting, the panel couldn't connect to your network — go through the [WiFi setup](/getting-started/install#connect-to-wifi) again.
 

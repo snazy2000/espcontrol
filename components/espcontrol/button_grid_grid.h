@@ -68,7 +68,7 @@ struct CardPalette {
   uint32_t sensor_val = DEFAULT_TERTIARY_COLOR;
 };
 
-constexpr lv_coord_t LARGE_SENSOR_UNIT_Y_OFFSET_PX = -30;
+constexpr lv_coord_t LARGE_SENSOR_UNIT_Y_OFFSET_PX = -20;
 
 inline void apply_large_sensor_number_style(const BtnSlot &s, const lv_font_t *large_font) {
   if (s.sensor_lbl && large_font) {

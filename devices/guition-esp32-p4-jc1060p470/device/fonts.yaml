@@ -20,7 +20,7 @@ font:
     size: 55
     bpp: 4
     glyphs:
-      - "0123456789.-°/%kWhVA Of"
+      - "0123456789.-°/%kWhVA OfIdle"
       - ":"
 
   # Main page: large-card sensor values (2.5x the regular sensor value font)
@@ -29,7 +29,7 @@ font:
     size: 138
     bpp: 4
     glyphs:
-      - "0123456789.-°/%kWhVA Of"
+      - "0123456789.-°/%kWhVA OfIdle"
       - ":"
 
   # Button labels (22px)

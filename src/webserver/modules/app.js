@@ -123,6 +123,7 @@ function exportConfig() {
       ntp_server_3: state.ntpServer3,
       screensaver_mode: getActiveScreensaverMode(),
       presence_sensor_entity: state.presenceEntity,
+      media_player_sleep_prevention: state.mediaPlayerSleepPreventionOn,
       media_player_sleep_prevention_entity: state.mediaPlayerSleepPreventionEntity,
       clock_screensaver: state.clockScreensaverOn,
       clock_brightness: state.clockBrightnessDay,
@@ -379,6 +380,7 @@ function importConfig() {
         }
         postText("Screensaver Mode", importedScreensaverMode);
         postText("Presence Sensor Entity", s.presence_sensor_entity || "");
+        postSwitch("Screen Saver: Media Player Sleep Prevention", !!s.media_player_sleep_prevention);
         postText("Media Player Sleep Prevention Entity", s.media_player_sleep_prevention_entity || "");
         var importedClockBrightnessDay = normalizeClockBrightness(
           s.clock_brightness_day != null ? s.clock_brightness_day : s.clock_brightness,
@@ -412,6 +414,7 @@ function importConfig() {
         state.screensaverMode = importedScreensaverMode;
         state._screensaverModeReceived = true;
         state.presenceEntity = s.presence_sensor_entity || "";
+        state.mediaPlayerSleepPreventionOn = !!s.media_player_sleep_prevention;
         state.mediaPlayerSleepPreventionEntity = s.media_player_sleep_prevention_entity || "";
         state.clockScreensaverOn = s.clock_screensaver != null ? !!s.clock_screensaver : false;
         state.clockBrightnessDay = importedClockBrightnessDay;
@@ -430,6 +433,7 @@ function importConfig() {
         if (els.setTemperatureUnit) els.setTemperatureUnit.value = state.temperatureUnit;
         syncInput(els.setPresence, state.presenceEntity);
         syncInput(els.setMediaPlayerSleepPrevention, state.mediaPlayerSleepPreventionEntity);
+        syncMediaPlayerSleepPreventionUi();
         if (els.setTimezone) els.setTimezone.value = state.timezone;
         if (els.setClockFormat) els.setClockFormat.value = state.clockFormat;
         syncNtpServerUi();
@@ -717,6 +721,10 @@ function connectEvents() {
     "switch-screen_saver__clock": function (val, d) {
       state.clockScreensaverOn = d.value === true || val === "ON";
       syncClockScreensaverControls();
+    },
+    "switch-screen_saver__media_player_sleep_prevention": function (val, d) {
+      state.mediaPlayerSleepPreventionOn = d.value === true || val === "ON";
+      syncMediaPlayerSleepPreventionUi();
     },
     "number-screen_saver__clock_brightness": function (val) {
       if (state.clockBrightnessSplitReceived) return;

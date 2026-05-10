@@ -604,9 +604,21 @@ function buildSettingsPage(parent) {
   els.setClockBrightnessNightVal = timerClockControls.clockBrightnessNightVal;
   els.setClockBrightnessField = timerClockControls.brightnessField;
 
+  var mediaPlayerToggle = toggleRow(
+    "Keep Awake Media Player",
+    "sp-set-ss-media-player-enable",
+    state.mediaPlayerSleepPreventionOn);
+  timerPanel.appendChild(mediaPlayerToggle.row);
+  mediaPlayerToggle.input.addEventListener("change", function () {
+    state.mediaPlayerSleepPreventionOn = this.checked;
+    syncMediaPlayerSleepPreventionUi();
+    postSwitch("Screen Saver: Media Player Sleep Prevention", state.mediaPlayerSleepPreventionOn);
+  });
+  els.setMediaPlayerSleepPreventionToggle = mediaPlayerToggle.input;
+
   var mediaPlayerField = document.createElement("div");
-  mediaPlayerField.className = "sp-field";
-  mediaPlayerField.appendChild(fieldLabel("Keep Awake Media Player", "sp-set-ss-media-player"));
+  mediaPlayerField.className = "sp-field sp-cond-field";
+  mediaPlayerField.appendChild(fieldLabel("Media Player Entity", "sp-set-ss-media-player"));
   var mediaPlayerInp = textInput(
     "sp-set-ss-media-player",
     state.mediaPlayerSleepPreventionEntity,
@@ -617,6 +629,7 @@ function buildSettingsPage(parent) {
     onBlur: function (value) { state.mediaPlayerSleepPreventionEntity = value; },
   });
   els.setMediaPlayerSleepPrevention = mediaPlayerInp;
+  els.setMediaPlayerSleepPreventionField = mediaPlayerField;
 
   ssBody.appendChild(timerPanel);
   els.setSSTimeout = timeoutSelect;
@@ -643,6 +656,7 @@ function buildSettingsPage(parent) {
   els.setSensorClockBrightnessNightVal = sensorClockControls.clockBrightnessNightVal;
   els.setSensorClockBrightnessField = sensorClockControls.brightnessField;
   syncClockScreensaverControls();
+  syncMediaPlayerSleepPreventionUi();
 
   var ssBadge = document.createElement("span");
   ssBadge.setAttribute("aria-label", "Screensaver on");
@@ -1013,6 +1027,15 @@ function syncClockScreensaverControls() {
   if (els.setSensorClockBrightnessNight) {
     els.setSensorClockBrightnessNight.value = state.clockBrightnessNight;
     els.setSensorClockBrightnessNightVal.textContent = nightBrightness;
+  }
+}
+
+function syncMediaPlayerSleepPreventionUi() {
+  if (els.setMediaPlayerSleepPreventionToggle) {
+    els.setMediaPlayerSleepPreventionToggle.checked = !!state.mediaPlayerSleepPreventionOn;
+  }
+  if (els.setMediaPlayerSleepPreventionField) {
+    els.setMediaPlayerSleepPreventionField.classList.toggle("sp-visible", !!state.mediaPlayerSleepPreventionOn);
   }
 }
 

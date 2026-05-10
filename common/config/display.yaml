@@ -159,6 +159,29 @@ switch:
           then:
             - script.execute: screensaver_idle_check
 
+  - platform: template
+    name: "Screen Saver: Media Player Sleep Prevention"
+    internal: true
+    id: media_player_sleep_prevention_enabled
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    icon: "mdi:speaker-play"
+    entity_category: config
+    web_server:
+      sorting_group_id: sg_screensaver
+    on_turn_on:
+      - if:
+          condition:
+            lambda: 'return !id(display_asleep) && lv_scr_act() == id(main_page)->obj;'
+          then:
+            - script.execute: screensaver_idle_check
+    on_turn_off:
+      - if:
+          condition:
+            lambda: 'return !id(display_asleep) && lv_scr_act() == id(main_page)->obj;'
+          then:
+            - script.execute: screensaver_idle_check
+
 select:
   - platform: template
     name: "Screen: Temperature Unit"

@@ -22,6 +22,7 @@ var state = {
   clockBarOn: false,
   temperatureDegreeSymbolOn: true,
   presenceEntity: "",
+  mediaPlayerSleepPreventionOn: false,
   mediaPlayerSleepPreventionEntity: "",
   screensaverMode: "disabled",
   _screensaverModeReceived: false,

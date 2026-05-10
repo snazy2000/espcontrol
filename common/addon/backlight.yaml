@@ -103,7 +103,7 @@ script:
                 return (int)(val * 1000);
             - if:
                 condition:
-                  lambda: 'return id(media_player_playing);'
+                  lambda: 'return id(media_player_sleep_prevention_enabled).state && id(media_player_playing);'
                 then:
                   - script.execute: screensaver_idle_check
                 else:

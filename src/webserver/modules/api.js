@@ -467,6 +467,8 @@ function settingsStateEntities() {
     ["text", "Outdoor Temp Entity"],
     ["text", "Screensaver Mode"],
     ["text", "Presence Sensor Entity"],
+    ["switch", "Screen Saver: Media Player Sleep Prevention"],
+    ["text", "Media Player Sleep Prevention Entity"],
     ["number", "Screen Saver: Daytime Clock Brightness"],
     ["number", "Screen Saver: Nighttime Clock Brightness"],
     ["number", "Screen Saver: Clock Brightness"],

@@ -963,6 +963,15 @@ function connectEvents() {
       state.sunset = val;
       updateSunInfo();
     },
+    "text_sensor-network_transport": function (val) {
+      state.networkTransport = normalizeNetworkTransport(val);
+      updateNetworkPreview();
+    },
+    "sensor-wifi_strength": function (val) {
+      state.networkTransport = "wifi";
+      state.wifiStrengthPercent = normalizeWifiStrengthPercent(val);
+      updateNetworkPreview();
+    },
     "text_sensor-firmware__version": function (val) {
       setFirmwareVersion(val);
     },
@@ -1174,6 +1183,36 @@ function updateTempPreview() {
   }
 }
 
+function normalizeNetworkTransport(value) {
+  value = String(value == null ? "" : value).trim().toLowerCase();
+  return value === "ethernet" ? "ethernet" : "wifi";
+}
+
+function normalizeWifiStrengthPercent(value) {
+  var n = parseFloat(value);
+  if (!isFinite(n)) return 100;
+  if (n < 0) return 0;
+  if (n > 100) return 100;
+  return n;
+}
+
+function networkPreviewIconSlug(transport, strengthPercent) {
+  if (normalizeNetworkTransport(transport) === "ethernet") return "ethernet";
+  var strength = normalizeWifiStrengthPercent(strengthPercent);
+  if (strength < 25) return "wifi-strength-1";
+  if (strength < 50) return "wifi-strength-2";
+  if (strength < 75) return "wifi-strength-3";
+  return "wifi-strength-4";
+}
+
+function updateNetworkPreview() {
+  if (!els.networkPreview) return;
+  var show = state.clockBarOn && state.networkStatusOn;
+  els.networkPreview.className = "sp-network-preview mdi mdi-" +
+    networkPreviewIconSlug(state.networkTransport, state.wifiStrengthPercent) +
+    (show ? " sp-visible" : "");
+}
+
 if (typeof globalThis !== "undefined" && globalThis.__ESPCONTROL_TEST_HOOKS__) {
   globalThis.__ESPCONTROL_TEST_HOOKS__.config = {
     parseButtonConfig: parseButtonConfig,
@@ -1191,6 +1230,7 @@ if (typeof globalThis !== "undefined" && globalThis.__ESPCONTROL_TEST_HOOKS__) {
     screensaverActionOption: screensaverActionOption,
     normalizeScreensaverDimmedBrightness: normalizeScreensaverDimmedBrightness,
     previewHtmlValue: previewHtmlValue,
+    networkPreviewIconSlug: networkPreviewIconSlug,
     findDuplicatePlacementFor: function (grid, start, size, maxSlots) {
       return findDuplicatePlacement(grid.slice(), start, size, maxSlots || NUM_SLOTS);
     },

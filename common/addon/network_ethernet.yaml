@@ -48,6 +48,16 @@ sensor:
 # IP address (text_sensor)
 # ---------------------------------------------------------------------------
 text_sensor:
+  - platform: template
+    name: "Network Transport"
+    id: network_transport_sensor
+    icon: mdi:ethernet
+    entity_category: diagnostic
+    internal: true
+    update_interval: 60s
+    lambda: |-
+      return {"ethernet"};
+
   - platform: ethernet_info
     ip_address:
       name: IP Address

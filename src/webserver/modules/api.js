@@ -519,6 +519,8 @@ function settingsStateEntities() {
     ["text", "Screen: NTP Server 3"],
     ["text_sensor", "Screen: Sunrise"],
     ["text_sensor", "Screen: Sunset"],
+    ["text_sensor", "Network Transport"],
+    ["sensor", "Wifi Strength"],
     ["switch", "Screen: Schedule Enabled"],
     ["select", "Screen: Schedule Mode"],
     ["number", "Screen: Schedule On Hour"],

@@ -73,6 +73,16 @@ sensor:
 # IP address (text_sensor)
 # ---------------------------------------------------------------------------
 text_sensor:
+  - platform: template
+    name: "Network Transport"
+    id: network_transport_sensor
+    icon: mdi:wifi
+    entity_category: diagnostic
+    internal: true
+    update_interval: 60s
+    lambda: |-
+      return {"wifi"};
+
   - platform: wifi_info
     ip_address:
       name: IP Address

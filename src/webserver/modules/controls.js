@@ -92,6 +92,7 @@ function buildScreenPage(parent) {
     '<div class="sp-topbar">' +
     '<span class="sp-temp"></span>' +
     '<span class="sp-clock">--:--</span>' +
+    '<span class="sp-network-preview mdi mdi-wifi-strength-4"></span>' +
     "</div>" +
     '<div class="sp-main"></div>' +
     "</div>";
@@ -100,6 +101,7 @@ function buildScreenPage(parent) {
   els.topbar = wrap.querySelector(".sp-topbar");
   els.temp = wrap.querySelector(".sp-temp");
   els.clock = wrap.querySelector(".sp-clock");
+  els.networkPreview = wrap.querySelector(".sp-network-preview");
   els.previewMain = wrap.querySelector(".sp-main");
   els.previewMain.setAttribute("role", "grid");
   els.previewMain.setAttribute("aria-label", "Button grid");

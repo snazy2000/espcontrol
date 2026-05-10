@@ -55,5 +55,10 @@ assert.strictEqual(hooks.normalizeTemperatureUnit("centigrade"), "\u00b0C");
 assert.strictEqual(hooks.normalizeScreensaverAction("Screen Dimmed"), "dim");
 assert.strictEqual(hooks.previewHtmlValue({ labelHtml: "" }, "labelHtml", "fallback"), "");
 assert.strictEqual(hooks.previewHtmlValue({}, "labelHtml", "fallback"), "fallback");
+assert.strictEqual(hooks.networkPreviewIconSlug("wifi", 24), "wifi-strength-1");
+assert.strictEqual(hooks.networkPreviewIconSlug("wifi", 25), "wifi-strength-2");
+assert.strictEqual(hooks.networkPreviewIconSlug("wifi", 50), "wifi-strength-3");
+assert.strictEqual(hooks.networkPreviewIconSlug("wifi", 75), "wifi-strength-4");
+assert.strictEqual(hooks.networkPreviewIconSlug("ethernet", 0), "ethernet");
 
 console.log("Web UI smoke tests passed.");

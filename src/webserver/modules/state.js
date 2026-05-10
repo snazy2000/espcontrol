@@ -21,6 +21,8 @@ var state = {
   temperatureUnit: "Auto",
   clockBarOn: false,
   networkStatusOn: true,
+  networkTransport: "wifi",
+  wifiStrengthPercent: 100,
   temperatureDegreeSymbolOn: true,
   presenceEntity: "",
   mediaPlayerSleepPreventionOn: false,
@@ -481,6 +483,7 @@ function syncClockBarUi() {
   if (els.setTemperatureDegreeSymbolToggle) {
     els.setTemperatureDegreeSymbolToggle.checked = !!state.temperatureDegreeSymbolOn;
   }
+  updateNetworkPreview();
   updateTempPreview();
 }
 

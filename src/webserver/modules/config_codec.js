@@ -50,6 +50,15 @@ function normalizeButtonConfig(b) {
     b.icon_on = "Auto";
     b.precision = normalizeClimatePrecisionConfig(b.precision);
   }
+  if (b && b.type === "camera") {
+    var secs = parseInt(b.sensor, 10);
+    if (!isFinite(secs) || secs < 2) secs = 5;
+    if (secs > 120) secs = 120;
+    b.sensor = String(secs);
+    b.icon_on = "Auto";
+    b.unit = "";
+    b.precision = "";
+  }
   return b;
 }
 
@@ -307,6 +316,7 @@ function subpageTypeCode(type) {
     push: "P",
     internal: "I",
     subpage: "G",
+    camera: "V",
   };
   return map[type || ""] || (type || "");
 }
@@ -329,6 +339,7 @@ function subpageTypeFromCode(code) {
     P: "push",
     I: "internal",
     G: "subpage",
+    V: "camera",
   };
   return map[code || ""] || (code || "");
 }

@@ -149,6 +149,10 @@ inline void setup_card_visual(BtnSlot &s, const ParsedCfg &p,
       s.btn, s.icon_lbl, s.sensor_container, s.sensor_lbl, s.unit_lbl, s.text_lbl, p);
     return;
   }
+  if (p.type == "camera") {
+    setup_camera_card(s, p);
+    return;
+  }
   if (p.type == "slider" || p.type == "cover") {
     setup_slider_visual(s, p, palette.has_on ? palette.on_val : DEFAULT_SLIDER_COLOR);
     return;
@@ -503,6 +507,13 @@ inline void grid_phase2(
           cfg.volume_width_compensation_percent,
           s.sensor_lbl, s.unit_lbl);
         subscribe_climate_control_state(ctx);
+      }
+      continue;
+    }
+    if (p.type == "camera") {
+      if (!p.entity.empty()) {
+        subscribe_control_availability(s.btn, s.btn, p.entity);
+        if (p.label.empty()) subscribe_friendly_name(s.text_lbl, p.entity);
       }
       continue;
     }
@@ -920,6 +931,18 @@ inline void grid_phase2(
           lv_obj_add_event_cb(sb_btn, [](lv_event_t *e) {
             ClimateControlCtx *ctx = (ClimateControlCtx *)lv_event_get_user_data(e);
             if (ctx) climate_control_open_modal(ctx);
+          }, LV_EVENT_CLICKED, ctx);
+        }
+        continue;
+      }
+      if (sb_cfg.type == "camera") {
+        if (!sb_cfg.entity.empty()) {
+          subscribe_control_availability(sub_slot.btn, sub_slot.btn, sb_cfg.entity);
+          if (sb_cfg.label.empty()) subscribe_friendly_name(sub_slot.text_lbl, sb_cfg.entity);
+          ParsedCfg *ctx = new ParsedCfg(sb_cfg);
+          lv_obj_add_event_cb(sb_btn, [](lv_event_t *e) {
+            ParsedCfg *c = (ParsedCfg *)lv_event_get_user_data(e);
+            if (c) camera_popup_open_from_cfg(*c);
           }, LV_EVENT_CLICKED, ctx);
         }
         continue;

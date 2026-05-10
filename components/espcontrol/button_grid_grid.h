@@ -68,6 +68,17 @@ struct CardPalette {
   uint32_t sensor_val = DEFAULT_TERTIARY_COLOR;
 };
 
+constexpr lv_coord_t LARGE_SENSOR_UNIT_Y_OFFSET_PX = -30;
+
+inline void apply_large_sensor_number_style(const BtnSlot &s, const lv_font_t *large_font) {
+  if (s.sensor_lbl && large_font) {
+    lv_obj_set_style_text_font(s.sensor_lbl, large_font, LV_PART_MAIN);
+  }
+  if (s.unit_lbl) {
+    lv_obj_set_style_translate_y(s.unit_lbl, LARGE_SENSOR_UNIT_Y_OFFSET_PX, LV_PART_MAIN);
+  }
+}
+
 inline void setup_card_visual(BtnSlot &s, const ParsedCfg &p,
                               const GridConfig &cfg,
                               const CardPalette &palette,
@@ -75,6 +86,7 @@ inline void setup_card_visual(BtnSlot &s, const ParsedCfg &p,
                               int col_span = 1) {
   apply_button_colors(s.btn, palette.has_on, palette.on_val,
     palette.has_off, palette.off_val);
+  if (s.unit_lbl) lv_obj_set_style_translate_y(s.unit_lbl, 0, LV_PART_MAIN);
 
   if (!experimental_card_enabled(p, cfg)) {
     setup_toggle_visual(s, ParsedCfg{});
@@ -89,7 +101,7 @@ inline void setup_card_visual(BtnSlot &s, const ParsedCfg &p,
     setup_sensor_card(s, p, palette.has_sensor_color, palette.sensor_val);
     if (row_span == 2 && col_span == 2 &&
         sensor_large_numbers_enabled(p) && cfg.sp_large_sensor_font) {
-      lv_obj_set_style_text_font(s.sensor_lbl, cfg.sp_large_sensor_font, LV_PART_MAIN);
+      apply_large_sensor_number_style(s, cfg.sp_large_sensor_font);
     }
     return;
   }

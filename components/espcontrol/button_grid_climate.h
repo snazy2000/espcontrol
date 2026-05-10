@@ -75,6 +75,7 @@ struct ClimateControlModalUi {
   lv_obj_t *option_list_view = nullptr;
   lv_obj_t *arc = nullptr;
   lv_obj_t *current_dot = nullptr;
+  lv_obj_t *handle_dot = nullptr;
   lv_obj_t *target_row = nullptr;
   lv_obj_t *target_lbl = nullptr;
   lv_obj_t *unit_lbl = nullptr;
@@ -303,14 +304,11 @@ inline int climate_arc_angle_for_tenths(ClimateControlCtx *ctx, int value) {
   return (135 + offset) % 360;
 }
 
-inline void climate_layout_current_dot(ClimateControlCtx *ctx, const ControlModalLayout &layout) {
-  ClimateControlModalUi &ui = climate_control_modal_ui();
-  if (!ctx || !ui.current_dot) return;
-  lv_coord_t dot_size = control_modal_scaled_px(10, layout.short_side);
-  if (dot_size < 8) dot_size = 8;
-  lv_coord_t radius = layout.arc_size / 2 - layout.arc_stroke - dot_size / 2;
-  if (radius < 0) radius = layout.arc_size / 2;
-  int angle = climate_arc_angle_for_tenths(ctx, ctx->current_tenths);
+inline void climate_layout_arc_dot(ClimateControlCtx *ctx, const ControlModalLayout &layout,
+                                   lv_obj_t *dot, int tenths, lv_coord_t size,
+                                   lv_coord_t radius) {
+  if (!ctx || !dot) return;
+  int angle = climate_arc_angle_for_tenths(ctx, tenths);
   float radians = (float)angle * 3.14159265f / 180.0f;
   lv_coord_t arc_left = layout.panel_w / 2 + layout.arc_center_x - layout.arc_size / 2;
   lv_coord_t arc_top = layout.panel_h / 2 + layout.arc_center_y - layout.arc_size / 2;
@@ -321,11 +319,29 @@ inline void climate_layout_current_dot(ClimateControlCtx *ctx, const ControlModa
   int width_percent = normalize_width_compensation_percent(ctx->width_compensation_percent);
   if (width_compensation_vertical_axis()) y_radius = y_radius * width_percent / 100.0f;
   else x_radius = x_radius * width_percent / 100.0f;
-  lv_obj_set_size(ui.current_dot, dot_size, dot_size);
-  lv_obj_set_style_radius(ui.current_dot, dot_size / 2, LV_PART_MAIN);
-  lv_obj_set_pos(ui.current_dot,
-    center_x + (lv_coord_t)(std::cos(radians) * x_radius) - dot_size / 2,
-    center_y + (lv_coord_t)(std::sin(radians) * y_radius) - dot_size / 2);
+  lv_obj_set_size(dot, size, size);
+  lv_obj_set_style_radius(dot, size / 2, LV_PART_MAIN);
+  lv_obj_set_pos(dot,
+    center_x + (lv_coord_t)(std::cos(radians) * x_radius) - size / 2,
+    center_y + (lv_coord_t)(std::sin(radians) * y_radius) - size / 2);
+}
+
+inline void climate_layout_current_dot(ClimateControlCtx *ctx, const ControlModalLayout &layout) {
+  ClimateControlModalUi &ui = climate_control_modal_ui();
+  lv_coord_t dot_size = control_modal_scaled_px(10, layout.short_side);
+  if (dot_size < 8) dot_size = 8;
+  lv_coord_t radius = layout.arc_size / 2 - layout.arc_stroke - dot_size / 2;
+  if (radius < 0) radius = layout.arc_size / 2;
+  climate_layout_arc_dot(ctx, layout, ui.current_dot, ctx ? ctx->current_tenths : CLIMATE_DEFAULT_TARGET_TENTHS, dot_size, radius);
+}
+
+inline void climate_layout_handle_dot(ClimateControlCtx *ctx, const ControlModalLayout &layout) {
+  ClimateControlModalUi &ui = climate_control_modal_ui();
+  lv_coord_t pad = layout.short_side < 520 ? 4 : 6;
+  lv_coord_t handle_size = layout.arc_stroke + pad * 2;
+  lv_coord_t radius = layout.arc_size / 2 - layout.arc_stroke / 2;
+  if (radius < 0) radius = layout.arc_size / 2;
+  climate_layout_arc_dot(ctx, layout, ui.handle_dot, climate_selected_target(ctx), handle_size, radius);
 }
 
 inline uint32_t climate_active_color(ClimateControlCtx *ctx) {
@@ -605,6 +621,9 @@ inline void climate_set_dial_controls_visible(bool visible) {
   climate_set_obj_visible(ui.back_btn, visible);
   climate_set_obj_visible(ui.mode_btn, visible);
   climate_set_obj_visible(ui.arc, visible);
+  climate_set_obj_visible(ui.current_dot, visible && ui.active && ui.active->has_current &&
+    climate_temperature_controls_enabled(ui.active));
+  climate_set_obj_visible(ui.handle_dot, visible && ui.active && climate_temperature_controls_enabled(ui.active));
   climate_set_obj_visible(ui.target_row, visible);
   climate_set_obj_visible(ui.status_lbl, visible);
   climate_set_obj_visible(ui.hint_lbl, visible);
@@ -881,6 +900,10 @@ inline void climate_control_set_modal_value(ClimateControlCtx *ctx) {
     climate_set_obj_visible(ui.current_dot, show_current);
     if (show_current && ui.panel) climate_layout_current_dot(ctx, control_modal_calc_layout(ctx->width_compensation_percent));
   }
+  if (ui.handle_dot) {
+    climate_set_obj_visible(ui.handle_dot, temp_enabled);
+    if (temp_enabled && ui.panel) climate_layout_handle_dot(ctx, control_modal_calc_layout(ctx->width_compensation_percent));
+  }
   if (ui.target_row) climate_set_obj_visible(ui.target_row, true);
   if (ui.target_lbl) {
     if (!ctx->available) lv_label_set_text(ui.target_lbl, "--");
@@ -963,6 +986,7 @@ inline void climate_control_layout_modal(ClimateControlCtx *ctx) {
   }
   control_modal_apply_arc_layout(ui.arc, layout, ctx->width_compensation_percent);
   if (ui.current_dot) climate_layout_current_dot(ctx, layout);
+  if (ui.handle_dot) climate_layout_handle_dot(ctx, layout);
   lv_obj_align(ui.status_lbl, LV_ALIGN_CENTER, 0, title_center_y);
   lv_obj_align(ui.target_row, LV_ALIGN_CENTER, 0, layout.value_center_y);
   lv_obj_align(ui.hint_lbl, LV_ALIGN_CENTER, 0, layout.controls_center_y - layout.btn_size / 2 - 50);
@@ -1136,16 +1160,6 @@ inline void climate_control_open_modal(ClimateControlCtx *ctx) {
     if (ui.active) climate_open_option_menu(ui.active, "preset");
   }, LV_EVENT_CLICKED, nullptr);
 
-  ui.current_dot = lv_obj_create(ui.panel);
-  lv_obj_set_style_bg_color(ui.current_dot, lv_color_hex(CLIMATE_NEUTRAL_COLOR), LV_PART_MAIN);
-  lv_obj_set_style_bg_opa(ui.current_dot, LV_OPA_COVER, LV_PART_MAIN);
-  lv_obj_set_style_border_width(ui.current_dot, 0, LV_PART_MAIN);
-  lv_obj_set_style_shadow_width(ui.current_dot, 0, LV_PART_MAIN);
-  lv_obj_set_style_pad_all(ui.current_dot, 0, LV_PART_MAIN);
-  lv_obj_clear_flag(ui.current_dot, LV_OBJ_FLAG_CLICKABLE);
-  lv_obj_clear_flag(ui.current_dot, LV_OBJ_FLAG_SCROLLABLE);
-  lv_obj_add_flag(ui.current_dot, LV_OBJ_FLAG_HIDDEN);
-
   ui.arc = lv_arc_create(ui.panel);
   lv_arc_set_bg_angles(ui.arc, 135, 45);
   lv_arc_set_range(ui.arc, ctx->min_tenths, ctx->max_tenths);
@@ -1154,7 +1168,7 @@ inline void climate_control_open_modal(ClimateControlCtx *ctx) {
   lv_obj_set_style_arc_color(ui.arc, lv_color_hex(ctx->secondary_color), LV_PART_MAIN);
   lv_obj_set_style_arc_rounded(ui.arc, true, LV_PART_MAIN);
   lv_obj_set_style_arc_rounded(ui.arc, true, LV_PART_INDICATOR);
-  lv_obj_set_style_bg_color(ui.arc, lv_color_hex(0xFFFFFF), LV_PART_KNOB);
+  lv_obj_set_style_bg_opa(ui.arc, LV_OPA_TRANSP, LV_PART_KNOB);
   lv_obj_set_style_border_width(ui.arc, 0, LV_PART_KNOB);
   lv_obj_set_style_shadow_width(ui.arc, 0, LV_PART_KNOB);
   lv_obj_add_flag(ui.arc, LV_OBJ_FLAG_ADV_HITTEST);
@@ -1172,6 +1186,26 @@ inline void climate_control_open_modal(ClimateControlCtx *ctx) {
     ui.dragging_arc = false;
     climate_apply_selected_target(ui.active, lv_arc_get_value(arc), true, false);
   }, LV_EVENT_RELEASED, nullptr);
+
+  ui.current_dot = lv_obj_create(ui.panel);
+  lv_obj_set_style_bg_color(ui.current_dot, lv_color_hex(CLIMATE_NEUTRAL_COLOR), LV_PART_MAIN);
+  lv_obj_set_style_bg_opa(ui.current_dot, LV_OPA_COVER, LV_PART_MAIN);
+  lv_obj_set_style_border_width(ui.current_dot, 0, LV_PART_MAIN);
+  lv_obj_set_style_shadow_width(ui.current_dot, 0, LV_PART_MAIN);
+  lv_obj_set_style_pad_all(ui.current_dot, 0, LV_PART_MAIN);
+  lv_obj_clear_flag(ui.current_dot, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_clear_flag(ui.current_dot, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_add_flag(ui.current_dot, LV_OBJ_FLAG_HIDDEN);
+
+  ui.handle_dot = lv_obj_create(ui.panel);
+  lv_obj_set_style_bg_color(ui.handle_dot, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+  lv_obj_set_style_bg_opa(ui.handle_dot, LV_OPA_COVER, LV_PART_MAIN);
+  lv_obj_set_style_border_width(ui.handle_dot, 0, LV_PART_MAIN);
+  lv_obj_set_style_shadow_width(ui.handle_dot, 0, LV_PART_MAIN);
+  lv_obj_set_style_pad_all(ui.handle_dot, 0, LV_PART_MAIN);
+  lv_obj_clear_flag(ui.handle_dot, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_clear_flag(ui.handle_dot, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_add_flag(ui.handle_dot, LV_OBJ_FLAG_HIDDEN);
 
   ui.target_row = lv_obj_create(ui.panel);
   lv_obj_set_size(ui.target_row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);

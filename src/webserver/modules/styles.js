@@ -47,7 +47,7 @@ var CSS =
   ".sp-temp.sp-visible{opacity:1}" +
   ".sp-clock{position:absolute;left:50%;transform:translateX(-50%);" +
   "color:#fff;font-size:var(--clock-fs,var(--topbar-fs));white-space:nowrap}" +
-  ".sp-network-preview{margin-left:auto;color:#fff;font-size:calc(var(--topbar-fs)*.86);" +
+  ".sp-network-preview{margin-left:auto;margin-right:1cqw;color:#fff;font-size:calc(var(--topbar-fs)*.86);" +
   "line-height:1;width:calc(var(--topbar-fs)*1.2);height:100%;display:flex;align-items:center;" +
   "justify-content:center;opacity:0;transition:opacity .3s}" +
   ".sp-network-preview.sp-visible{opacity:1}" +

@@ -76,6 +76,7 @@
         "fonts": {
           "icon": "icon_font_600",
           "sensor": "statistics_font_600",
+          "largeSensor": "statistics_font_600_xl",
           "mediaTitle": "media_title_font",
           "volumeNumber": "volume_modal_number_font_600",
           "volumeLabel": "volume_modal_label_font_600"
@@ -149,6 +150,7 @@
         "fonts": {
           "icon": "icon_font_480",
           "sensor": "statistics_font_lg",
+          "largeSensor": "statistics_font_lg_xl",
           "mediaTitle": "media_title_font_lg",
           "volumeNumber": "volume_modal_number_font_lg",
           "volumeLabel": "label_font_lg"
@@ -233,6 +235,7 @@
         "fonts": {
           "icon": "icon_font_800",
           "sensor": "statistics_font_lt",
+          "largeSensor": "statistics_font_lt_xl",
           "mediaTitle": "media_title_font_lt",
           "volumeNumber": "volume_modal_number_font_800",
           "volumeLabel": "volume_modal_label_font_800"
@@ -316,6 +319,7 @@
         "fonts": {
           "icon": "icon_font_md_square",
           "sensor": "statistics_font_md_square",
+          "largeSensor": "statistics_font_md_square_xl",
           "mediaTitle": "media_title_font_md_square",
           "volumeNumber": "volume_modal_number_font_md_square",
           "volumeLabel": "volume_modal_label_font_md_square"
@@ -403,6 +407,7 @@
         "fonts": {
           "icon": "icon_font_sm",
           "sensor": "statistics_font_sm",
+          "largeSensor": "statistics_font_sm_xl",
           "mediaTitle": "media_title_font_sm",
           "volumeNumber": "volume_modal_number_font",
           "volumeLabel": "label_font_sm"

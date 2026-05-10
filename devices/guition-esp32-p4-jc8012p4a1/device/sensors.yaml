@@ -53,6 +53,7 @@ script:
           cfg.wrap_tall_labels = true;
           cfg.icon_font = id(icon_font_800)->get_lv_font();
           cfg.sp_sensor_font = id(statistics_font_lt)->get_lv_font();
+          cfg.sp_large_sensor_font = id(statistics_font_lt_xl)->get_lv_font();
           cfg.media_title_font = id(media_title_font_lt)->get_lv_font();
           cfg.volume_number_font = id(volume_modal_number_font_800)->get_lv_font();
           cfg.volume_label_font = id(volume_modal_label_font_800)->get_lv_font();
@@ -118,6 +119,7 @@ esphome:
             cfg.wrap_tall_labels = true;
             cfg.icon_font = id(icon_font_800)->get_lv_font();
             cfg.sp_sensor_font = id(statistics_font_lt)->get_lv_font();
+            cfg.sp_large_sensor_font = id(statistics_font_lt_xl)->get_lv_font();
             cfg.media_title_font = id(media_title_font_lt)->get_lv_font();
             cfg.volume_number_font = id(volume_modal_number_font_800)->get_lv_font();
             cfg.volume_label_font = id(volume_modal_label_font_800)->get_lv_font();
@@ -217,6 +219,7 @@ esphome:
             cfg.wrap_tall_labels = true;
             cfg.icon_font = id(icon_font_800)->get_lv_font();
             cfg.sp_sensor_font = id(statistics_font_lt)->get_lv_font();
+            cfg.sp_large_sensor_font = id(statistics_font_lt_xl)->get_lv_font();
             cfg.media_title_font = id(media_title_font_lt)->get_lv_font();
             cfg.volume_number_font = id(volume_modal_number_font_800)->get_lv_font();
             cfg.volume_label_font = id(volume_modal_label_font_800)->get_lv_font();

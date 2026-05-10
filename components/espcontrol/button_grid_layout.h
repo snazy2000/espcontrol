@@ -56,21 +56,6 @@ inline void apply_slot_text_width_compensation(const BtnSlot &s, int percent) {
   apply_width_compensation(s.sensor_container, percent);
 }
 
-inline int scale_transform_percent(int base_scale, int percent) {
-  return base_scale * percent / 100;
-}
-
-inline void apply_large_sensor_number_scale(const BtnSlot &s, int width_percent) {
-  if (!s.sensor_container) return;
-  int width_scale = width_compensation_scale(width_percent);
-  int base_x = width_compensation_vertical_axis() ? 256 : width_scale;
-  int base_y = width_compensation_vertical_axis() ? width_scale : 256;
-  lv_obj_set_style_transform_scale_x(
-    s.sensor_container, scale_transform_percent(base_x, 250), LV_PART_MAIN);
-  lv_obj_set_style_transform_scale_y(
-    s.sensor_container, scale_transform_percent(base_y, 250), LV_PART_MAIN);
-}
-
 // ── Grid layout parsing ───────────────────────────────────────────────
 
 // Result of parsing a button_order CSV string into grid cell positions

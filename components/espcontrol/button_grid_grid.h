@@ -19,6 +19,7 @@ struct GridConfig {
   int volume_width_compensation_percent = 100;
   const lv_font_t *icon_font;
   const lv_font_t *sp_sensor_font;
+  const lv_font_t *sp_large_sensor_font = nullptr;
   const lv_font_t *media_title_font;
   const lv_font_t *volume_number_font;
   const lv_font_t *volume_label_font = nullptr;
@@ -86,8 +87,10 @@ inline void setup_card_visual(BtnSlot &s, const ParsedCfg &p,
   if (p.type == "sensor") {
     if (p.sensor.empty()) return;
     setup_sensor_card(s, p, palette.has_sensor_color, palette.sensor_val);
-    if (row_span == 2 && col_span == 2 && sensor_large_numbers_enabled(p))
-      apply_large_sensor_number_scale(s, cfg.width_compensation_percent);
+    if (row_span == 2 && col_span == 2 &&
+        sensor_large_numbers_enabled(p) && cfg.sp_large_sensor_font) {
+      lv_obj_set_style_text_font(s.sensor_lbl, cfg.sp_large_sensor_font, LV_PART_MAIN);
+    }
     return;
   }
   if (p.type == "calendar") {

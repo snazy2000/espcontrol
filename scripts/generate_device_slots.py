@@ -32,6 +32,7 @@ def slot_device(slug: str, device: dict) -> dict:
         "grid": layout["firmwareGrid"],
         "icon_font": fonts["icon"],
         "sensor_font": fonts["sensor"],
+        "large_sensor_font": fonts["largeSensor"],
         "media_title_font": fonts["mediaTitle"],
         "volume_number_font": fonts["volumeNumber"],
         "volume_label_font": fonts["volumeLabel"],
@@ -128,6 +129,7 @@ def cfg_lines(device: dict) -> list[str]:
         )
     lines.append(f"            cfg.icon_font = id({device['icon_font']})->get_lv_font();")
     lines.append(f"            cfg.sp_sensor_font = id({device['sensor_font']})->get_lv_font();")
+    lines.append(f"            cfg.sp_large_sensor_font = id({device['large_sensor_font']})->get_lv_font();")
     lines.append(f"            cfg.media_title_font = id({device['media_title_font']})->get_lv_font();")
     lines.append(f"            cfg.volume_number_font = id({device['volume_number_font']})->get_lv_font();")
     lines.append(f"            cfg.volume_label_font = id({device['volume_label_font']})->get_lv_font();")

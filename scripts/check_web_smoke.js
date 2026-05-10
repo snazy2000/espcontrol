@@ -2,9 +2,9 @@
 "use strict";
 
 const assert = require("assert");
-const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
+const { loadBundledWebSource } = require("./web_source");
 
 const ROOT = path.resolve(__dirname, "..");
 const SOURCE = path.join(ROOT, "src", "webserver", "www.js");
@@ -24,7 +24,7 @@ function loadHooks() {
   };
   sandbox.window = sandbox;
   vm.createContext(sandbox);
-  vm.runInContext(fs.readFileSync(SOURCE, "utf8"), sandbox, { filename: SOURCE });
+  vm.runInContext(loadBundledWebSource(), sandbox, { filename: SOURCE });
   return sandbox.__ESPCONTROL_TEST_HOOKS__.config;
 }
 

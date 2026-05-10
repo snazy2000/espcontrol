@@ -268,13 +268,25 @@ def sync_icons(check_only=False):
 # ===========================================================================
 
 WWW_SOURCE = ROOT / "src" / "webserver" / "www.js"
+MODULES_DIR = ROOT / "src" / "webserver" / "modules"
 TYPES_DIR = ROOT / "src" / "webserver" / "types"
 WWW_OUTPUT_DIR = ROOT / "docs" / "public" / "webserver"
 
 CONFIG_START = "__DEVICE_CONFIG_START__"
 CONFIG_END = "__DEVICE_CONFIG_END__"
+MODULES_START = "__WEB_MODULES_START__"
+MODULES_END = "__WEB_MODULES_END__"
 TYPES_START = "__BUTTON_TYPES_START__"
 TYPES_END = "__BUTTON_TYPES_END__"
+WEB_MODULE_ORDER = [
+    "styles",
+    "state",
+    "grid",
+    "api",
+    "config_codec",
+    "controls",
+    "app",
+]
 
 
 def build_config_block(slug, cfg):
@@ -301,17 +313,43 @@ def load_button_types():
     return "\n".join(chunks) + "\n"
 
 
-def replace_types(source_text):
+def load_web_modules():
+    chunks = []
+    for name in WEB_MODULE_ORDER:
+        path = MODULES_DIR / f"{name}.js"
+        if not path.exists():
+            raise BuildError(f"Missing web module: {path.relative_to(ROOT)}")
+        chunks.append(f"  // --- module: {name} ---")
+        for line in path.read_text().rstrip().splitlines():
+            chunks.append(f"  {line}" if line.strip() else "")
+    return "\n".join(chunks) + "\n"
+
+
+def replace_marked_block(source_text, start_tag, end_tag, new_content):
     pattern = re.compile(
-        r"(^[^\n]*" + re.escape(TYPES_START) + r"[^\n]*\n)"
+        r"(^[^\n]*" + re.escape(start_tag) + r"[^\n]*\n)"
         r"(.*?)"
-        r"(^[^\n]*" + re.escape(TYPES_END) + r"[^\n]*$)",
+        r"(^[^\n]*" + re.escape(end_tag) + r"[^\n]*$)",
         re.MULTILINE | re.DOTALL,
     )
     m = pattern.search(source_text)
     if not m:
+        return None
+    return source_text[: m.start(2)] + new_content + source_text[m.start(3) :]
+
+
+def replace_types(source_text):
+    replaced = replace_marked_block(source_text, TYPES_START, TYPES_END, load_button_types())
+    if replaced is None:
         return source_text
-    return source_text[: m.start(2)] + load_button_types() + source_text[m.start(3) :]
+    return replaced
+
+
+def replace_modules(source_text):
+    replaced = replace_marked_block(source_text, MODULES_START, MODULES_END, load_web_modules())
+    if replaced is None:
+        raise ValueError(f"Module markers not found: {MODULES_START} / {MODULES_END}")
+    return replaced
 
 
 def replace_config(source_text, slug, cfg):
@@ -357,6 +395,7 @@ def build_www(check_only=False):
     devices = load_json(DEVICES_JSON)
     source_text = WWW_SOURCE.read_text()
     source_text = replace_types(source_text)
+    source_text = replace_modules(source_text)
     dirty = []
 
     for slug, cfg in devices.items():

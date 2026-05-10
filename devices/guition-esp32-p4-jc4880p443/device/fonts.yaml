@@ -30,7 +30,7 @@ font:
     size: 62
     bpp: 4
     glyphs:
-      - "0123456789.-°/%kWhVA OfIdle"
+      - "0123456789.-°/% ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
       - ":"
 
   # Large-card sensor values (2.5x the regular sensor value font)
@@ -39,7 +39,7 @@ font:
     size: 155
     bpp: 4
     glyphs:
-      - "0123456789.-°/%kWhVA OfIdle"
+      - "0123456789.-°/% ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
       - ":"
 
   # Media now-playing titles (sensor value size, full text glyph coverage)

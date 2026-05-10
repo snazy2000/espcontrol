@@ -608,6 +608,7 @@
     clockBarOn: false,
     temperatureDegreeSymbolOn: true,
     presenceEntity: "",
+    mediaPlayerSleepPreventionEntity: "",
     screensaverMode: "disabled",
     _screensaverModeReceived: false,
     clockScreensaverOn: false,
@@ -662,6 +663,7 @@
     clipboard: null,
     settingsDraft: null,
     entityPostPaths: {},
+    entityNames: {},
   };
 
   for (var i = 0; i < NUM_SLOTS; i++) {
@@ -1449,6 +1451,119 @@
     };
   }
 
+  function parseHomeAssistantEntity(value) {
+    var text = String(value || "").trim();
+    var dot = text.indexOf(".");
+    if (dot <= 0 || dot >= text.length - 1) return null;
+    return {
+      id: text,
+      domain: text.substring(0, dot),
+      objectId: text.substring(dot + 1),
+    };
+  }
+
+  function titleFromEntityId(entityId) {
+    var parsed = parseHomeAssistantEntity(entityId);
+    if (!parsed) return entityId;
+    return parsed.objectId.replace(/_/g, " ").replace(/\b\w/g, function (ch) {
+      return ch.toUpperCase();
+    });
+  }
+
+  function rememberEntityName(entityId, name) {
+    var parsed = parseHomeAssistantEntity(entityId);
+    if (!parsed || !name) return;
+    if (!state.entityNames[parsed.id]) state.entityNames[parsed.id] = [];
+    uniquePush(state.entityNames[parsed.id], String(name));
+  }
+
+  function rememberConfiguredButtonEntities(button) {
+    if (!button) return;
+    var label = button.label || "";
+    if (button.entity) rememberEntityName(button.entity, label || titleFromEntityId(button.entity));
+    if (button.sensor && parseHomeAssistantEntity(button.sensor)) {
+      rememberEntityName(button.sensor, label || titleFromEntityId(button.sensor));
+    }
+  }
+
+  function rememberConfiguredEntities() {
+    for (var i = 0; i < state.buttons.length; i++) rememberConfiguredButtonEntities(state.buttons[i]);
+    for (var slot in state.subpages) {
+      var sp = state.subpages[slot];
+      if (!sp || !sp.buttons) continue;
+      for (var bi = 0; bi < sp.buttons.length; bi++) rememberConfiguredButtonEntities(sp.buttons[bi]);
+    }
+    rememberEntityName(state.indoorEntity, "Indoor Temperature");
+    rememberEntityName(state.outdoorEntity, "Outdoor Temperature");
+    rememberEntityName(state.presenceEntity, "Presence Sensor");
+    rememberEntityName(state.mediaPlayerSleepPreventionEntity, "Media Player");
+  }
+
+  function optionLabelForEntity(entityId) {
+    var names = state.entityNames[entityId] || [];
+    if (!names.length) return titleFromEntityId(entityId);
+    return names.join(" / ");
+  }
+
+  function entitySuggestions(domains) {
+    rememberConfiguredEntities();
+    var allowed = {};
+    (domains || []).forEach(function (domain) { allowed[domain] = true; });
+    var ids = [];
+    for (var id in state.entityNames) {
+      var parsed = parseHomeAssistantEntity(id);
+      if (!parsed) continue;
+      if (domains && domains.length && !allowed[parsed.domain]) continue;
+      ids.push(id);
+    }
+    ids.sort(function (a, b) {
+      var al = optionLabelForEntity(a).toLowerCase();
+      var bl = optionLabelForEntity(b).toLowerCase();
+      if (al === bl) return a.localeCompare(b);
+      return al.localeCompare(bl);
+    });
+    return ids.map(function (id) {
+      return { value: id, label: optionLabelForEntity(id) };
+    });
+  }
+
+  function refreshEntityDatalist(input) {
+    if (!input || !input._entityDatalist) return;
+    var list = input._entityDatalist;
+    if (input.parentNode && !list.parentNode) input.parentNode.appendChild(list);
+    list.innerHTML = "";
+    entitySuggestions(input._entityDomains || []).forEach(function (item) {
+      var opt = document.createElement("option");
+      opt.value = item.value;
+      opt.label = item.label;
+      opt.textContent = item.label;
+      list.appendChild(opt);
+    });
+  }
+
+  function attachEntitySuggestions(input, domains) {
+    if (!input || input._entityDatalist) return input;
+    if (!input.id) input.id = "sp-entity-" + Math.random().toString(36).slice(2);
+    var list = document.createElement("datalist");
+    list.id = input.id + "-suggestions";
+    input.setAttribute("list", list.id);
+    input._entityDatalist = list;
+    input._entityDomains = domains || [];
+    input.parentNode && input.parentNode.appendChild(list);
+    input.addEventListener("focus", function () { refreshEntityDatalist(input); });
+    input.addEventListener("input", function () {
+      rememberEntityName(input.value, optionLabelForEntity(input.value));
+      refreshEntityDatalist(input);
+    });
+    refreshEntityDatalist(input);
+    return input;
+  }
+
+  function entityInput(id, value, placeholder, domains) {
+    var el = textInput(id, value, placeholder);
+    return attachEntitySuggestions(el, domains);
+  }
+
   function entityStateKeys(data) {
     var keys = [];
     [data && data.id, data && data.name_id].forEach(function (id) {
@@ -1462,6 +1577,7 @@
 
   function rememberEntityPostPath(data) {
     var preferred = parseEntityId(data && data.name_id) || parseEntityId(data && data.id);
+    if (data && data.domain && data.name) rememberEntityName(data.domain + "." + esphomeObjectId(data.name), data.name);
     if (!preferred || !preferred.path) return;
     entityStateKeys(data).forEach(function (key) {
       state.entityPostPaths[key] = preferred.path;
@@ -1935,7 +2051,7 @@
       }
       if (b.sensor === "position" && (!b.label || b.label === "Track")) b.label = "Position";
       if (b.sensor === "now_playing") {
-        b.precision = b.precision === "progress" ? "progress" : "";
+        b.precision = b.precision === "progress" || b.precision === "play_pause" ? b.precision : "";
       } else if ((b.sensor === "play_pause" || b.sensor === "position") && b.precision === "state") {
         b.precision = "state";
       } else {
@@ -3199,6 +3315,20 @@
     timeoutField.appendChild(timeoutSelect);
     timerPanel.appendChild(timeoutField);
 
+    var mediaPlayerField = document.createElement("div");
+    mediaPlayerField.className = "sp-field";
+    mediaPlayerField.appendChild(fieldLabel("Keep Awake Media Player", "sp-set-ss-media-player"));
+    var mediaPlayerInp = textInput(
+      "sp-set-ss-media-player",
+      state.mediaPlayerSleepPreventionEntity,
+      "e.g. media_player.living_room");
+    mediaPlayerField.appendChild(mediaPlayerInp);
+    timerPanel.appendChild(mediaPlayerField);
+    bindTextPost(mediaPlayerInp, "Media Player Sleep Prevention Entity", {
+      onBlur: function (value) { state.mediaPlayerSleepPreventionEntity = value; },
+    });
+    els.setMediaPlayerSleepPrevention = mediaPlayerInp;
+
     var timerClockControls = createScreensaverThenControls("sp-set-clock-mode");
     timerPanel.appendChild(timerClockControls.clockField);
     timerPanel.appendChild(timerClockControls.brightnessField);
@@ -3218,7 +3348,7 @@
     var presenceField = document.createElement("div");
     presenceField.className = "sp-field";
     presenceField.appendChild(fieldLabel("Presence Entity", "sp-set-presence"));
-    var presInp = textInput("sp-set-presence", "", "Presence sensor entity");
+    var presInp = entityInput("sp-set-presence", "", "Presence sensor entity", ["binary_sensor", "sensor"]);
     presenceField.appendChild(presInp);
     sensorPanel.appendChild(presenceField);
     bindTextPost(presInp, "Presence Sensor Entity", {});
@@ -3690,7 +3820,7 @@
   function createEntityToggleSection(label, id, checked, switchName, entityLabel, entityPostName, placeholder) {
     var toggle = toggleRow(label, id, checked);
     var field = condField();
-    var inp = textInput("", "", placeholder);
+    var inp = entityInput("", "", placeholder, ["sensor"]);
     field.appendChild(inp);
     toggle.input.addEventListener("change", function () { postSwitch(switchName, this.checked); });
     bindTextPost(inp, entityPostName, {});
@@ -4235,6 +4365,7 @@
       makeIconPicker: makeIconPicker,
       fieldLabel: fieldLabel,
       textInput: textInput,
+      entityInput: entityInput,
       bindField: bindField,
       saveField: saveField,
       requireField: requireField,
@@ -4265,7 +4396,9 @@
       var ef = document.createElement("div");
       ef.className = "sp-field";
       ef.appendChild(fieldLabel("Entity", idPrefix + "entity"));
-      var entityInp = textInput(idPrefix + "entity", b.entity, "e.g. light.kitchen");
+      var entityInp = entityInput(idPrefix + "entity", b.entity, "e.g. light.kitchen", [
+        "light", "switch", "input_boolean", "fan"
+      ]);
       ef.appendChild(entityInp);
       panel.appendChild(ef);
       bindField(entityInp, "entity", true);
@@ -4331,7 +4464,9 @@
       var sf = document.createElement("div");
       sf.className = "sp-field";
       sf.appendChild(fieldLabel("Sensor Entity", idPrefix + "sensor"));
-      var sensorInp = textInput(idPrefix + "sensor", b.sensor, "e.g. sensor.printer_percent_complete");
+      var sensorInp = entityInput(idPrefix + "sensor", b.sensor, "e.g. sensor.printer_percent_complete", [
+        "sensor", "binary_sensor", "text_sensor"
+      ]);
       sf.appendChild(sensorInp);
       sensorSection.appendChild(sf);
 
@@ -5630,6 +5765,7 @@
         ntp_server_3: state.ntpServer3,
         screensaver_mode: getActiveScreensaverMode(),
         presence_sensor_entity: state.presenceEntity,
+        media_player_sleep_prevention_entity: state.mediaPlayerSleepPreventionEntity,
         clock_screensaver: state.clockScreensaverOn,
         clock_brightness: state.clockBrightnessDay,
         clock_brightness_day: state.clockBrightnessDay,
@@ -5885,6 +6021,7 @@
           }
           postText("Screensaver Mode", importedScreensaverMode);
           postText("Presence Sensor Entity", s.presence_sensor_entity || "");
+          postText("Media Player Sleep Prevention Entity", s.media_player_sleep_prevention_entity || "");
           var importedClockBrightnessDay = normalizeClockBrightness(
             s.clock_brightness_day != null ? s.clock_brightness_day : s.clock_brightness,
             35);
@@ -5917,6 +6054,7 @@
           state.screensaverMode = importedScreensaverMode;
           state._screensaverModeReceived = true;
           state.presenceEntity = s.presence_sensor_entity || "";
+          state.mediaPlayerSleepPreventionEntity = s.media_player_sleep_prevention_entity || "";
           state.clockScreensaverOn = s.clock_screensaver != null ? !!s.clock_screensaver : false;
           state.clockBrightnessDay = importedClockBrightnessDay;
           state.clockBrightnessNight = importedClockBrightnessNight;
@@ -5933,6 +6071,7 @@
           syncInput(els.setOutdoorEntity, state.outdoorEntity);
           if (els.setTemperatureUnit) els.setTemperatureUnit.value = state.temperatureUnit;
           syncInput(els.setPresence, state.presenceEntity);
+          syncInput(els.setMediaPlayerSleepPrevention, state.mediaPlayerSleepPreventionEntity);
           if (els.setTimezone) els.setTimezone.value = state.timezone;
           if (els.setClockFormat) els.setClockFormat.value = state.clockFormat;
           syncNtpServerUi();
@@ -6244,6 +6383,10 @@
         if (state.screensaverMode === "") {
           if (els.setSsMode) els.setSsMode(getActiveScreensaverMode());
         }
+      },
+      "text-media_player_sleep_prevention_entity": function (val) {
+        state.mediaPlayerSleepPreventionEntity = val;
+        syncInput(els.setMediaPlayerSleepPrevention, val);
       },
       "text-screensaver_mode": function (val) {
         state._screensaverModeReceived = true;

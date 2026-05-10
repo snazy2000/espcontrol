@@ -33,7 +33,7 @@ registerButtonType("climate", {
     var ef = document.createElement("div");
     ef.className = "sp-field";
     ef.appendChild(helpers.fieldLabel("Climate Entity", helpers.idPrefix + "entity"));
-    var entityInp = helpers.textInput(helpers.idPrefix + "entity", b.entity, "e.g. climate.living_room");
+    var entityInp = helpers.entityInput(helpers.idPrefix + "entity", b.entity, "e.g. climate.living_room", ["climate"]);
     ef.appendChild(entityInp);
     panel.appendChild(ef);
     helpers.bindField(entityInp, "entity", true);

@@ -9,7 +9,9 @@ registerButtonType("", {
     var ef = document.createElement("div");
     ef.className = "sp-field";
     ef.appendChild(helpers.fieldLabel("Entity", helpers.idPrefix + "entity"));
-    var entityInp = helpers.textInput(helpers.idPrefix + "entity", b.entity, "e.g. light.kitchen");
+    var entityInp = helpers.entityInput(helpers.idPrefix + "entity", b.entity, "e.g. light.kitchen", [
+      "light", "switch", "input_boolean", "fan"
+    ]);
     ef.appendChild(entityInp);
     panel.appendChild(ef);
     helpers.bindField(entityInp, "entity", true);
@@ -60,7 +62,9 @@ registerButtonType("", {
     var sf = document.createElement("div");
     sf.className = "sp-field";
     sf.appendChild(helpers.fieldLabel("Sensor Entity", helpers.idPrefix + "sensor"));
-    var sensorInp = helpers.textInput(helpers.idPrefix + "sensor", b.sensor, "e.g. sensor.printer_percent_complete");
+    var sensorInp = helpers.entityInput(helpers.idPrefix + "sensor", b.sensor, "e.g. sensor.printer_percent_complete", [
+      "sensor", "binary_sensor", "text_sensor"
+    ]);
     sf.appendChild(sensorInp);
     sensorSection.appendChild(sf);
     helpers.bindField(sensorInp, "sensor", true);

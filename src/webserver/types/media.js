@@ -12,8 +12,17 @@ function mediaEditorValidMode(value) {
   return mediaEditorMode(value);
 }
 
+function mediaNowPlayingControls(b) {
+  if (!b || b.sensor !== "now_playing") return "";
+  return b.precision === "progress" || b.precision === "play_pause" ? b.precision : "";
+}
+
 function mediaNowPlayingProgressEnabled(b) {
-  return b && b.sensor === "now_playing" && b.precision === "progress";
+  return mediaNowPlayingControls(b) === "progress";
+}
+
+function mediaNowPlayingPlayPauseEnabled(b) {
+  return mediaNowPlayingControls(b) === "play_pause";
 }
 
 registerButtonType("media", {
@@ -93,7 +102,7 @@ registerButtonType("media", {
         helpers.saveField("icon", b.icon);
       }
       if (b.sensor === "now_playing") {
-        b.precision = b.precision === "progress" ? "progress" : "";
+        b.precision = mediaNowPlayingControls(b);
         helpers.saveField("precision", b.precision);
       } else if (b.sensor === "play_pause" || b.sensor === "position") {
         b.precision = b.precision === "state" ? "state" : "";
@@ -130,8 +139,8 @@ registerButtonType("media", {
 
     b.sensor = validMode(b.sensor);
     b.unit = "";
-    b.precision = b.sensor === "now_playing" && b.precision === "progress"
-      ? "progress"
+    b.precision = b.sensor === "now_playing"
+      ? mediaNowPlayingControls(b)
       : ((b.sensor === "play_pause" || b.sensor === "position") && b.precision === "state" ? "state" : "");
     b.icon_on = "Auto";
     if (b.sensor === "previous" && b.label === "Skip Previous") {
@@ -162,7 +171,7 @@ registerButtonType("media", {
     var ef = document.createElement("div");
     ef.className = "sp-field";
     ef.appendChild(helpers.fieldLabel("Media Player Entity", helpers.idPrefix + "entity"));
-    var entityInp = helpers.textInput(helpers.idPrefix + "entity", b.entity, "e.g. media_player.living_room");
+    var entityInp = helpers.entityInput(helpers.idPrefix + "entity", b.entity, "e.g. media_player.living_room", ["media_player"]);
     ef.appendChild(entityInp);
     panel.appendChild(ef);
     helpers.bindField(entityInp, "entity", true);
@@ -176,7 +185,7 @@ registerButtonType("media", {
         displayField.style.display = "";
       } else {
         displayField.style.display = "none";
-        if (b.precision && !mediaNowPlayingProgressEnabled(b)) {
+        if (b.precision && !mediaNowPlayingControls(b)) {
           b.precision = "";
           helpers.saveField("precision", "");
         }
@@ -208,17 +217,37 @@ registerButtonType("media", {
     syncDisplayField();
 
     if (b.sensor === "now_playing") {
-      var progressToggle = toggleRow(
-        "Track progress background",
-        helpers.idPrefix + "media-progress",
-        mediaNowPlayingProgressEnabled(b)
-      );
-      progressToggle.input.addEventListener("change", function () {
-        b.precision = this.checked ? "progress" : "";
-        helpers.saveField("precision", b.precision);
-        renderButtonSettings();
+      var controlsField = document.createElement("div");
+      controlsField.className = "sp-field";
+      controlsField.appendChild(helpers.fieldLabel("Controls", helpers.idPrefix + "media-controls"));
+      var controlsSeg = document.createElement("div");
+      controlsSeg.className = "sp-segment";
+      [
+        ["", "None"],
+        ["progress", "Track Position"],
+        ["play_pause", "Play/Pause"],
+      ].forEach(function (entry) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = entry[1];
+        btn.classList.toggle("active", mediaNowPlayingControls(b) === entry[0]);
+        btn.addEventListener("click", function () {
+          b.precision = entry[0];
+          helpers.saveField("precision", b.precision);
+          renderButtonSettings();
+        });
+        controlsSeg.appendChild(btn);
       });
-      panel.appendChild(progressToggle.row);
+      controlsField.appendChild(controlsSeg);
+      panel.appendChild(controlsField);
+    }
+
+    if (b.sensor === "now_playing") {
+      var controlsMode = mediaNowPlayingControls(b);
+      if (b.precision !== controlsMode) {
+        b.precision = controlsMode;
+        helpers.saveField("precision", b.precision);
+      }
     }
 
     if (b.sensor !== "now_playing" &&
@@ -295,6 +324,11 @@ registerButtonType("media", {
           '<span class="sp-slider-preview" style="inset:-2px;background:#' + helpers.escHtml(nowBgColor) + '">' +
           '<span class="sp-slider-track"><span class="sp-slider-fill" style="width:50%;height:100%;background:#444444">' +
           '</span></span></span>';
+      } else if (mediaNowPlayingPlayPauseEnabled(b)) {
+        var playBgColor = (typeof state !== "undefined" && state.onColor) ? state.onColor : "FF8C00";
+        progressBg =
+          '<span class="sp-slider-preview" style="inset:-2px;background:#' + helpers.escHtml(playBgColor) + '">' +
+          '</span>';
       }
       return {
         iconHtml:

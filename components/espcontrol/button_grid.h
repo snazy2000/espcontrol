@@ -134,7 +134,7 @@ inline ParsedCfg normalize_parsed_cfg(ParsedCfg p) {
     }
     if (p.sensor == "position" && (p.label.empty() || p.label == "Track")) p.label = "Position";
     if (p.sensor == "now_playing") {
-      p.precision = p.precision == "progress" ? "progress" : "";
+      p.precision = (p.precision == "progress" || p.precision == "play_pause") ? p.precision : "";
     } else if ((p.sensor == "play_pause" || p.sensor == "position") && p.precision == "state") {
       p.precision = "state";
     } else {
@@ -2301,6 +2301,8 @@ struct MediaNowPlayingCtx {
   lv_obj_t *title_lbl = nullptr;
   lv_obj_t *artist_lbl = nullptr;
   lv_obj_t *progress_slider = nullptr;
+  lv_obj_t *btn = nullptr;
+  bool play_pause_background = false;
 };
 
 constexpr uint32_t MEDIA_SEEK_PENDING_TIMEOUT_MS = 3000;
@@ -2913,6 +2915,10 @@ inline bool media_position_show_state(const ParsedCfg &p) {
 
 inline bool media_now_playing_progress_enabled(const ParsedCfg &p) {
   return media_card_mode(p.sensor) == "now_playing" && p.precision == "progress";
+}
+
+inline bool media_now_playing_play_pause_enabled(const ParsedCfg &p) {
+  return media_card_mode(p.sensor) == "now_playing" && p.precision == "play_pause";
 }
 
 inline void media_format_time(float seconds, char *buf, size_t size) {
@@ -5162,6 +5168,8 @@ inline void setup_media_card(BtnSlot &s, const ParsedCfg &p, uint32_t on_color,
     lv_obj_add_flag(s.sensor_container, LV_OBJ_FLAG_HIDDEN);
     lv_color_t text_color = lv_obj_get_style_text_color(s.sensor_lbl, LV_PART_MAIN);
     MediaNowPlayingCtx *ctx = new MediaNowPlayingCtx();
+    ctx->btn = s.btn;
+    ctx->play_pause_background = media_now_playing_play_pause_enabled(p);
     if (media_now_playing_progress_enabled(p)) {
       ctx->progress_slider = setup_media_progress_background(s.btn, secondary_color, tertiary_color);
     }
@@ -5234,6 +5242,9 @@ inline void subscribe_media_now_playing_state(MediaNowPlayingCtx *ctx,
   );
   if (ctx && ctx->progress_slider) {
     subscribe_media_slider_state(lv_obj_get_parent(ctx->progress_slider), ctx->progress_slider, entity_id);
+  }
+  if (ctx && ctx->play_pause_background && ctx->btn) {
+    subscribe_media_state(ctx->btn, nullptr, entity_id);
   }
 }
 
@@ -5461,7 +5472,7 @@ inline SubpageBtn normalize_subpage_btn(SubpageBtn b) {
     }
     if (b.sensor == "position" && (b.label.empty() || b.label == "Track")) b.label = "Position";
     if (b.sensor == "now_playing") {
-      b.precision = b.precision == "progress" ? "progress" : "";
+      b.precision = (b.precision == "progress" || b.precision == "play_pause") ? b.precision : "";
     } else if ((b.sensor == "play_pause" || b.sensor == "position") && b.precision == "state") {
       b.precision = "state";
     } else {
@@ -6773,7 +6784,7 @@ inline void grid_phase2(
     order_str, on_hex, off_hex, sensor_hex, main_page_obj);
 }
 
-// ── Phase 3: Temperature + presence subscriptions ────────────────────
+// ── Phase 3: Temperature + presence/media subscriptions ───────────────
 
 inline void grid_phase3(
     bool indoor_on, bool outdoor_on,
@@ -6782,9 +6793,11 @@ inline void grid_phase3(
     lv_obj_t *temp_label,
     const std::string &presence_entity,
     bool *presence_detected_ptr,
+    const std::string &media_player_entity,
+    bool *media_player_playing_ptr,
     std::function<void()> wake_callback,
     std::function<void()> sleep_callback) {
-  ESP_LOGI("sensors", "Phase 3: temp/presence subscriptions start (%lu ms)", esphome::millis());
+  ESP_LOGI("sensors", "Phase 3: temp/presence/media subscriptions start (%lu ms)", esphome::millis());
 
   if (indoor_on && outdoor_on) {
     char buf[32];
@@ -6863,6 +6876,16 @@ inline void grid_phase3(
             *presence_detected_ptr = false;
             sleep_callback();
           }
+        })
+    );
+  }
+
+  if (!media_player_entity.empty() && media_player_playing_ptr) {
+    esphome::api::global_api_server->subscribe_home_assistant_state(
+      media_player_entity, {},
+      std::function<void(esphome::StringRef)>(
+        [media_player_playing_ptr](esphome::StringRef state) {
+          *media_player_playing_ptr = state == "playing";
         })
     );
   }

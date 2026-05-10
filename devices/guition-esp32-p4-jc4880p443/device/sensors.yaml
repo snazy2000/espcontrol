@@ -147,6 +147,8 @@ esphome:
               id(temperatures),
               id(presence_sensor_entity).state,
               &id(presence_detected),
+              id(media_player_sleep_prevention_entity).state,
+              &id(media_player_playing),
               []() {
                 id(screensaver_presence_wake).execute();
               },

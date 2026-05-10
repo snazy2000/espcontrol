@@ -27,7 +27,7 @@ registerButtonType("lock", {
     var ef = document.createElement("div");
     ef.className = "sp-field";
     ef.appendChild(helpers.fieldLabel("Entity", helpers.idPrefix + "entity"));
-    var entityInp = helpers.textInput(helpers.idPrefix + "entity", b.entity, "e.g. lock.front_door");
+    var entityInp = helpers.entityInput(helpers.idPrefix + "entity", b.entity, "e.g. lock.front_door", ["lock"]);
     ef.appendChild(entityInp);
     panel.appendChild(ef);
     helpers.bindField(entityInp, "entity", true);

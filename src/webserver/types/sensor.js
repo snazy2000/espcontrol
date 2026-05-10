@@ -31,7 +31,9 @@ registerButtonType("sensor", {
     var sf = document.createElement("div");
     sf.className = "sp-field";
     sf.appendChild(helpers.fieldLabel("Sensor Entity", helpers.idPrefix + "sensor"));
-    var sensorInp = helpers.textInput(helpers.idPrefix + "sensor", b.sensor, "e.g. sensor.living_room_temperature");
+    var sensorInp = helpers.entityInput(helpers.idPrefix + "sensor", b.sensor, "e.g. sensor.living_room_temperature", [
+      "sensor", "binary_sensor", "text_sensor"
+    ]);
     sf.appendChild(sensorInp);
     panel.appendChild(sf);
     helpers.bindField(sensorInp, "sensor", true);

@@ -261,6 +261,30 @@ text:
     web_server:
       sorting_group_id: sg_screensaver
 
+  # Optional media player that keeps the screensaver awake while playing.
+  - platform: template
+    name: "Media Player Sleep Prevention Entity"
+    internal: true
+    id: media_player_sleep_prevention_entity
+    optimistic: true
+    restore_value: true
+    initial_value: ""
+    min_length: 0
+    max_length: 100
+    mode: text
+    entity_category: config
+    icon: "mdi:speaker-play"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_screensaver
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: 'return !id(display_asleep) && lv_scr_act() == id(main_page)->obj;'
+            then:
+              - script.execute: screensaver_idle_check
+
 number:
   - platform: template
     name: "Screen Saver: Daytime Clock Brightness"

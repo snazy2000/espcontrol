@@ -18,7 +18,7 @@ registerButtonType("weather_forecast", {
     var ef = document.createElement("div");
     ef.className = "sp-field";
     ef.appendChild(helpers.fieldLabel("Weather Entity", helpers.idPrefix + "entity"));
-    var entityInp = helpers.textInput(helpers.idPrefix + "entity", b.entity, "e.g. weather.forecast_home");
+    var entityInp = helpers.entityInput(helpers.idPrefix + "entity", b.entity, "e.g. weather.forecast_home", ["weather"]);
     ef.appendChild(entityInp);
     panel.appendChild(ef);
     helpers.bindField(entityInp, "entity", true);

@@ -37,6 +37,9 @@ globals:
   - id: presence_detected
     type: bool
     initial_value: 'false'
+  - id: media_player_playing
+    type: bool
+    initial_value: 'false'
   - id: is_clock_showing
     type: bool
     initial_value: 'false'
@@ -100,11 +103,17 @@ script:
                 return (int)(val * 1000);
             - if:
                 condition:
-                  lambda: 'return id(screensaver_mode).state == "sensor" && id(presence_detected);'
+                  lambda: 'return id(media_player_playing);'
                 then:
                   - script.execute: screensaver_idle_check
                 else:
-                  - script.execute: screensaver_sleep_timer
+                  - if:
+                      condition:
+                        lambda: 'return id(screensaver_mode).state == "sensor" && id(presence_detected);'
+                      then:
+                        - script.execute: screensaver_idle_check
+                      else:
+                        - script.execute: screensaver_sleep_timer
 
   # Timer mode honours the clock/display-off setting.
   - id: screensaver_sleep_timer

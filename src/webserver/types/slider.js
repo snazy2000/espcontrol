@@ -194,7 +194,7 @@ function sliderTypeFactory(opts) {
       var ef = document.createElement("div");
       ef.className = "sp-field";
       ef.appendChild(helpers.fieldLabel("Entity", helpers.idPrefix + "entity"));
-      var entityInp = helpers.textInput(helpers.idPrefix + "entity", b.entity, opts.entityPlaceholder);
+      var entityInp = helpers.entityInput(helpers.idPrefix + "entity", b.entity, opts.entityPlaceholder, opts.entityDomains);
       ef.appendChild(entityInp);
       panel.appendChild(ef);
       helpers.bindField(entityInp, "entity", true);
@@ -333,6 +333,7 @@ registerButtonType("slider", sliderTypeFactory({
   label: "Slider",
   placeholder: "e.g. Living Room",
   entityPlaceholder: "e.g. light.living_room",
+  entityDomains: ["light", "fan"],
   defaultIcon: "Auto",
   defaultIconOn: "Auto",
   fallbackLabel: "Slider",
@@ -348,6 +349,7 @@ registerButtonType("cover", sliderTypeFactory({
   label: "Cover",
   placeholder: "e.g. Office Blind",
   entityPlaceholder: "e.g. cover.office_blind",
+  entityDomains: ["cover"],
   defaultIcon: "Blinds",
   defaultIconOn: "Blinds Open",
   fallbackLabel: "Cover",

@@ -60,10 +60,11 @@ registerButtonType("subpage", {
     var iconEntityField = document.createElement("div");
     iconEntityField.className = "sp-field";
     iconEntityField.appendChild(helpers.fieldLabel("State Entity", helpers.idPrefix + "icon-state-entity"));
-    var iconEntityInp = helpers.textInput(
+    var iconEntityInp = helpers.entityInput(
       helpers.idPrefix + "icon-state-entity",
       iconStateEntity,
-      "e.g. cover.office_blind"
+      "e.g. cover.office_blind",
+      ["light", "switch", "input_boolean", "binary_sensor", "cover", "lock", "media_player", "fan", "person", "device_tracker"]
     );
     iconEntityField.appendChild(iconEntityInp);
     stateIconSection.appendChild(iconEntityField);
@@ -81,7 +82,9 @@ registerButtonType("subpage", {
     var sf = document.createElement("div");
     sf.className = "sp-field";
     sf.appendChild(helpers.fieldLabel("Sensor Entity", helpers.idPrefix + "sensor"));
-    var sensorInp = helpers.textInput(helpers.idPrefix + "sensor", sensorEntity, "e.g. sensor.open_windows");
+    var sensorInp = helpers.entityInput(helpers.idPrefix + "sensor", sensorEntity, "e.g. sensor.open_windows", [
+      "sensor", "binary_sensor", "text_sensor"
+    ]);
     sf.appendChild(sensorInp);
     sensorField.appendChild(sf);
     helpers.requireField(sensorInp, "Add a sensor entity before saving.", function () {

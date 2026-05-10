@@ -511,7 +511,7 @@ assertButtonRoundTrip(hooks, "media now playing card", {
   precision: "",
 }, false);
 
-assertButtonRoundTrip(hooks, "media now playing progress background", {
+assertButtonRoundTrip(hooks, "media now playing track position control", {
   entity: "media_player.office",
   label: "",
   icon: "Auto",
@@ -520,6 +520,17 @@ assertButtonRoundTrip(hooks, "media now playing progress background", {
   unit: "",
   type: "media",
   precision: "progress",
+}, false);
+
+assertButtonRoundTrip(hooks, "media now playing play pause control", {
+  entity: "media_player.office",
+  label: "",
+  icon: "Auto",
+  icon_on: "Auto",
+  sensor: "now_playing",
+  unit: "",
+  type: "media",
+  precision: "play_pause",
 }, false);
 
 assertButtonRoundTrip(hooks, "climate card", {

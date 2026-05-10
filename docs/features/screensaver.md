@@ -27,6 +27,8 @@ The screensaver turns on after the panel hasn't been touched for a set amount of
 
 If the 10 or 30 second choices are not shown, update the panel firmware first. The web page checks what range the installed firmware supports before showing the shorter timer values.
 
+You can also enter a **Keep Awake Media Player** entity, such as `media_player.living_room`. When that media player is in the `playing` state, the timer keeps waiting instead of putting the screen to sleep.
+
 ### Clock or Display Off
 
 When the screensaver activates, you can choose what happens:

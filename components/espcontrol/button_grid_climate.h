@@ -357,6 +357,13 @@ inline void climate_layout_handle_dot(ClimateControlCtx *ctx, const ControlModal
   climate_layout_arc_dot(ctx, layout, ui.handle_dot, climate_selected_target(ctx), handle_size, radius);
 }
 
+inline void climate_apply_background_arc_width(lv_obj_t *arc, const ControlModalLayout &layout) {
+  if (!arc) return;
+  lv_coord_t extra = control_modal_scaled_px(4, layout.short_side);
+  if (extra < 2) extra = 2;
+  lv_obj_set_style_arc_width(arc, layout.arc_stroke + extra, LV_PART_MAIN);
+}
+
 inline void climate_raise_arc_markers() {
   ClimateControlModalUi &ui = climate_control_modal_ui();
   if (ui.current_dot) lv_obj_move_foreground(ui.current_dot);
@@ -1007,6 +1014,7 @@ inline void climate_control_layout_modal(ClimateControlCtx *ctx) {
     lv_obj_align(ui.menu_close_btn, LV_ALIGN_TOP_RIGHT, -layout.inset, layout.inset);
   }
   control_modal_apply_arc_layout(ui.arc, layout, ctx->width_compensation_percent);
+  climate_apply_background_arc_width(ui.arc, layout);
   if (ui.current_dot) climate_layout_current_dot(ctx, layout);
   if (ui.handle_dot) climate_layout_handle_dot(ctx, layout);
   climate_raise_arc_markers();

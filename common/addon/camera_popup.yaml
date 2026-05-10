@@ -56,9 +56,7 @@ online_image:
           format: "Camera snapshot download failed"
       - lambda: |-
           id(camera_popup_open_flag) = false;
-          lv_label_set_text(id(camera_popup_img_widget), "Camera\nUnavailable");
-          lv_obj_set_style_text_font(id(camera_popup_img_widget), id(label_font_sm)->get_lv_font(), LV_PART_MAIN);
-          lv_obj_set_style_text_color(id(camera_popup_img_widget), lv_color_make(255, 100, 100), LV_PART_MAIN);
+          lv_obj_add_flag(id(camera_popup_overlay), LV_OBJ_FLAG_HIDDEN);
 
 esphome:
   on_boot:

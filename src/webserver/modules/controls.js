@@ -593,6 +593,17 @@ function buildSettingsPage(parent) {
   timeoutField.appendChild(timeoutSelect);
   timerPanel.appendChild(timeoutField);
 
+  var timerClockControls = createScreensaverThenControls("sp-set-clock-mode");
+  timerPanel.appendChild(timerClockControls.clockField);
+  timerPanel.appendChild(timerClockControls.brightnessField);
+  els.setClockSelect = timerClockControls.clockSelect;
+  els.setClockField = timerClockControls.clockField;
+  els.setClockBrightnessDay = timerClockControls.clockBrightnessDay;
+  els.setClockBrightnessDayVal = timerClockControls.clockBrightnessDayVal;
+  els.setClockBrightnessNight = timerClockControls.clockBrightnessNight;
+  els.setClockBrightnessNightVal = timerClockControls.clockBrightnessNightVal;
+  els.setClockBrightnessField = timerClockControls.brightnessField;
+
   var mediaPlayerField = document.createElement("div");
   mediaPlayerField.className = "sp-field";
   mediaPlayerField.appendChild(fieldLabel("Keep Awake Media Player", "sp-set-ss-media-player"));
@@ -606,17 +617,6 @@ function buildSettingsPage(parent) {
     onBlur: function (value) { state.mediaPlayerSleepPreventionEntity = value; },
   });
   els.setMediaPlayerSleepPrevention = mediaPlayerInp;
-
-  var timerClockControls = createScreensaverThenControls("sp-set-clock-mode");
-  timerPanel.appendChild(timerClockControls.clockField);
-  timerPanel.appendChild(timerClockControls.brightnessField);
-  els.setClockSelect = timerClockControls.clockSelect;
-  els.setClockField = timerClockControls.clockField;
-  els.setClockBrightnessDay = timerClockControls.clockBrightnessDay;
-  els.setClockBrightnessDayVal = timerClockControls.clockBrightnessDayVal;
-  els.setClockBrightnessNight = timerClockControls.clockBrightnessNight;
-  els.setClockBrightnessNightVal = timerClockControls.clockBrightnessNightVal;
-  els.setClockBrightnessField = timerClockControls.brightnessField;
 
   ssBody.appendChild(timerPanel);
   els.setSSTimeout = timeoutSelect;

@@ -71,7 +71,7 @@ font:
   # Top bar network status icon
   - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'
     id: network_status_font_lt
-    size: 24
+    size: 21
     bpp: 4
     glyphs: !include ../../../common/assets/network_status_glyphs.yaml
 

@@ -67,6 +67,7 @@ var CSS =
   "overflow:hidden;word-break:break-word;min-height:0}" +
   ".sp-sensor-badge{position:absolute;top:var(--sensor-top);right:var(--sensor-right);font-size:var(--sensor-fs);opacity:.5}" +
   ".sp-sensor-preview{display:flex;align-items:baseline;gap:.18em;color:#fff}" +
+  ".sp-btn-big .sp-sensor-preview-large{transform:scale(2.5);transform-origin:top left}" +
   ".sp-forecast-preview{white-space:nowrap;gap:0}" +
   ".sp-sensor-value{font-size:var(--btn-icon);line-height:1;font-weight:300}" +
   ".sp-sensor-unit{font-size:var(--btn-label);line-height:1;color:#fff}" +

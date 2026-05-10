@@ -89,7 +89,7 @@ var state = {
 
 for (var i = 0; i < NUM_SLOTS; i++) {
   state.grid.push(0);
-  state.buttons.push({ entity: "", label: "", icon: "Auto", icon_on: "Auto", sensor: "", unit: "", type: "", precision: "" });
+  state.buttons.push({ entity: "", label: "", icon: "Auto", icon_on: "Auto", sensor: "", unit: "", type: "", precision: "", options: "" });
 }
 
 function getActiveScreensaverMode() {

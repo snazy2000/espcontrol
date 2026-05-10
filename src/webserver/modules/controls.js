@@ -1263,7 +1263,7 @@ function renderPreview() {
         label = "Configure";
       }
       var typePreview = previewTypeDef && previewTypeDef.renderPreview
-        ? previewTypeDef.renderPreview(b, { escHtml: escHtml })
+        ? previewTypeDef.renderPreview(b, { escHtml: escHtml, cardSize: slotSz || 1 })
         : null;
 
       var btn = document.createElement("div");
@@ -1500,6 +1500,7 @@ function renderButtonSettings(forceOpen) {
       unit: src.unit || "",
       type: src.type || "",
       precision: src.precision || "",
+      options: src.options || "",
       _whenOnActive: src._whenOnActive,
       _whenOnMode: src._whenOnMode,
     };
@@ -1514,6 +1515,7 @@ function renderButtonSettings(forceOpen) {
     target.unit = src.unit || "";
     target.type = src.type || "";
     target.precision = src.precision || "";
+    target.options = src.options || "";
     target._whenOnActive = src._whenOnActive;
     target._whenOnMode = src._whenOnMode;
     normalizeButtonConfig(target);
@@ -1827,6 +1829,7 @@ function renderButtonSettings(forceOpen) {
     requireField: requireField,
     clearFieldError: clearFieldError,
     toggleRow: toggleRow,
+    cardSize: c.sizes[slot] || 1,
     idPrefix: idPrefix,
   };
 
@@ -2652,7 +2655,7 @@ function firstFreeCell(afterPos) {
 }
 
 function emptyButtonConfig(type) {
-  return { entity: "", label: "", icon: "Auto", icon_on: "Auto", sensor: "", unit: "", type: type || "", precision: "" };
+  return { entity: "", label: "", icon: "Auto", icon_on: "Auto", sensor: "", unit: "", type: type || "", precision: "", options: "" };
 }
 
 function addSlot(pos) {
@@ -2710,6 +2713,7 @@ function duplicateButton(srcSlot) {
     entity: src.entity, label: src.label, icon: src.icon,
     icon_on: src.icon_on, sensor: src.sensor, unit: src.unit,
     type: src.type || "", precision: src.precision || "",
+    options: src.options || "",
   };
 
   if (placement.size === 1) delete state.sizes[newSlot]; else state.sizes[newSlot] = placement.size;
@@ -2747,6 +2751,7 @@ function duplicateSubpageButton(srcSlot) {
     entity: src.entity, label: src.label, icon: src.icon,
     icon_on: src.icon_on, sensor: src.sensor, unit: src.unit,
     type: src.type || "", precision: src.precision || "",
+    options: src.options || "",
   };
 
   if (placement.size === 1) delete sp.sizes[newSlot]; else sp.sizes[newSlot] = placement.size;
@@ -2779,14 +2784,14 @@ function deleteSlot(slot) {
   if (c.isSub) {
     var sp = getSubpage(state.editingSubpage);
     if (slot >= 1 && slot <= sp.buttons.length) {
-      sp.buttons[slot - 1] = { entity: "", label: "", icon: "Auto", icon_on: "Auto", sensor: "", unit: "", type: "", precision: "" };
+      sp.buttons[slot - 1] = emptyButtonConfig();
     }
     sp.order = serializeSubpageGrid(sp);
     state.subpageLastClicked = -1;
     saveSubpageConfig(state.editingSubpage);
   } else {
     postText("Button Order", serializeGrid(state.grid));
-    state.buttons[slot - 1] = { entity: "", label: "", icon: "Auto", icon_on: "Auto", sensor: "", unit: "", type: "", precision: "" };
+    state.buttons[slot - 1] = emptyButtonConfig();
     delete state.subpages[slot];
     saveButtonConfig(slot);
     saveSubpageEntity(slot);
@@ -2814,14 +2819,14 @@ function deleteButtons(slots) {
     var sp = getSubpage(state.editingSubpage);
     slots.forEach(function (slot) {
       if (slot >= 1 && slot <= sp.buttons.length) {
-        sp.buttons[slot - 1] = { entity: "", label: "", icon: "Auto", icon_on: "Auto", sensor: "", unit: "", type: "", precision: "" };
+        sp.buttons[slot - 1] = emptyButtonConfig();
       }
     });
     sp.order = serializeSubpageGrid(sp);
     saveSubpageConfig(state.editingSubpage);
   } else {
     slots.forEach(function (slot) {
-      state.buttons[slot - 1] = { entity: "", label: "", icon: "Auto", icon_on: "Auto", sensor: "", unit: "", type: "", precision: "" };
+      state.buttons[slot - 1] = emptyButtonConfig();
       delete state.subpages[slot];
       saveButtonConfig(slot);
       saveSubpageEntity(slot);
@@ -3083,6 +3088,7 @@ function buildClipboardEntry(slot) {
     entity: src.entity, label: src.label, icon: src.icon,
     icon_on: src.icon_on, sensor: src.sensor, unit: src.unit,
     type: src.type || "", precision: src.precision || "",
+    options: src.options || "",
     subpageConfig: null, size: c.sizes[slot] || 1,
   };
   if (!c.isSub && src.type === "subpage" && state.subpages[slot]) {
@@ -3127,6 +3133,7 @@ function pasteButton(pos) {
       entity: e.entity, label: e.label, icon: e.icon,
       icon_on: e.icon_on, sensor: e.sensor, unit: e.unit,
       type: e.type || "", precision: e.precision || "",
+      options: e.options || "",
     };
     if (placeSize === 1) delete state.sizes[newSlot]; else state.sizes[newSlot] = placeSize;
     placeSlotAt(state.grid, newSlot, cell, placeSize);
@@ -3167,6 +3174,7 @@ function pasteSubpageButton(pos) {
       entity: e.entity, label: e.label, icon: e.icon,
       icon_on: e.icon_on, sensor: e.sensor, unit: e.unit,
       type: e.type || "", precision: e.precision || "",
+      options: e.options || "",
     };
     if (placeSize === 1) delete sp.sizes[newSlot]; else sp.sizes[newSlot] = placeSize;
     placeSlotAt(sp.grid, newSlot, cell, placeSize);

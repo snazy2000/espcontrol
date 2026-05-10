@@ -8,9 +8,11 @@ registerButtonType("sensor", {
     b.icon_on = "Auto";
     if (!b.precision) b.precision = "";
     if (b.precision !== "text") b.icon = "Auto";
+    if (b.precision === "text") b.options = "";
   },
   renderSettings: function (panel, b, slot, helpers) {
     var isTextMode = b.precision === "text";
+    var isLargeCard = helpers.cardSize === 4;
 
     var mode = helpers.segmentControl([
       ["numeric", "Numeric"],
@@ -47,6 +49,17 @@ registerButtonType("sensor", {
     });
     var precisionSelect = precisionField.select;
     numericSection.appendChild(precisionField.field);
+
+    if (isLargeCard) {
+      var largeNumbersToggle = helpers.toggleRow(
+        "Large Sensor Numbers", helpers.idPrefix + "large-sensor-numbers",
+        sensorLargeNumbersEnabled(b));
+      numericSection.appendChild(largeNumbersToggle.row);
+      largeNumbersToggle.input.addEventListener("change", function () {
+        setSensorLargeNumbersEnabled(b, this.checked);
+        helpers.saveField("options", b.options);
+      });
+    }
     panel.appendChild(numericSection);
 
     var textSection = condField();
@@ -72,12 +85,14 @@ registerButtonType("sensor", {
         b.label = "";
         b.unit = "";
         b.icon_on = "Auto";
+        b.options = "";
         labelInp.value = "";
         unitInp.value = "";
         helpers.saveField("precision", "text");
         helpers.saveField("label", "");
         helpers.saveField("unit", "");
         helpers.saveField("icon_on", "Auto");
+        helpers.saveField("options", "");
       } else {
         b.precision = "";
         b.icon = "Auto";
@@ -108,9 +123,11 @@ registerButtonType("sensor", {
     var unit = b.unit ? helpers.escHtml(b.unit) : "";
     var prec = parseInt(b.precision || "0", 10) || 0;
     var sampleVal = (0).toFixed(prec);
+    var previewClass = "sp-sensor-preview" +
+      (helpers.cardSize === 4 && sensorLargeNumbersEnabled(b) ? " sp-sensor-preview-large" : "");
     return {
       iconHtml:
-        '<span class="sp-sensor-preview">' +
+        '<span class="' + previewClass + '">' +
           '<span class="sp-sensor-value">' + sampleVal + '</span>' +
           '<span class="sp-sensor-unit">' + unit + '</span>' +
         '</span>',

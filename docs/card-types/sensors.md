@@ -26,6 +26,7 @@ For **Numeric** mode:
 1. Set a **Unit** — the unit label shown next to the value, for example `°C`, `%`, `W`, or `kWh`.
 2. Set a **Label** if you want custom text under the value. If left blank, the entity name from Home Assistant is used.
 3. Set **Unit Precision** if you want one or two decimal places.
+4. On a **Large** card, turn on **Large Sensor Numbers** if you want the top sensor readout scaled much larger.
 
 For **Text** mode:
 

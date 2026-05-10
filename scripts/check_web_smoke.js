@@ -44,6 +44,7 @@ const button = {
   unit: "",
   type: "",
   precision: "",
+  options: "",
 };
 
 const encoded = hooks.serializeButtonConfig(button);

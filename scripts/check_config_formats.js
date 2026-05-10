@@ -79,6 +79,7 @@ function firmwareParseButtonConfig(str) {
     unit: parts[5] || "",
     type: parts[6] || "",
     precision: parts[7] || "",
+    options: parts[8] || "",
   };
 }
 
@@ -106,6 +107,7 @@ function firmwareParseSubpageConfig(str) {
         sensor: decodeField(f[5]),
         unit: decodeField(f[6]),
         precision: decodeField(f[7]),
+        options: decodeField(f[8]),
       });
     } else {
       const f = splitFields(pipes[i], ":");
@@ -118,6 +120,7 @@ function firmwareParseSubpageConfig(str) {
         unit: f[5] || "",
         type: f[6] || "",
         precision: f[7] || "",
+        options: f[8] || "",
       });
     }
   }
@@ -134,6 +137,7 @@ function buttonShape(b) {
     unit: b.unit || "",
     type: b.type || "",
     precision: b.precision || "",
+    options: b.options || "",
   };
 }
 
@@ -263,6 +267,18 @@ assertButtonRoundTrip(hooks, "delimiter button", {
   type: "sensor",
   precision: "1",
 }, true);
+
+assertButtonRoundTrip(hooks, "large sensor numbers option", {
+  entity: "sensor.blood_glucose",
+  label: "Blood Glucose",
+  icon: "Auto",
+  icon_on: "Auto",
+  sensor: "sensor.blood_glucose",
+  unit: "",
+  type: "sensor",
+  precision: "",
+  options: "large_numbers",
+}, false);
 
 assertButtonRoundTrip(hooks, "internal relay push button", {
   entity: "relay_1",
@@ -785,7 +801,7 @@ assertButtonRoundTrip(hooks, "input select delimiter action card", {
   precision: "",
 }, true);
 
-assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("light.legacy;Legacy;Auto;Lightbulb;sensor.legacy;W;sensor;1")), {
+assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("light.legacy;Legacy;Auto;Lightbulb;sensor.legacy;W;sensor;1")), buttonShape({
   entity: "light.legacy",
   label: "Legacy",
   icon: "Auto",
@@ -794,9 +810,9 @@ assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("light.legacy;Legacy;
   unit: "W",
   type: "sensor",
   precision: "1",
-}, "legacy button parse");
+}), "legacy button parse");
 
-assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("~light.compact,Compact%3B%20Label,Auto,Auto,sensor.compact,deg%3BC,sensor,2")), {
+assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("~light.compact,Compact%3B%20Label,Auto,Auto,sensor.compact,deg%3BC,sensor,2")), buttonShape({
   entity: "light.compact",
   label: "Compact; Label",
   icon: "Auto",
@@ -805,7 +821,7 @@ assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("~light.compact,Compa
   unit: "deg;C",
   type: "sensor",
   precision: "2",
-}, "compact button parse");
+}), "compact button parse");
 
 assertButtonMigration(hooks, "legacy horizontal slider card", "light.strip;Strip;Lightbulb;Lightbulb On;h;;slider", {
   entity: "light.strip",
@@ -934,7 +950,7 @@ assertSubpageRoundTrip(hooks, "delimiter subpage", {
   order: ["1", "B", "2"],
   buttons: [
     buttonShape({ entity: "light.zone", label: "Kitchen: west | 50%, main", icon: "Auto", icon_on: "Auto" }),
-    buttonShape({ entity: "sensor.zone", label: "Temp: west | 50%", icon: "Thermometer", icon_on: "Auto", sensor: "sensor.zone", unit: "deg:C", type: "sensor", precision: "1" }),
+    buttonShape({ entity: "sensor.zone", label: "Temp: west | 50%", icon: "Thermometer", icon_on: "Auto", sensor: "sensor.zone", unit: "deg:C", type: "sensor", precision: "1", options: "large_numbers" }),
   ],
 }, true);
 

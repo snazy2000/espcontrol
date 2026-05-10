@@ -1,6 +1,7 @@
 // ── Subpage helpers ────────────────────────────────────────────────────
 
 function normalizeButtonConfig(b) {
+  if (b) b.options = b.options || "";
   if (b && b.type === "slider" && b.sensor) {
     b.sensor = "";
   }
@@ -50,7 +51,48 @@ function normalizeButtonConfig(b) {
     b.icon_on = "Auto";
     b.precision = normalizeClimatePrecisionConfig(b.precision);
   }
+  if (b && (b.type !== "sensor" || b.precision === "text")) {
+    b.options = "";
+  }
   return b;
+}
+
+var SENSOR_LARGE_NUMBERS_OPTION = "large_numbers";
+
+function configOptionEnabled(options, name) {
+  var parts = String(options || "").split(",");
+  for (var i = 0; i < parts.length; i++) {
+    if (parts[i] === name) return true;
+  }
+  return false;
+}
+
+function setConfigOption(options, name, enabled) {
+  var parts = String(options || "").split(",");
+  var out = [];
+  var found = false;
+  for (var i = 0; i < parts.length; i++) {
+    var part = parts[i];
+    if (!part) continue;
+    if (part === name) {
+      found = true;
+      if (enabled) out.push(part);
+    } else if (out.indexOf(part) < 0) {
+      out.push(part);
+    }
+  }
+  if (enabled && !found) out.push(name);
+  return out.join(",");
+}
+
+function sensorLargeNumbersEnabled(b) {
+  return !!(b && configOptionEnabled(b.options, SENSOR_LARGE_NUMBERS_OPTION));
+}
+
+function setSensorLargeNumbersEnabled(b, enabled) {
+  if (!b) return "";
+  b.options = setConfigOption(b.options, SENSOR_LARGE_NUMBERS_OPTION, enabled);
+  return b.options;
 }
 
 function parseClimatePrecisionConfig(value) {
@@ -95,6 +137,7 @@ function buttonConfigChangedByNormalize(raw) {
     unit: raw && raw.unit || "",
     type: raw && raw.type || "",
     precision: raw && raw.precision || "",
+    options: raw && raw.options || "",
   };
   var after = normalizeButtonConfig({
     entity: before.entity,
@@ -105,6 +148,7 @@ function buttonConfigChangedByNormalize(raw) {
     unit: before.unit,
     type: before.type,
     precision: before.precision,
+    options: before.options,
   });
   return before.entity !== after.entity ||
     before.label !== after.label ||
@@ -113,7 +157,8 @@ function buttonConfigChangedByNormalize(raw) {
     before.sensor !== after.sensor ||
     before.unit !== after.unit ||
     before.type !== after.type ||
-    before.precision !== after.precision;
+    before.precision !== after.precision ||
+    before.options !== after.options;
 }
 
 function trimConfigFields(fields) {
@@ -129,9 +174,12 @@ function buttonConfigFields(b) {
   var iconOn = type === "climate" ? "Auto" : (b && b.icon_on || "Auto");
   var precision = b && b.precision || "";
   if (type === "climate") precision = normalizeClimatePrecisionConfig(precision);
+  var options = b && b.options || "";
+  if (!(type === "sensor" && precision !== "text")) options = "";
   if (!type && !sensor) {
     unit = "";
     precision = "";
+    options = "";
   }
   return trimConfigFields([
     b && b.entity || "",
@@ -142,6 +190,7 @@ function buttonConfigFields(b) {
     unit,
     type,
     precision,
+    options,
   ]);
 }
 
@@ -185,6 +234,7 @@ function parseRawButtonConfig(str) {
     unit: parts[5] || "",
     type: parts[6] || "",
     precision: parts[7] || "",
+    options: parts[8] || "",
   };
 }
 
@@ -283,6 +333,7 @@ function parseSubpageConfig(str, raw) {
       unit: f[5] || "",
       type: f[6] || "",
       precision: f[7] || "",
+      options: f[8] || "",
     };
     buttons.push(raw ? button : normalizeButtonConfig(button));
   }
@@ -359,6 +410,7 @@ function parseCompactSubpageConfig(str, raw) {
       sensor: decodeSubpageField(f[5]),
       unit: decodeSubpageField(f[6]),
       precision: decodeSubpageField(f[7]),
+      options: decodeSubpageField(f[8]),
     };
     buttons.push(raw ? button : normalizeButtonConfig(button));
   }
@@ -399,7 +451,9 @@ function legacySubpageConfigSafe(sp) {
     var iconOn = b.type === "climate" ? "Auto" : (b.icon_on || "Auto");
     var precision = b.precision || "";
     if (b.type === "climate") precision = normalizeClimatePrecisionConfig(precision);
-    var fields = [b.entity || "", b.label || "", icon, iconOn, sensor, unit, b.type || "", precision];
+    var options = b.options || "";
+    if (!(b.type === "sensor" && precision !== "text")) options = "";
+    var fields = [b.entity || "", b.label || "", icon, iconOn, sensor, unit, b.type || "", precision, options];
     for (var j = 0; j < fields.length; j++) {
       if (String(fields[j] || "").indexOf("|") >= 0 || String(fields[j] || "").indexOf(":") >= 0) {
         return false;
@@ -420,7 +474,9 @@ function serializeLegacySubpageConfig(sp) {
     var iconOn = b.type === "climate" ? "Auto" : (b.icon_on || "Auto");
     var precision = b.precision || "";
     if (b.type === "climate") precision = normalizeClimatePrecisionConfig(precision);
-    var fields = [b.entity || "", b.label || "", icon, iconOn, sensor, unit, b.type || "", precision];
+    var options = b.options || "";
+    if (!(b.type === "sensor" && precision !== "text")) options = "";
+    var fields = [b.entity || "", b.label || "", icon, iconOn, sensor, unit, b.type || "", precision, options];
     while (fields.length > 1 && !fields[fields.length - 1]) fields.pop();
     if (fields.length > 1 && fields[fields.length - 1] === "Auto") {
       while (fields.length > 1 && (fields[fields.length - 1] === "Auto" || !fields[fields.length - 1])) fields.pop();
@@ -441,6 +497,8 @@ function serializeCompactSubpageConfig(sp) {
     var iconOn = b.type === "climate" ? "Auto" : (b.icon_on || "Auto");
     var precision = b.precision || "";
     if (b.type === "climate") precision = normalizeClimatePrecisionConfig(precision);
+    var options = b.options || "";
+    if (!(b.type === "sensor" && precision !== "text")) options = "";
     var fields = [
       subpageTypeCode(b.type || ""),
       encodeSubpageField(b.entity),
@@ -450,6 +508,7 @@ function serializeCompactSubpageConfig(sp) {
       encodeSubpageField(sensor),
       encodeSubpageField(unit),
       encodeSubpageField(precision),
+      encodeSubpageField(options),
     ];
     while (fields.length > 1 && !fields[fields.length - 1]) fields.pop();
     out += "|" + fields.join(",");

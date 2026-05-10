@@ -426,6 +426,13 @@ export default defineConfig({
           { text: 'Icon Reference', link: '/reference/icons' },
           { text: 'FAQ', link: '/reference/faq' },
           { text: 'Roadmap', link: '/reference/roadmap' },
+        ],
+      },
+      {
+        text: 'Development',
+        items: [
+          { text: 'Project Organization', link: '/development/project-organization' },
+          { text: 'Display Sizing Notes', link: '/development/display-sizing' },
           { text: 'Climate Control Spec', link: '/development/climate-control' },
         ],
       },

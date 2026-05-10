@@ -85,7 +85,9 @@ Do not hand-edit the generated `device/sensors.yaml` font assignments. Update `d
 
 The volume modal layout is in:
 
-- `components/espcontrol/button_grid.h`
+- `components/espcontrol/button_grid_sliders.h`
+
+`components/espcontrol/button_grid.h` remains the public include used by generated device YAML. It includes the smaller internal headers.
 
 Important constants:
 

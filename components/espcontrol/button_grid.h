@@ -23,6 +23,8 @@
 #include "icons.h"
 #include "backlight.h"
 
+// Public compatibility include. Device YAML includes this file, while the
+// implementation is split into focused headers below for easier review.
 #include "button_grid_config.h"
 #include "button_grid_layout.h"
 #include "button_grid_cards.h"

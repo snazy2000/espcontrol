@@ -1,7 +1,9 @@
 """ESPHome external component stub for espcontrol.
 
-Registers this directory as an include path so C++ headers (button_grid.h,
-icons.h, sun_calc.h, temperature_unit.h) are available to lambdas in device YAML configs.
+Registers this directory as an include path so public C++ headers
+(button_grid.h, icons.h, sun_calc.h, temperature_unit.h) are available to
+lambdas in device YAML configs. button_grid.h is the compatibility facade for
+the smaller button_grid_*.h implementation headers.
 No YAML schema — all config is handled by the YAML packages.
 """
 import esphome.codegen as cg

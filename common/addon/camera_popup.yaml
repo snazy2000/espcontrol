@@ -44,8 +44,7 @@ online_image:
     type: RGB565
     update_interval: never
     resize: "${camera_popup_resize}"
-    buffer_size: 262144
-    timeout: 15s
+    buffer_size: 65536
     on_download_finished:
       - lvgl.image.update:
           id: camera_popup_img_widget

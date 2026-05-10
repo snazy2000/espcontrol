@@ -2,11 +2,23 @@
 
 // Internal implementation detail for button_grid.h. Include button_grid.h from device YAML.
 //
-// Camera popup card: tapping the tile opens a fullscreen LVGL overlay that
-// shows periodic JPEG snapshots fetched from HA's camera_proxy REST endpoint.
-// The overlay tree and fetch loop live in common/addon/camera_popup.yaml;
-// this header only wires the tile visual and opens the popup by assigning
-// YAML globals and executing camera_popup_open_script.
+// id() is only resolvable inside YAML-generated lambda bodies (main.cpp scope).
+// This header is compiled as part of the ESPHome component system before those
+// variables are declared, so it cannot call id() directly.
+//
+// Instead, camera_popup_yaml registers a capturing lambda at on_boot (where id()
+// IS in scope). camera_popup_open_from_cfg calls it via the stored std::function.
+
+inline std::function<void(const std::string &, uint32_t)> &camera_popup_open_fn_storage() {
+  static std::function<void(const std::string &, uint32_t)> fn;
+  return fn;
+}
+
+// Called once from the camera_popup.yaml on_boot lambda to bind id()-based
+// globals and the open script into C++-callable storage.
+inline void camera_popup_register_fn(std::function<void(const std::string &, uint32_t)> fn) {
+  camera_popup_open_fn_storage() = std::move(fn);
+}
 
 inline void setup_camera_card(BtnSlot &s, const ParsedCfg &p) {
   lv_label_set_text(s.text_lbl,
@@ -31,14 +43,17 @@ inline bool camera_entity_valid(const std::string &entity_id) {
   return entity_id.size() > 7 && entity_id.compare(0, 7, "camera.") == 0;
 }
 
-// Assign popup globals and execute the open script (defined in camera_popup.yaml).
-// Safe to call from both main-grid handle_button_click and subpage event callbacks.
+// Open the camera popup for the given config.
+// Safe to call from handle_button_click and subpage event callbacks.
 inline void camera_popup_open_from_cfg(const ParsedCfg &p) {
   if (!camera_entity_valid(p.entity)) {
     ESP_LOGW("camera_popup", "Expected camera.* entity, got: %s", p.entity.c_str());
     return;
   }
-  id(camera_popup_entity) = p.entity;
-  id(camera_popup_refresh_ms) = camera_refresh_ms(p.sensor);
-  id(camera_popup_open_script).execute();
+  auto &fn = camera_popup_open_fn_storage();
+  if (!fn) {
+    ESP_LOGW("camera_popup", "Camera popup not registered; include camera_popup.yaml");
+    return;
+  }
+  fn(p.entity, camera_refresh_ms(p.sensor));
 }

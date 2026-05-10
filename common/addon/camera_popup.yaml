@@ -56,6 +56,17 @@ online_image:
           tag: camera_popup
           format: "Camera snapshot download failed"
 
+esphome:
+  on_boot:
+    priority: 600
+    then:
+      - lambda: |-
+          camera_popup_register_fn([](const std::string &entity, uint32_t refresh_ms) {
+            id(camera_popup_entity) = entity;
+            id(camera_popup_refresh_ms) = refresh_ms;
+            id(camera_popup_open_script).execute();
+          });
+
 script:
   - id: camera_popup_open_script
     then:

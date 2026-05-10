@@ -26,10 +26,13 @@ var state = {
   mediaPlayerSleepPreventionEntity: "",
   screensaverMode: "disabled",
   _screensaverModeReceived: false,
+  screensaverAction: "off",
+  _screensaverActionReceived: false,
   clockScreensaverOn: false,
   clockBrightnessDay: 35,
   clockBrightnessNight: 35,
   clockBrightnessSplitReceived: false,
+  screensaverDimmedBrightness: 10,
   screensaverTimeout: 300,
   screensaverTimeoutMin: 60,
   screensaverTimeoutMax: 3600,
@@ -236,6 +239,20 @@ function normalizeScheduleMode(value) {
   return "screen_off";
 }
 
+function normalizeScreensaverAction(value) {
+  var v = String(value || "").toLowerCase().replace(/[\s-]+/g, "_");
+  if (v === "screen_dimmed" || v === "dimmed" || v === "dim") return "dim";
+  if (v === "clock") return "clock";
+  return "off";
+}
+
+function screensaverActionOption(value) {
+  var action = normalizeScreensaverAction(value);
+  if (action === "dim") return "Screen Dimmed";
+  if (action === "clock") return "Clock";
+  return "Display Off";
+}
+
 function scheduleModeOption(value) {
   var mode = normalizeScheduleMode(value);
   if (mode === "screen_dimmed") return "Screen Dimmed";
@@ -246,6 +263,14 @@ function scheduleModeOption(value) {
 function normalizeClockBrightness(value, fallback) {
   var n = parseFloat(value);
   if (!isFinite(n) || n <= 0) return fallback;
+  if (n < 1) return 1;
+  if (n > 100) return 100;
+  return Math.round(n);
+}
+
+function normalizeScreensaverDimmedBrightness(value) {
+  var n = parseFloat(value);
+  if (!isFinite(n) || n <= 0) return 10;
   if (n < 1) return 1;
   if (n > 100) return 100;
   return Math.round(n);

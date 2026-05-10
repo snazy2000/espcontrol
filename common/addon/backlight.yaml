@@ -7,8 +7,8 @@
 #   3. Presence sensor: optional HA binary_sensor, wakes display on detection
 # Screen schedule can also force the physical backlight off outside configured
 # hours. It shares the same display sleep/wake plumbing but tracks its own state.
-# When the clock screensaver is enabled, the idle timer shows a drifting clock
-# instead of turning off the display. The label repositions each update for
+# When the screensaver activates, it can dim the current screen, show a drifting
+# clock, or turn the display off. The clock label repositions each update for
 # burn-in prevention.
 # Setup screen dim: dims to 50% after 120s on static setup pages.
 # Touch wake is handled by the touchscreen on_touch in device.yaml.
@@ -31,6 +31,9 @@ globals:
   - id: screensaver_display_off_active
     type: bool
     initial_value: 'false'
+  - id: screensaver_dimmed_active
+    type: bool
+    initial_value: 'false'
   - id: home_screen_idle_suspended
     type: bool
     initial_value: 'false'
@@ -49,7 +52,14 @@ globals:
   - id: screensaver_clock_target_level
     type: float
     initial_value: '0.35'
+  - id: screensaver_dimmed_target_level
+    type: float
+    initial_value: '0.10'
   - id: clock_brightness_migrated
+    type: bool
+    restore_value: true
+    initial_value: 'false'
+  - id: screensaver_action_migrated
     type: bool
     restore_value: true
     initial_value: 'false'
@@ -59,6 +69,16 @@ esphome:
     priority: -240
     then:
       - lambda: |-
+          if (!id(screensaver_action_migrated)) {
+            if (id(clock_screensaver_enabled).state) {
+              auto action_call = id(screensaver_action).make_call();
+              action_call.set_option("Clock");
+              action_call.perform();
+            }
+            id(screensaver_action_migrated) = true;
+            global_preferences->sync();
+          }
+
           if (id(clock_brightness_migrated)) return;
           float legacy_pct = id(clock_brightness).state;
           if (std::isnan(legacy_pct) || legacy_pct <= 0.0f) legacy_pct = 35.0f;
@@ -121,14 +141,20 @@ script:
     then:
       - if:
           condition:
-            lambda: 'return id(clock_screensaver_enabled).state;'
+            lambda: 'return screensaver_action_clock_mode(id(screensaver_action).current_option());'
           then:
             - globals.set:
                 id: display_asleep
                 value: 'true'
             - script.execute: show_clock_view
           else:
-            - script.execute: screensaver_sleep_display_off
+            - if:
+                condition:
+                  lambda: 'return screensaver_action_dimmed_mode(id(screensaver_action).current_option());'
+                then:
+                  - script.execute: show_dimmed_view
+                else:
+                  - script.execute: screensaver_sleep_display_off
 
   # Sensor mode honours the same clock/display-off setting as timer mode.
   - id: screensaver_sleep_sensor
@@ -260,8 +286,12 @@ script:
       - globals.set:
           id: screensaver_display_off_active
           value: 'true'
+      - globals.set:
+          id: screensaver_dimmed_active
+          value: 'false'
       - lvgl.resume:
       - script.execute: hide_clock_view
+      - lvgl.widget.hide: dim_screensaver_touch_guard
       - lvgl.page.show: screen_off_page
       - delay: 50ms
       - script.execute: backlight_force_display_off
@@ -274,6 +304,10 @@ script:
       - script.execute: backlight_force_display_off
       - lvgl.resume:
       - script.execute: hide_clock_view
+      - globals.set:
+          id: screensaver_dimmed_active
+          value: 'false'
+      - lvgl.widget.hide: dim_screensaver_touch_guard
       - lvgl.page.show: screen_off_page
       - delay: 50ms
       - script.execute: backlight_force_display_off
@@ -356,6 +390,8 @@ script:
       - script.stop: backlight_sleep_display_off
       - script.stop: backlight_schedule_display_off
       - script.stop: screen_schedule_show_clock
+      - script.stop: show_dimmed_view
+      - script.stop: screensaver_dimmed_refresh_brightness
       - lambda: |-
           id(backlight_manual_off) = false;
           if (id(schedule_enabled).state) {
@@ -379,16 +415,20 @@ script:
             - script.stop: screen_schedule_wake_timeout_check
       - if:
           condition:
-            lambda: 'return id(display_asleep) || id(screen_schedule_asleep) || id(screensaver_display_off_active);'
+            lambda: 'return id(display_asleep) || id(screen_schedule_asleep) || id(screensaver_display_off_active) || id(screensaver_dimmed_active);'
           then:
             - script.stop: screensaver_idle_check
             - globals.set:
                 id: screensaver_display_off_active
                 value: 'false'
             - globals.set:
+                id: screensaver_dimmed_active
+                value: 'false'
+            - globals.set:
                 id: screen_schedule_asleep
                 value: 'false'
             - lvgl.resume:
+            - lvgl.widget.hide: dim_screensaver_touch_guard
             - if:
                 condition:
                   lambda: 'return id(is_clock_showing);'
@@ -419,6 +459,55 @@ script:
                   - script.execute: backlight_apply_brightness
       - script.execute: screensaver_idle_check
       - script.execute: home_screen_idle_check
+
+  # Choose and apply the brightness for the dimmed-screen screensaver.
+  - id: screensaver_dimmed_refresh_brightness
+    mode: restart
+    then:
+      - lambda: |-
+          float pct = id(screensaver_dimmed_brightness).state;
+          if (std::isnan(pct) || pct <= 0.0f) pct = 10.0f;
+          if (pct < 1.0f) pct = 1.0f;
+          if (pct > 100.0f) pct = 100.0f;
+
+          float target = pct / 100.0f;
+          if (target < 0.01f) target = 0.01f;
+          if (target > 1.0f) target = 1.0f;
+          id(screensaver_dimmed_target_level) = target;
+      - if:
+          condition:
+            lambda: 'return id(screensaver_dimmed_active);'
+          then:
+            - light.turn_on:
+                id: display_backlight
+                brightness: !lambda 'return id(screensaver_dimmed_target_level);'
+                transition_length: 400ms
+
+  # Keep the normal UI visible but lower the backlight and catch the first tap.
+  - id: show_dimmed_view
+    mode: restart
+    then:
+      - script.execute: screensaver_dimmed_refresh_brightness
+      - script.wait: screensaver_dimmed_refresh_brightness
+      - globals.set:
+          id: display_asleep
+          value: 'true'
+      - globals.set:
+          id: screen_schedule_asleep
+          value: 'false'
+      - globals.set:
+          id: screensaver_display_off_active
+          value: 'false'
+      - globals.set:
+          id: screensaver_dimmed_active
+          value: 'true'
+      - lvgl.resume:
+      - script.execute: hide_clock_view
+      - lvgl.widget.show: dim_screensaver_touch_guard
+      - light.turn_on:
+          id: display_backlight
+          brightness: !lambda 'return id(screensaver_dimmed_target_level);'
+          transition_length: 2s
 
   # Choose the clock screensaver brightness for the current day/night period.
   - id: clock_screensaver_refresh_brightness
@@ -471,6 +560,10 @@ script:
   - id: show_clock_view
     mode: single
     then:
+      - globals.set:
+          id: screensaver_dimmed_active
+          value: 'false'
+      - lvgl.widget.hide: dim_screensaver_touch_guard
       - script.execute: clock_screensaver_refresh_brightness
       - script.wait: clock_screensaver_refresh_brightness
       - lambda: |-

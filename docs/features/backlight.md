@@ -23,7 +23,7 @@ Sunrise and sunset times are derived from the timezone set in [Time Settings](/f
 
 ## Screensaver
 
-When the screensaver clock is active, it can use separate daytime and nighttime clock brightness values based on the same sunrise and sunset times. If the screensaver is set to Display Off, the backlight turns off completely. On wake (touch or presence sensor), brightness returns to the correct level for the current time.
+When the screensaver uses **Screen Dimmed**, it keeps the normal screen visible at the saved dim brightness. When the screensaver clock is active, it can use separate daytime and nighttime clock brightness values based on the same sunrise and sunset times. If the screensaver is set to Display Off, the backlight turns off completely. On wake (touch or presence sensor), brightness returns to the correct level for the current time.
 
 ## Screen Schedule
 

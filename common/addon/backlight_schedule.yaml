@@ -356,6 +356,9 @@ script:
           id: screensaver_display_off_active
           value: 'false'
       - globals.set:
+          id: screensaver_dimmed_active
+          value: 'false'
+      - globals.set:
           id: backlight_manual_off
           value: 'false'
       - globals.set:
@@ -364,6 +367,7 @@ script:
       - lambda: 'global_preferences->sync();'
       - lvgl.resume:
       - script.execute: hide_clock_view
+      - lvgl.widget.hide: dim_screensaver_touch_guard
       - if:
           condition:
             lambda: 'return lv_scr_act() == id(screen_off_page)->obj;'
@@ -392,6 +396,9 @@ script:
           id: screensaver_display_off_active
           value: 'false'
       - globals.set:
+          id: screensaver_dimmed_active
+          value: 'false'
+      - globals.set:
           id: backlight_manual_off
           value: 'false'
       - globals.set:
@@ -399,6 +406,7 @@ script:
           value: '0'
       - lvgl.resume:
       - script.execute: hide_clock_view
+      - lvgl.widget.hide: dim_screensaver_touch_guard
       - if:
           condition:
             lambda: 'return lv_scr_act() == id(screen_off_page)->obj;'
@@ -433,9 +441,13 @@ script:
           id: screensaver_display_off_active
           value: 'false'
       - globals.set:
+          id: screensaver_dimmed_active
+          value: 'false'
+      - globals.set:
           id: display_asleep
           value: 'true'
       - lvgl.resume:
+      - lvgl.widget.hide: dim_screensaver_touch_guard
       - script.execute: show_clock_view
       - lambda: 'global_preferences->sync();'
 

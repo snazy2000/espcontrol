@@ -183,6 +183,10 @@ assert.strictEqual(hooks.previewHtmlValue({ labelHtml: "" }, "labelHtml", "fallb
 assert.strictEqual(hooks.previewHtmlValue({}, "labelHtml", "fallback"), "fallback", "missing preview label uses fallback");
 assert.strictEqual(hooks.normalizeTemperatureUnit("fahrenheit"), "°F", "fahrenheit unit normalization");
 assert.strictEqual(hooks.normalizeTemperatureUnit("centigrade"), "°C", "centigrade unit normalization");
+assert.strictEqual(hooks.normalizeScreensaverAction("Screen Dimmed"), "dim", "dimmed screensaver action normalization");
+assert.strictEqual(hooks.screensaverActionOption("dim"), "Screen Dimmed", "dimmed screensaver action option");
+assert.strictEqual(hooks.normalizeScreensaverDimmedBrightness(0), 10, "dimmed screensaver brightness fallback");
+assert.strictEqual(hooks.normalizeScreensaverDimmedBrightness(101), 100, "dimmed screensaver brightness maximum");
 assert.strictEqual(hooks.temperatureUnitSymbolFor("America/New_York (GMT-5)", "Auto"), "°F", "auto unit for US timezone");
 assert.strictEqual(hooks.temperatureUnitSymbolFor("Europe/London (GMT+0)", "Auto"), "°C", "auto unit for UK timezone");
 assert.strictEqual(hooks.temperatureUnitSymbolFor("Europe/London (GMT+0)", "°F"), "°F", "manual fahrenheit override");

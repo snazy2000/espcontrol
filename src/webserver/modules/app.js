@@ -125,10 +125,12 @@ function exportConfig() {
       presence_sensor_entity: state.presenceEntity,
       media_player_sleep_prevention: state.mediaPlayerSleepPreventionOn,
       media_player_sleep_prevention_entity: state.mediaPlayerSleepPreventionEntity,
+      screensaver_action: normalizeScreensaverAction(state.screensaverAction),
       clock_screensaver: state.clockScreensaverOn,
       clock_brightness: state.clockBrightnessDay,
       clock_brightness_day: state.clockBrightnessDay,
       clock_brightness_night: state.clockBrightnessNight,
+      screensaver_dimmed_brightness: normalizeScreensaverDimmedBrightness(state.screensaverDimmedBrightness),
       screensaver_timeout: state.screensaverTimeout,
       home_screen_timeout: state.homeScreenTimeout,
       screen_rotation: state.screenRotation,
@@ -382,15 +384,23 @@ function importConfig() {
         postText("Presence Sensor Entity", s.presence_sensor_entity || "");
         postSwitch("Screen Saver: Media Player Sleep Prevention", !!s.media_player_sleep_prevention);
         postText("Media Player Sleep Prevention Entity", s.media_player_sleep_prevention_entity || "");
+        var importedScreensaverAction = normalizeScreensaverAction(
+          s.screensaver_action != null
+            ? s.screensaver_action
+            : (s.clock_screensaver ? "clock" : "off"));
+        var importedScreensaverDimmedBrightness = normalizeScreensaverDimmedBrightness(
+          s.screensaver_dimmed_brightness);
         var importedClockBrightnessDay = normalizeClockBrightness(
           s.clock_brightness_day != null ? s.clock_brightness_day : s.clock_brightness,
           35);
         var importedClockBrightnessNight = normalizeClockBrightness(
           s.clock_brightness_night != null ? s.clock_brightness_night : s.clock_brightness,
           importedClockBrightnessDay);
-        postSwitch("Screen Saver: Clock", s.clock_screensaver != null ? !!s.clock_screensaver : false);
+        postScreensaverAction(importedScreensaverAction);
+        postSwitch("Screen Saver: Clock", importedScreensaverAction === "clock");
         postClockBrightnessDay(importedClockBrightnessDay);
         postClockBrightnessNight(importedClockBrightnessNight);
+        postScreensaverDimmedBrightness(importedScreensaverDimmedBrightness);
         postScreensaverTimeout(s.screensaver_timeout || 300);
         postNumber("Home Screen Timeout", s.home_screen_timeout != null ? s.home_screen_timeout : 60);
         var importedScreenRotation = normalizeScreenRotation(s.screen_rotation);
@@ -416,9 +426,12 @@ function importConfig() {
         state.presenceEntity = s.presence_sensor_entity || "";
         state.mediaPlayerSleepPreventionOn = !!s.media_player_sleep_prevention;
         state.mediaPlayerSleepPreventionEntity = s.media_player_sleep_prevention_entity || "";
-        state.clockScreensaverOn = s.clock_screensaver != null ? !!s.clock_screensaver : false;
+        state.screensaverAction = importedScreensaverAction;
+        state._screensaverActionReceived = true;
+        state.clockScreensaverOn = importedScreensaverAction === "clock";
         state.clockBrightnessDay = importedClockBrightnessDay;
         state.clockBrightnessNight = importedClockBrightnessNight;
+        state.screensaverDimmedBrightness = importedScreensaverDimmedBrightness;
         state.screensaverTimeout = s.screensaver_timeout || 300;
         state.homeScreenTimeout = s.home_screen_timeout != null ? s.home_screen_timeout : 60;
         state.screenRotation = importedScreenRotation;
@@ -720,6 +733,9 @@ function connectEvents() {
     },
     "switch-screen_saver__clock": function (val, d) {
       state.clockScreensaverOn = d.value === true || val === "ON";
+      if (!state._screensaverActionReceived) {
+        state.screensaverAction = state.clockScreensaverOn ? "clock" : "off";
+      }
       syncClockScreensaverControls();
     },
     "switch-screen_saver__media_player_sleep_prevention": function (val, d) {
@@ -741,6 +757,16 @@ function connectEvents() {
     "number-screen_saver__nighttime_clock_brightness": function (val) {
       state.clockBrightnessSplitReceived = true;
       state.clockBrightnessNight = normalizeClockBrightness(val, state.clockBrightnessDay);
+      syncClockScreensaverControls();
+    },
+    "select-screen_saver__action": function (val, d) {
+      state._screensaverActionReceived = true;
+      state.screensaverAction = normalizeScreensaverAction(d.value || val);
+      state.clockScreensaverOn = state.screensaverAction === "clock";
+      syncClockScreensaverControls();
+    },
+    "number-screen_saver__dimmed_brightness": function (val) {
+      state.screensaverDimmedBrightness = normalizeScreensaverDimmedBrightness(val);
       syncClockScreensaverControls();
     },
     "text-presence_sensor_entity": function (val) {
@@ -1146,6 +1172,9 @@ if (typeof globalThis !== "undefined" && globalThis.__ESPCONTROL_TEST_HOOKS__) {
     buttonConfigNeedsMigration: buttonConfigNeedsMigration,
     subpageConfigNeedsMigration: subpageConfigNeedsMigration,
     normalizeTemperatureUnit: normalizeTemperatureUnit,
+    normalizeScreensaverAction: normalizeScreensaverAction,
+    screensaverActionOption: screensaverActionOption,
+    normalizeScreensaverDimmedBrightness: normalizeScreensaverDimmedBrightness,
     previewHtmlValue: previewHtmlValue,
     findDuplicatePlacementFor: function (grid, start, size, maxSlots) {
       return findDuplicatePlacement(grid.slice(), start, size, maxSlots || NUM_SLOTS);

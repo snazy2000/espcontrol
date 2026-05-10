@@ -149,10 +149,24 @@ switch:
     on_turn_on:
       - if:
           condition:
+            lambda: 'return !screensaver_action_clock_mode(id(screensaver_action).current_option());'
+          then:
+            - select.set:
+                id: screensaver_action
+                option: "Clock"
+      - if:
+          condition:
             lambda: 'return !id(display_asleep) && lv_scr_act() == id(main_page)->obj;'
           then:
             - script.execute: screensaver_idle_check
     on_turn_off:
+      - if:
+          condition:
+            lambda: 'return screensaver_action_clock_mode(id(screensaver_action).current_option());'
+          then:
+            - select.set:
+                id: screensaver_action
+                option: "Display Off"
       - if:
           condition:
             lambda: 'return !id(display_asleep) && lv_scr_act() == id(main_page)->obj;'
@@ -183,6 +197,43 @@ switch:
             - script.execute: screensaver_idle_check
 
 select:
+  - platform: template
+    name: "Screen Saver: Action"
+    internal: true
+    id: screensaver_action
+    entity_category: config
+    icon: "mdi:monitor-shimmer"
+    optimistic: true
+    restore_value: true
+    initial_option: "Display Off"
+    options:
+      - "Display Off"
+      - "Screen Dimmed"
+      - "Clock"
+    web_server:
+      sorting_group_id: sg_screensaver
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: |-
+                return screensaver_action_clock_mode(id(screensaver_action).current_option()) &&
+                       !id(clock_screensaver_enabled).state;
+            then:
+              - switch.turn_on: clock_screensaver_enabled
+        - if:
+            condition:
+              lambda: |-
+                return !screensaver_action_clock_mode(id(screensaver_action).current_option()) &&
+                       id(clock_screensaver_enabled).state;
+            then:
+              - switch.turn_off: clock_screensaver_enabled
+        - if:
+            condition:
+              lambda: 'return !id(display_asleep) && lv_scr_act() == id(main_page)->obj;'
+            then:
+              - script.execute: screensaver_idle_check
+
   - platform: template
     name: "Screen: Temperature Unit"
     internal: true
@@ -354,6 +405,29 @@ number:
               lambda: 'return id(is_clock_showing);'
             then:
               - script.execute: clock_screensaver_refresh_brightness
+
+  - platform: template
+    name: "Screen Saver: Dimmed Brightness"
+    internal: true
+    id: screensaver_dimmed_brightness
+    min_value: 1
+    max_value: 100
+    step: 1
+    initial_value: 10
+    restore_value: true
+    optimistic: true
+    unit_of_measurement: "%"
+    entity_category: config
+    icon: "mdi:brightness-4"
+    web_server:
+      sorting_group_id: sg_screensaver
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: 'return id(screensaver_dimmed_active);'
+            then:
+              - script.execute: screensaver_dimmed_refresh_brightness
 
   # Legacy setting kept so existing panels can migrate their saved single
   # clock brightness into the new day/night settings, and so older cached web

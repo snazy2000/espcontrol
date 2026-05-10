@@ -188,6 +188,17 @@ inline bool screen_schedule_clock_mode(const std::string &mode) {
   return mode == "Clock" || mode == "clock";
 }
 
+// ── Screensaver action helpers ────────────────────────────────────────
+
+inline bool screensaver_action_clock_mode(const std::string &action) {
+  return action == "Clock" || action == "clock";
+}
+
+inline bool screensaver_action_dimmed_mode(const std::string &action) {
+  return action == "Screen Dimmed" || action == "screen_dimmed" ||
+         action == "Dimmed" || action == "dimmed";
+}
+
 // ── Temperature label visibility ─────────────────────────────────────
 
 inline void update_temp_label(lv_obj_t *label, lv_obj_t *main_page_obj,

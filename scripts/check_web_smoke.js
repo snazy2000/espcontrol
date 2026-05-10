@@ -52,6 +52,7 @@ assert.deepStrictEqual(plain(hooks.parseButtonConfig(encoded)), button);
 
 assert.strictEqual(hooks.normalizeTemperatureUnit("fahrenheit"), "\u00b0F");
 assert.strictEqual(hooks.normalizeTemperatureUnit("centigrade"), "\u00b0C");
+assert.strictEqual(hooks.normalizeScreensaverAction("Screen Dimmed"), "dim");
 assert.strictEqual(hooks.previewHtmlValue({ labelHtml: "" }, "labelHtml", "fallback"), "");
 assert.strictEqual(hooks.previewHtmlValue({}, "labelHtml", "fallback"), "fallback");
 

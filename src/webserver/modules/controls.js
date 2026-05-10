@@ -595,9 +595,13 @@ function buildSettingsPage(parent) {
 
   var timerClockControls = createScreensaverThenControls("sp-set-clock-mode");
   timerPanel.appendChild(timerClockControls.clockField);
+  timerPanel.appendChild(timerClockControls.dimBrightnessField);
   timerPanel.appendChild(timerClockControls.brightnessField);
   els.setClockSelect = timerClockControls.clockSelect;
   els.setClockField = timerClockControls.clockField;
+  els.setDimBrightnessField = timerClockControls.dimBrightnessField;
+  els.setDimBrightness = timerClockControls.dimBrightness;
+  els.setDimBrightnessVal = timerClockControls.dimBrightnessVal;
   els.setClockBrightnessDay = timerClockControls.clockBrightnessDay;
   els.setClockBrightnessDayVal = timerClockControls.clockBrightnessDayVal;
   els.setClockBrightnessNight = timerClockControls.clockBrightnessNight;
@@ -645,11 +649,15 @@ function buildSettingsPage(parent) {
   bindTextPost(presInp, "Presence Sensor Entity", {});
   var sensorClockControls = createScreensaverThenControls("sp-set-sensor-clock-mode");
   sensorPanel.appendChild(sensorClockControls.clockField);
+  sensorPanel.appendChild(sensorClockControls.dimBrightnessField);
   sensorPanel.appendChild(sensorClockControls.brightnessField);
   ssBody.appendChild(sensorPanel);
   els.setPresence = presInp;
   els.setSensorClockSelect = sensorClockControls.clockSelect;
   els.setSensorClockField = sensorClockControls.clockField;
+  els.setSensorDimBrightnessField = sensorClockControls.dimBrightnessField;
+  els.setSensorDimBrightness = sensorClockControls.dimBrightness;
+  els.setSensorDimBrightnessVal = sensorClockControls.dimBrightnessVal;
   els.setSensorClockBrightnessDay = sensorClockControls.clockBrightnessDay;
   els.setSensorClockBrightnessDayVal = sensorClockControls.clockBrightnessDayVal;
   els.setSensorClockBrightnessNight = sensorClockControls.clockBrightnessNight;
@@ -1003,15 +1011,29 @@ function createRangeSlider(label, initial, postName) {
 }
 
 function syncClockScreensaverControls() {
-  var mode = state.clockScreensaverOn ? "clock" : "off";
+  var mode = normalizeScreensaverAction(state.screensaverAction);
   var dayBrightness = Math.round(state.clockBrightnessDay) + "%";
   var nightBrightness = Math.round(state.clockBrightnessNight) + "%";
-  var display = state.clockScreensaverOn ? "" : "none";
+  var dimBrightness = Math.round(state.screensaverDimmedBrightness) + "%";
+  var clockDisplay = mode === "clock" ? "" : "none";
+  var dimDisplay = mode === "dim" ? "" : "none";
+
+  state.clockScreensaverOn = mode === "clock";
 
   if (els.setClockSelect) els.setClockSelect.value = mode;
   if (els.setSensorClockSelect) els.setSensorClockSelect.value = mode;
-  syncOptionalClockBrightness(els.setClockBrightnessField, els.setClockField, display);
-  syncOptionalClockBrightness(els.setSensorClockBrightnessField, els.setSensorClockField, display);
+  syncOptionalClockBrightness(els.setClockBrightnessField, els.setDimBrightnessField || els.setClockField, clockDisplay);
+  syncOptionalClockBrightness(els.setSensorClockBrightnessField, els.setSensorDimBrightnessField || els.setSensorClockField, clockDisplay);
+  syncOptionalClockBrightness(els.setDimBrightnessField, els.setClockField, dimDisplay);
+  syncOptionalClockBrightness(els.setSensorDimBrightnessField, els.setSensorClockField, dimDisplay);
+  if (els.setDimBrightness) {
+    els.setDimBrightness.value = state.screensaverDimmedBrightness;
+    els.setDimBrightnessVal.textContent = dimBrightness;
+  }
+  if (els.setSensorDimBrightness) {
+    els.setSensorDimBrightness.value = state.screensaverDimmedBrightness;
+    els.setSensorDimBrightnessVal.textContent = dimBrightness;
+  }
   if (els.setClockBrightnessDay) {
     els.setClockBrightnessDay.value = state.clockBrightnessDay;
     els.setClockBrightnessDayVal.textContent = dayBrightness;
@@ -1051,24 +1073,39 @@ function createScreensaverThenControls(selectId) {
   var clockSelect = document.createElement("select");
   clockSelect.className = "sp-select";
   clockSelect.id = selectId;
-  var clockOff = document.createElement("option");
-  clockOff.value = "off";
-  clockOff.textContent = "Display Off";
-  var clockOn = document.createElement("option");
-  clockOn.value = "clock";
-  clockOn.textContent = "Clock";
-  clockSelect.appendChild(clockOff);
-  clockSelect.appendChild(clockOn);
-  clockSelect.value = state.clockScreensaverOn ? "clock" : "off";
+  [
+    { value: "off", label: "Display Off" },
+    { value: "dim", label: "Screen Dimmed" },
+    { value: "clock", label: "Clock" },
+  ].forEach(function (opt) {
+    var o = document.createElement("option");
+    o.value = opt.value;
+    o.textContent = opt.label;
+    clockSelect.appendChild(o);
+  });
+  clockSelect.value = normalizeScreensaverAction(state.screensaverAction);
   clockSelect.addEventListener("change", function () {
-    state.clockScreensaverOn = this.value === "clock";
+    state.screensaverAction = normalizeScreensaverAction(this.value);
+    state.clockScreensaverOn = state.screensaverAction === "clock";
     syncClockScreensaverControls();
+    postScreensaverAction(state.screensaverAction);
     postSwitch("Screen Saver: Clock", state.clockScreensaverOn);
   });
   clockField.appendChild(clockSelect);
 
+  var dimBrightnessField = document.createElement("div");
+  dimBrightnessField.style.display = normalizeScreensaverAction(state.screensaverAction) === "dim" ? "" : "none";
+  var dimSlider = createRangeSlider("Dimmed Screen Brightness", state.screensaverDimmedBrightness, postScreensaverDimmedBrightness);
+  dimSlider.range.min = "1";
+  dimSlider.range.step = "1";
+  dimSlider.range.addEventListener("input", function () {
+    state.screensaverDimmedBrightness = normalizeScreensaverDimmedBrightness(this.value);
+    syncClockScreensaverControls();
+  });
+  dimBrightnessField.appendChild(dimSlider.wrap);
+
   var clockBrightnessField = document.createElement("div");
-  clockBrightnessField.style.display = state.clockScreensaverOn ? "" : "none";
+  clockBrightnessField.style.display = normalizeScreensaverAction(state.screensaverAction) === "clock" ? "" : "none";
   var daySlider = createRangeSlider("Daytime Clock Brightness", state.clockBrightnessDay, postClockBrightnessDay);
   daySlider.range.min = "1";
   daySlider.range.step = "1";
@@ -1089,6 +1126,9 @@ function createScreensaverThenControls(selectId) {
   return {
     clockField: clockField,
     clockSelect: clockSelect,
+    dimBrightnessField: dimBrightnessField,
+    dimBrightness: dimSlider.range,
+    dimBrightnessVal: dimSlider.val,
     brightnessField: clockBrightnessField,
     clockBrightnessDay: daySlider.range,
     clockBrightnessDayVal: daySlider.val,

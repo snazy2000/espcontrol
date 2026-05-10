@@ -300,6 +300,10 @@ function postSelectWithObjectId(name, objectId, option, errorMessage) {
   postWithObjectId("select", name, objectId, "set?option=" + encodeURIComponent(option), errorMessage);
 }
 
+function postSelectWithObjectIds(name, objectIds, option, errorMessage) {
+  postWithObjectIds("select", name, objectIds, "set?option=" + encodeURIComponent(option), errorMessage);
+}
+
 function postScreensaverTimeout(value) {
   if (!screensaverTimeoutSupported(value)) {
     showBanner("Update the device firmware before using shorter screensaver timers.", "error");
@@ -307,6 +311,25 @@ function postScreensaverTimeout(value) {
     return;
   }
   postNumberWithObjectIds("Screensaver Timeout", ["screensaver_timeout"], value);
+}
+
+var SCREENSAVER_ACTION_UNAVAILABLE =
+  "Screen dimmed screensaver is not available on this firmware. Update the device firmware, then reload this page.";
+
+function postScreensaverAction(value) {
+  postSelectWithObjectIds("Screen Saver: Action", [
+    "screen_saver__action",
+    "screen_saver_action",
+    "screensaver_action",
+  ], screensaverActionOption(value), SCREENSAVER_ACTION_UNAVAILABLE);
+}
+
+function postScreensaverDimmedBrightness(value) {
+  postNumberWithObjectIds("Screen Saver: Dimmed Brightness", [
+    "screen_saver__dimmed_brightness",
+    "screen_saver_dimmed_brightness",
+    "screensaver_dimmed_brightness",
+  ], value, SCREENSAVER_ACTION_UNAVAILABLE);
 }
 
 function postClockBrightnessDay(value) {
@@ -466,12 +489,14 @@ function settingsStateEntities() {
     ["text", "Indoor Temp Entity"],
     ["text", "Outdoor Temp Entity"],
     ["text", "Screensaver Mode"],
+    ["select", "Screen Saver: Action"],
     ["text", "Presence Sensor Entity"],
     ["switch", "Screen Saver: Media Player Sleep Prevention"],
     ["text", "Media Player Sleep Prevention Entity"],
     ["number", "Screen Saver: Daytime Clock Brightness"],
     ["number", "Screen Saver: Nighttime Clock Brightness"],
     ["number", "Screen Saver: Clock Brightness"],
+    ["number", "Screen Saver: Dimmed Brightness"],
     ["number", "Screensaver Timeout"],
     ["number", "Home Screen Timeout"],
     ["switch", "Screen Saver: Clock"],

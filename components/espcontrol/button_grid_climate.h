@@ -291,9 +291,11 @@ inline std::string climate_action_label(ClimateControlCtx *ctx) {
 
 inline bool climate_is_active(ClimateControlCtx *ctx) {
   if (!ctx || !ctx->available || ctx->hvac_mode == "off") return false;
-  return !(ctx->hvac_action.empty() || ctx->hvac_action == "idle" ||
-           ctx->hvac_action == "off" || ctx->hvac_action == "unknown" ||
-           ctx->hvac_action == "unavailable");
+  if (ctx->hvac_action.empty() || ctx->hvac_action == "unknown" ||
+      ctx->hvac_action == "unavailable") {
+    return !climate_unavailable_value(ctx->hvac_mode);
+  }
+  return !(ctx->hvac_action == "idle" || ctx->hvac_action == "off");
 }
 
 inline bool climate_temperature_controls_enabled(ClimateControlCtx *ctx) {

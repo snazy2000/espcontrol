@@ -5,10 +5,10 @@
 # them in a fullscreen top-layer popup. The popup is opened from C++ via
 # camera_popup_open_script and closed by tapping the scrim or close button.
 #
-# Required substitutions (add to secrets.yaml or device packages.yaml):
-#   ha_rest_base_url: "http://homeassistant.local:8123"
-#   ha_rest_token:    ""  # long-lived access token; empty = unauthenticated
-#   camera_popup_resize: "400x400"  # cap decode RAM; tune per device profile
+# Configuration (set in device web UI under Display settings):
+#   Home Assistant URL: defaults to "http://homeassistant.local:8123"
+#   (optional) ha_rest_token: long-lived access token in substitutions
+#   camera_popup_resize: cap decode RAM; tune per device profile
 #
 # Include this package AFTER the device's lvgl package so the top_layer
 # widget list appends correctly:
@@ -16,7 +16,6 @@
 # =============================================================================
 
 substitutions:
-  ha_rest_base_url: "http://homeassistant.local:8123"
   ha_rest_token: ""
   camera_popup_resize: "400x400"
 
@@ -45,7 +44,8 @@ online_image:
     type: RGB565
     update_interval: never
     resize: "${camera_popup_resize}"
-    buffer_size: 65536
+    buffer_size: 262144
+    timeout: 15s
     on_download_finished:
       - lvgl.image.update:
           id: camera_popup_img_widget
@@ -55,6 +55,11 @@ online_image:
           level: WARN
           tag: camera_popup
           format: "Camera snapshot download failed"
+      - lambda: |-
+          id(camera_popup_open_flag) = false;
+          lv_label_set_text(id(camera_popup_img_widget), "Camera\nUnavailable");
+          lv_obj_set_style_text_font(id(camera_popup_img_widget), id(label_font_sm)->get_lv_font(), LV_PART_MAIN);
+          lv_obj_set_style_text_color(id(camera_popup_img_widget), lv_color_make(255, 100, 100), LV_PART_MAIN);
 
 esphome:
   on_boot:
@@ -72,7 +77,7 @@ script:
     then:
       - lambda: |-
           if (id(camera_popup_entity).empty()) return;
-          std::string url = "${ha_rest_base_url}/api/camera_proxy/" +
+          std::string url = id(ha_base_url).state + "/api/camera_proxy/" +
             id(camera_popup_entity) + "?t=" + std::to_string(millis());
           std::string token = "${ha_rest_token}";
           if (!token.empty()) url += "&access_token=" + token;
@@ -96,7 +101,7 @@ interval:
           uint32_t now_ms = millis();
           if (now_ms - id(camera_popup_last_ms) < id(camera_popup_refresh_ms)) return;
           id(camera_popup_last_ms) = now_ms;
-          std::string url = "${ha_rest_base_url}/api/camera_proxy/" +
+          std::string url = id(ha_base_url).state + "/api/camera_proxy/" +
             id(camera_popup_entity) + "?t=" + std::to_string(now_ms);
           std::string token = "${ha_rest_token}";
           if (!token.empty()) url += "&access_token=" + token;

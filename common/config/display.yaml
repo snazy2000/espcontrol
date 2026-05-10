@@ -401,6 +401,23 @@ text:
     web_server:
       sorting_group_id: sg_display
 
+  # Long-lived access token for camera proxy (leave empty for unauthenticated HA)
+  - platform: template
+    name: "Home Assistant Token"
+    internal: true
+    id: ha_rest_token
+    optimistic: true
+    restore_value: true
+    initial_value: ""
+    min_length: 0
+    max_length: 255
+    mode: password
+    entity_category: config
+    icon: "mdi:key"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_display
+
 number:
   - platform: template
     name: "Screen Saver: Daytime Clock Brightness"

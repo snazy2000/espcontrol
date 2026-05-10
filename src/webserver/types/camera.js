@@ -54,6 +54,15 @@ registerButtonType("camera", {
         helpers.saveField("icon", b.icon);
       }
     ));
+
+    var haUrl = (typeof state !== "undefined" && state.haBaseUrl) || "http://homeassistant.local:8123";
+    var haToken = (typeof state !== "undefined" && state.haRestToken) || "";
+    var haNote = document.createElement("div");
+    haNote.className = "sp-apply-note";
+    var tokenStatus = haToken ? "token set" : "no token";
+    haNote.textContent = "HA: " + haUrl + " — " + tokenStatus;
+    if (!haToken) haNote.title = "Set a Long-Lived Token in Home Assistant settings if your instance requires authentication.";
+    panel.appendChild(haNote);
   },
   renderPreview: function (b, helpers) {
     var label = b.label || b.entity || "Camera";

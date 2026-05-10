@@ -46,6 +46,10 @@ ethernet:
           - lvgl.widget.update:
               id: display_time
               hidden: true
+          - lvgl.widget.update:
+              id: network_status_button
+              hidden: true
+          - lambda: 'network_status_hide_modal();'
           - lvgl.page.show: ethernet_setup_page
           - script.execute: setup_screen_dim
 
@@ -86,12 +90,19 @@ script:
                   - lvgl.widget.update:
                       id: display_time
                       hidden: false
+                  - lvgl.widget.update:
+                      id: network_status_button
+                      hidden: false
+                  - script.execute: network_status_refresh
                 else:
                   - lvgl.widget.update:
                       id: temperatures
                       hidden: true
                   - lvgl.widget.update:
                       id: display_time
+                      hidden: true
+                  - lvgl.widget.update:
+                      id: network_status_button
                       hidden: true
             - script.execute: screensaver_idle_check
           else:

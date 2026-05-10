@@ -376,6 +376,7 @@ script:
             - lambda: |-
                 if (!id(home_screen_idle_suspended)) {
                   media_volume_hide_modal();
+                  network_status_hide_modal();
                 }
                 if (!id(home_screen_idle_suspended) && lv_scr_act() != id(main_page)->obj) {
                   lv_scr_load_anim(id(main_page)->obj, LV_SCR_LOAD_ANIM_NONE, 0, 0, false);
@@ -593,6 +594,8 @@ script:
       - lvgl.widget.show: clock_screensaver
       - lvgl.widget.hide: display_time
       - lvgl.widget.hide: temperatures
+      - lvgl.widget.hide: network_status_button
+      - lambda: 'network_status_hide_modal();'
       - output.set_level:
           id: gpio_backlight_pwm
           level: 0%
@@ -633,6 +636,8 @@ script:
             switch.is_on: clock_bar_enabled
           then:
             - lvgl.widget.show: display_time
+            - lvgl.widget.show: network_status_button
+            - script.execute: network_status_refresh
             - if:
                 condition:
                   or:
@@ -643,6 +648,7 @@ script:
           else:
             - lvgl.widget.hide: display_time
             - lvgl.widget.hide: temperatures
+            - lvgl.widget.hide: network_status_button
 
 # -----------------------------------------------------------------------------
 # Clock screensaver drift update (repositions label for burn-in prevention)

@@ -42,6 +42,13 @@ font:
       - file: "gfonts://Heebo"
         glyphs: !include ../../../common/assets/hebrew_glyphs.yaml
 
+  # Top bar network status icon
+  - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'
+    id: network_status_font_lt
+    size: 22
+    bpp: 4
+    glyphs: !include ../../../common/assets/network_status_glyphs.yaml
+
   # Volume/climate modal: 96px on the 480px S3 reference scaled to this 600px short side
   - file: "gfonts://Roboto@Thin"
     id: volume_modal_number_font_600

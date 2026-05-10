@@ -31,12 +31,16 @@ script:
           if (!enabled) {
             lv_obj_add_flag(id(display_time), LV_OBJ_FLAG_HIDDEN);
             lv_obj_add_flag(id(temperatures), LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_flag(id(network_status_button), LV_OBJ_FLAG_HIDDEN);
+            network_status_hide_modal();
             return;
           }
 
           if (lv_scr_act() == id(main_page)->obj) {
             lv_obj_clear_flag(id(display_time), LV_OBJ_FLAG_HIDDEN);
+            lv_obj_clear_flag(id(network_status_button), LV_OBJ_FLAG_HIDDEN);
           }
+          id(network_status_refresh).execute();
           refresh_temp_label_values(id(temperatures), id(main_page)->obj,
                                     enabled,
                                     id(indoor_temp_enable).state,

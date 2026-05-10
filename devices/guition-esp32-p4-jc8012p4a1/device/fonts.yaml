@@ -68,6 +68,13 @@ font:
       - file: "gfonts://Heebo"
         glyphs: !include ../../../common/assets/hebrew_glyphs.yaml
 
+  # Top bar network status icon
+  - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'
+    id: network_status_font_lt
+    size: 24
+    bpp: 4
+    glyphs: !include ../../../common/assets/network_status_glyphs.yaml
+
   # Setup screen icons: 61px on the 480px S3 reference scaled to this 800px short side
   - file: 'https://github.com/Templarian/MaterialDesign-Webfont/raw/v7.4.47/fonts/materialdesignicons-webfont.ttf'
     id: icon_font_setup_800

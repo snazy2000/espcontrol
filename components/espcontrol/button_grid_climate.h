@@ -637,12 +637,13 @@ inline void climate_set_obj_visible(lv_obj_t *obj, bool visible) {
 
 inline void climate_set_dial_controls_visible(bool visible) {
   ClimateControlModalUi &ui = climate_control_modal_ui();
+  bool show_current = visible && ui.active && ui.active->available && ui.active->has_current;
+  bool show_handle = visible && ui.active && climate_temperature_controls_enabled(ui.active);
   climate_set_obj_visible(ui.back_btn, visible);
   climate_set_obj_visible(ui.mode_btn, visible);
   climate_set_obj_visible(ui.arc, visible);
-  climate_set_obj_visible(ui.current_dot, visible && ui.active && ui.active->has_current &&
-    climate_temperature_controls_enabled(ui.active));
-  climate_set_obj_visible(ui.handle_dot, visible && ui.active && climate_temperature_controls_enabled(ui.active));
+  climate_set_obj_visible(ui.current_dot, show_current);
+  climate_set_obj_visible(ui.handle_dot, show_handle);
   climate_set_obj_visible(ui.target_row, visible);
   climate_set_obj_visible(ui.status_lbl, visible);
   climate_set_obj_visible(ui.hint_lbl, visible);
@@ -903,19 +904,20 @@ inline void climate_control_set_modal_value(ClimateControlCtx *ctx) {
   ClimateControlModalUi &ui = climate_control_modal_ui();
   if (!ctx || ui.active != ctx) return;
   bool temp_enabled = climate_temperature_controls_enabled(ctx);
+  bool show_dial = ctx->available;
   int target = climate_selected_target(ctx);
   if (ui.arc) {
-    climate_set_obj_visible(ui.arc, temp_enabled);
-    if (temp_enabled && !ui.dragging_arc) {
+    climate_set_obj_visible(ui.arc, show_dial);
+    if (show_dial && !ui.dragging_arc) {
       ui.updating_arc = true;
       lv_arc_set_range(ui.arc, ctx->min_tenths, ctx->max_tenths);
-      lv_arc_set_value(ui.arc, climate_clamp_tenths(ctx, target));
+      lv_arc_set_value(ui.arc, temp_enabled ? climate_clamp_tenths(ctx, target) : ctx->min_tenths);
       lv_obj_set_style_arc_color(ui.arc, lv_color_hex(climate_is_active(ctx) ? climate_active_color(ctx) : ctx->secondary_color), LV_PART_INDICATOR);
       ui.updating_arc = false;
     }
   }
   if (ui.current_dot) {
-    bool show_current = temp_enabled && ctx->has_current;
+    bool show_current = show_dial && ctx->has_current;
     climate_set_obj_visible(ui.current_dot, show_current);
     if (show_current && ui.panel) climate_layout_current_dot(ctx, control_modal_calc_layout(ctx->width_compensation_percent));
   }

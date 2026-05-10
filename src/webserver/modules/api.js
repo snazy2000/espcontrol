@@ -123,8 +123,6 @@ function refreshEntityDatalist(input) {
   entitySuggestions(input._entityDomains || []).forEach(function (item) {
     var opt = document.createElement("option");
     opt.value = item.value;
-    opt.label = item.label;
-    opt.textContent = item.label;
     list.appendChild(opt);
   });
 }

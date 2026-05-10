@@ -27,6 +27,8 @@ struct SliderCtx {
   lv_obj_t *media_value_lbl = nullptr;
   lv_obj_t *media_status_lbl = nullptr;
   lv_timer_t *media_timer = nullptr;
+  bool available = true;
+  bool interactive = true;
   // light_temperature fields
   bool light_temp = false;
   int kelvin_min = 2000;
@@ -82,6 +84,7 @@ struct MediaVolumeCtx {
   const lv_font_t *icon_font = nullptr;
   std::function<void()> pause_home_idle;
   std::function<void()> resume_home_idle;
+  bool available = true;
 };
 
 struct MediaHomeGridMetrics {
@@ -502,6 +505,7 @@ inline void setup_slider_visual(BtnSlot &s, const ParsedCfg &p, uint32_t on_colo
     lv_obj_t *sl = static_cast<lv_obj_t *>(lv_event_get_target(e));
     SliderCtx *c = (SliderCtx *)lv_obj_get_user_data(sl);
     if (c && !c->entity_id.empty()) {
+      if (!c->available) return;
       int val = lv_slider_get_value(sl);
       send_slider_action(c->entity_id, val, c->cover_tilt);
     }
@@ -525,7 +529,10 @@ inline void subscribe_slider_state(lv_obj_t *btn_ptr, lv_obj_t *icon_lbl,
   esphome::api::global_api_server->subscribe_home_assistant_state(
     entity_id, {},
     std::function<void(esphome::StringRef)>(
-      [slider, btn_ptr, fill, horiz, inv, rad, icon_lbl, has_icon_on, icon_off, icon_on](esphome::StringRef state) {
+      [slider, btn_ptr, fill, horiz, inv, rad, icon_lbl, has_icon_on, icon_off, icon_on, sctx](esphome::StringRef state) {
+        bool unavailable = ha_state_unavailable_ref(state);
+        if (sctx) sctx->available = !unavailable;
+        apply_control_availability(btn_ptr, slider, !unavailable);
         bool on = is_entity_on_ref(state);
         if (!on) {
           lv_slider_set_value(slider, 0, LV_ANIM_OFF);
@@ -663,6 +670,9 @@ inline void subscribe_light_temp_state(lv_obj_t *btn_ptr, lv_obj_t *slider,
     entity_id, {},
     std::function<void(esphome::StringRef)>(
       [slider, btn_ptr, kelvin_color, sctx](esphome::StringRef state) {
+        bool unavailable = ha_state_unavailable_ref(state);
+        if (sctx) sctx->available = !unavailable;
+        apply_control_availability(btn_ptr, slider, !unavailable);
         bool on = is_entity_on_ref(state);
         if (sctx) {
           sctx->light_state_known = true;
@@ -763,6 +773,7 @@ inline void setup_light_temp_visual(BtnSlot &s, const ParsedCfg &p, uint32_t on_
       c->light_temp_dragging = false;
       light_temp_restore_label(c);
     }
+    if (c && !c->available) return;
     if (c && !c->entity_id.empty())
       send_light_temp_action(c->entity_id, lv_slider_get_value(sl), c->kelvin_min, c->kelvin_max);
   }, LV_EVENT_RELEASED, nullptr);
@@ -857,7 +868,7 @@ inline void media_volume_set_card_value(MediaVolumeCtx *ctx, int pct) {
 
 inline void media_volume_apply_percent(MediaVolumeCtx *ctx, int pct,
                                        bool from_user, bool send_action) {
-  if (!ctx) return;
+  if (!ctx || !ctx->available) return;
   pct = media_clamp_percent(pct);
   ctx->current_pct = pct;
   if (from_user) {
@@ -996,7 +1007,7 @@ inline void media_volume_set_modal_value(MediaVolumeCtx *ctx, int pct) {
 }
 
 inline void media_volume_open_modal(MediaVolumeCtx *ctx) {
-  if (!ctx) return;
+  if (!ctx || !ctx->available) return;
   media_volume_hide_modal();
   MediaVolumeModalUi &ui = media_volume_modal_ui();
   ui.active = ctx;

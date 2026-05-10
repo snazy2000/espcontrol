@@ -30,7 +30,7 @@ struct ClimateControlCtx {
   std::vector<std::string> swing_modes;
   std::string preset_mode;
   std::vector<std::string> preset_modes;
-  bool available = false;
+  bool available = true;
   bool has_target = false;
   bool has_current = false;
   bool has_low = false;
@@ -1080,7 +1080,7 @@ inline void climate_control_hide_modal() {
 }
 
 inline void climate_control_open_modal(ClimateControlCtx *ctx) {
-  if (!ctx) return;
+  if (!ctx || !ctx->available) return;
   climate_control_hide_modal();
   ClimateControlModalUi &ui = climate_control_modal_ui();
   ui.active = ctx;
@@ -1338,6 +1338,8 @@ inline void subscribe_climate_control_state(ClimateControlCtx *ctx) {
         ctx->hvac_mode = climate_hvac_service_value(string_ref_limited(state, HA_SHORT_STATE_MAX_LEN));
         ctx->available = !climate_unavailable_value(ctx->hvac_mode);
         if (!ctx->available) ctx->hvac_mode = "off";
+        apply_control_availability(ctx->btn, ctx->btn, ctx->available);
+        if (!ctx->available) climate_control_hide_modal();
         refresh();
       })
   );

@@ -245,6 +245,7 @@ inline lv_obj_t *setup_media_progress_background(lv_obj_t *btn,
   ctx->radius = lv_obj_get_style_radius(btn, LV_PART_MAIN);
   ctx->media_position = true;
   ctx->media_slider = slider;
+  ctx->interactive = false;
   lv_obj_set_user_data(slider, (void *)ctx);
   slider_bind_geometry_refresh(btn, slider);
 
@@ -361,6 +362,7 @@ inline lv_obj_t *setup_media_slider_layout(lv_obj_t *btn, lv_obj_t *icon_lbl,
     lv_obj_t *sl = static_cast<lv_obj_t *>(lv_event_get_target(e));
     SliderCtx *ctx = (SliderCtx *)lv_obj_get_user_data(sl);
     if (!ctx || ctx->entity_id.empty()) return;
+    if (!ctx->available) return;
     int val = lv_slider_get_value(sl);
     if (ctx->media_position) {
       media_set_pending_seek_position(ctx, val);
@@ -463,6 +465,8 @@ inline void subscribe_media_state(lv_obj_t *btn_ptr,
     std::function<void(esphome::StringRef)>(
       [btn_ptr, status_lbl](esphome::StringRef state) {
         std::string state_text = string_ref_limited(state, HA_SHORT_STATE_MAX_LEN);
+        bool unavailable = ha_state_unavailable_ref(state);
+        apply_control_availability(btn_ptr, btn_ptr, !unavailable);
         bool playing = state_text == "playing";
         if (playing) lv_obj_add_state(btn_ptr, LV_STATE_CHECKED);
         else lv_obj_clear_state(btn_ptr, LV_STATE_CHECKED);
@@ -546,6 +550,15 @@ inline MediaVolumeCtx *create_media_volume_context(lv_obj_t *btn,
 inline void subscribe_media_volume_state(MediaVolumeCtx *ctx) {
   if (!ctx || ctx->entity_id.empty()) return;
   esphome::api::global_api_server->subscribe_home_assistant_state(
+    ctx->entity_id, {},
+    std::function<void(esphome::StringRef)>(
+      [ctx](esphome::StringRef state) {
+        ctx->available = !ha_state_unavailable_ref(state);
+        apply_control_availability(ctx->btn, ctx->btn, ctx->available);
+        if (!ctx->available) media_volume_hide_modal();
+      })
+  );
+  esphome::api::global_api_server->subscribe_home_assistant_state(
     ctx->entity_id, std::string("volume_level"),
     std::function<void(esphome::StringRef)>(
       [ctx](esphome::StringRef val) {
@@ -581,6 +594,11 @@ inline void subscribe_media_slider_state(lv_obj_t *btn_ptr,
     std::function<void(esphome::StringRef)>(
       [btn_ptr, ctx](esphome::StringRef state) {
         std::string state_text = string_ref_limited(state, HA_SHORT_STATE_MAX_LEN);
+        bool unavailable = ha_state_unavailable_ref(state);
+        ctx->available = !unavailable;
+        apply_control_availability(
+          btn_ptr, ctx->interactive ? ctx->media_slider : nullptr,
+          ctx->available, ctx->interactive);
         ctx->media_playing = state_text == "playing";
         if (ctx->media_status_lbl) {
           std::string label = media_status_text(state_text);

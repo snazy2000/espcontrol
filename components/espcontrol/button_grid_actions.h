@@ -361,6 +361,7 @@ inline void climate_control_open_modal(ClimateControlCtx *ctx);
 inline void handle_button_click(const std::string &cfg, int slot_num,
                                 lv_obj_t *btn_obj,
                                 bool developer_experimental_features = false) {
+  if (btn_obj && lv_obj_has_state(btn_obj, LV_STATE_DISABLED)) return;
   ParsedCfg p = parse_cfg(cfg);
   if (!experimental_card_enabled(p, developer_experimental_features)) return;
   if (p.type == "sensor" || p.type == "text_sensor" ||

@@ -80,6 +80,8 @@ inline void subscribe_garage_state(lv_obj_t *btn_ptr, lv_obj_t *icon_lbl,
     std::function<void(esphome::StringRef)>(
       [btn_ptr, icon_lbl, status_label, closed_icon, open_icon](esphome::StringRef state) {
         std::string state_text = string_ref_limited(state, HA_SHORT_STATE_MAX_LEN);
+        bool unavailable = ha_state_unavailable_ref(state);
+        apply_control_availability(btn_ptr, btn_ptr, !unavailable);
         bool active = garage_state_is_active(state_text);
         if (active) lv_obj_add_state(btn_ptr, LV_STATE_CHECKED);
         else lv_obj_clear_state(btn_ptr, LV_STATE_CHECKED);
@@ -99,6 +101,8 @@ inline void subscribe_cover_toggle_state(lv_obj_t *btn_ptr, lv_obj_t *icon_lbl,
     std::function<void(esphome::StringRef)>(
       [btn_ptr, icon_lbl, status_label, closed_icon, open_icon](esphome::StringRef state) {
         std::string state_text = string_ref_limited(state, HA_SHORT_STATE_MAX_LEN);
+        bool unavailable = ha_state_unavailable_ref(state);
+        apply_control_availability(btn_ptr, btn_ptr, !unavailable);
         bool active = cover_toggle_state_is_active(state_text);
         if (active) lv_obj_add_state(btn_ptr, LV_STATE_CHECKED);
         else lv_obj_clear_state(btn_ptr, LV_STATE_CHECKED);
@@ -119,6 +123,8 @@ inline void subscribe_lock_state(lv_obj_t *btn_ptr, lv_obj_t *icon_lbl,
     std::function<void(esphome::StringRef)>(
       [btn_ptr, icon_lbl, status_label, locked_icon, unlocked_icon, ctx](esphome::StringRef state) {
         std::string state_text = string_ref_limited(state, HA_SHORT_STATE_MAX_LEN);
+        bool unavailable = ha_state_unavailable_ref(state);
+        apply_control_availability(btn_ptr, btn_ptr, !unavailable);
         ctx->state = state_text;
         bool active = lock_state_is_active(state_text);
         if (active) lv_obj_add_state(btn_ptr, LV_STATE_CHECKED);
@@ -170,12 +176,16 @@ inline void subscribe_toggle_state(lv_obj_t *btn_ptr, lv_obj_t *icon_lbl,
                                    bool *slot_has_icon_on,
                                    const char **slot_icon_off, const char **slot_icon_on,
                                    ToggleTextSensorCtx *text_sensor_ctx,
-                                   const std::string &entity_id) {
+                                   const std::string &entity_id,
+                                   bool disable_interaction = true) {
   esphome::api::global_api_server->subscribe_home_assistant_state(
     entity_id, {},
     std::function<void(esphome::StringRef)>(
       [btn_ptr, icon_lbl, sensor_ctr, slot_has_sensor, slot_sensor_text_mode,
-       slot_has_icon_on, slot_icon_off, slot_icon_on, text_sensor_ctx](esphome::StringRef state) {
+       slot_has_icon_on, slot_icon_off, slot_icon_on, text_sensor_ctx,
+       disable_interaction](esphome::StringRef state) {
+        bool unavailable = ha_state_unavailable_ref(state);
+        apply_control_availability(btn_ptr, btn_ptr, !unavailable, disable_interaction);
         bool on = is_entity_on_ref(state);
         if (on) lv_obj_add_state(btn_ptr, LV_STATE_CHECKED);
         else lv_obj_clear_state(btn_ptr, LV_STATE_CHECKED);
@@ -200,6 +210,20 @@ inline void subscribe_toggle_state(lv_obj_t *btn_ptr, lv_obj_t *icon_lbl,
           if (*slot_has_icon_on)
             lv_label_set_text(icon_lbl, on ? *slot_icon_on : *slot_icon_off);
         }
+      })
+  );
+}
+
+inline void subscribe_control_availability(lv_obj_t *visual_obj, lv_obj_t *input_obj,
+                                           const std::string &entity_id,
+                                           bool disable_interaction = true) {
+  if (entity_id.empty()) return;
+  esphome::api::global_api_server->subscribe_home_assistant_state(
+    entity_id, {},
+    std::function<void(esphome::StringRef)>(
+      [visual_obj, input_obj, disable_interaction](esphome::StringRef state) {
+        apply_control_availability(
+          visual_obj, input_obj, !ha_state_unavailable_ref(state), disable_interaction);
       })
   );
 }

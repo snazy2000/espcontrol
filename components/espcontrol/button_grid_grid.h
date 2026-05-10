@@ -397,7 +397,7 @@ inline void grid_phase2(
       subscribe_toggle_state(s.btn, s.icon_lbl, s.sensor_container,
         &has_sensor[idx - 1], &sensor_text_mode[idx - 1],
         &has_icon_on[idx - 1], &icon_off_cp[idx - 1], &icon_on_cp[idx - 1],
-        nullptr, p.entity);
+        nullptr, p.entity, false);
       continue;
     }
     if (p.type == "lock") {
@@ -415,8 +415,11 @@ inline void grid_phase2(
       continue;
     }
     if (p.type == "cover" && cover_command_mode(p.sensor)) {
-      if (!p.entity.empty() && p.label.empty())
-        subscribe_friendly_name(s.text_lbl, p.entity);
+      if (!p.entity.empty()) {
+        if (p.label.empty())
+          subscribe_friendly_name(s.text_lbl, p.entity);
+        subscribe_control_availability(s.btn, s.btn, p.entity);
+      }
       continue;
     }
     if (p.type == "cover" && cover_toggle_mode(p.sensor)) {
@@ -440,6 +443,7 @@ inline void grid_phase2(
       continue;
     }
     if (p.type == "action") {
+      subscribe_control_availability(s.btn, s.btn, p.entity);
       continue;
     }
     if (p.type == "media") {
@@ -448,6 +452,7 @@ inline void grid_phase2(
         if (mode == "play_pause") {
           subscribe_media_state(s.btn, media_play_pause_show_state(p) ? s.text_lbl : nullptr, p.entity);
         } else if (media_playback_button_mode(mode)) {
+          subscribe_control_availability(s.btn, s.btn, p.entity);
           // Previous/next are momentary actions and do not reflect player state.
         } else if (mode == "volume") {
           MediaVolumeCtx *ctx = create_media_volume_context(
@@ -751,6 +756,7 @@ inline void grid_phase2(
         if (!sb_cfg.entity.empty()) {
           if (sb_cfg.label.empty())
             subscribe_friendly_name(sub_slot.text_lbl, sb_cfg.entity);
+          subscribe_control_availability(sub_slot.btn, sub_slot.btn, sb_cfg.entity);
           ParsedCfg *ctx = new ParsedCfg(sb_cfg);
           lv_obj_add_event_cb(sb_btn, [](lv_event_t *e) {
             ParsedCfg *c = (ParsedCfg *)lv_event_get_user_data(e);
@@ -824,6 +830,7 @@ inline void grid_phase2(
       }
       if (sb_cfg.type == "action") {
         if (!sb_cfg.entity.empty() && !sb_cfg.sensor.empty()) {
+          subscribe_control_availability(sub_slot.btn, sub_slot.btn, sb_cfg.entity);
           ParsedCfg *ctx = new ParsedCfg(sb_cfg);
           lv_obj_add_event_cb(sb_btn, [](lv_event_t *e) {
             ParsedCfg *c = (ParsedCfg *)lv_event_get_user_data(e);
@@ -846,6 +853,8 @@ inline void grid_phase2(
               subscribe_media_state(sub_slot.btn,
                 media_play_pause_show_state(sb_cfg) ? sub_slot.text_lbl : nullptr,
                 sb_cfg.entity);
+            else
+              subscribe_control_availability(sub_slot.btn, sub_slot.btn, sb_cfg.entity);
           } else if (mode == "volume") {
             MediaVolumeCtx *ctx = create_media_volume_context(
               sub_slot.btn, sub_slot.text_lbl, sb_cfg,

@@ -314,15 +314,22 @@ inline void climate_layout_arc_dot(ClimateControlCtx *ctx, const ControlModalLay
   if (!ctx || !dot) return;
   int angle = climate_arc_angle_for_tenths(ctx, tenths);
   float radians = (float)angle * 3.14159265f / 180.0f;
-  lv_coord_t arc_left = layout.panel_w / 2 + layout.arc_center_x - layout.arc_size / 2;
-  lv_coord_t arc_top = layout.panel_h / 2 + layout.arc_center_y - layout.arc_size / 2;
-  lv_coord_t center_x = arc_left + layout.arc_size / 2;
-  lv_coord_t center_y = arc_top + layout.arc_size / 2;
   float x_radius = radius;
   float y_radius = radius;
   int width_percent = normalize_width_compensation_percent(ctx->width_compensation_percent);
-  if (width_compensation_vertical_axis()) y_radius = y_radius * width_percent / 100.0f;
-  else x_radius = x_radius * width_percent / 100.0f;
+  lv_coord_t visible_w = layout.arc_size;
+  lv_coord_t visible_h = layout.arc_size;
+  if (width_compensation_vertical_axis()) {
+    y_radius = y_radius * width_percent / 100.0f;
+    visible_h = layout.arc_size * width_percent / 100;
+  } else {
+    x_radius = x_radius * width_percent / 100.0f;
+    visible_w = layout.arc_size * width_percent / 100;
+  }
+  lv_coord_t arc_left = layout.panel_w / 2 + layout.arc_center_x - layout.arc_size / 2;
+  lv_coord_t arc_top = layout.panel_h / 2 + layout.arc_center_y - layout.arc_size / 2;
+  lv_coord_t center_x = arc_left + visible_w / 2;
+  lv_coord_t center_y = arc_top + visible_h / 2;
   lv_obj_set_size(dot, size, size);
   lv_obj_set_style_radius(dot, size / 2, LV_PART_MAIN);
   lv_obj_set_pos(dot,

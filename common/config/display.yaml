@@ -456,7 +456,8 @@ number:
 
   # Legacy setting kept so existing panels can migrate their saved single
   # clock brightness into the new day/night settings, and so older cached web
-  # UIs still change the live screensaver brightness.
+  # UIs still change the live screensaver brightness. The boot guard prevents
+  # the restored legacy value from overwriting the saved day/night values.
   - platform: template
     name: "Screen Saver: Clock Brightness"
     internal: true
@@ -473,6 +474,7 @@ number:
     on_value:
       then:
         - lambda: |-
+            if (!id(clock_brightness_legacy_sync_ready)) return;
             float legacy_pct = id(clock_brightness).state;
             if (std::isnan(legacy_pct) || legacy_pct <= 0.0f) legacy_pct = 35.0f;
             if (legacy_pct < 1.0f) legacy_pct = 1.0f;

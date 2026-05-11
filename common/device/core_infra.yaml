@@ -34,7 +34,7 @@ logger:
   logs:
     light: WARN
     script: INFO
-    camera_popup: DEBUG
+    camera_popup: INFO
 
 http_request:
   id: http_req

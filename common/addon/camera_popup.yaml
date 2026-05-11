@@ -50,6 +50,7 @@ online_image:
         if (token.empty()) return std::string("");
         return "Bearer " + token;
     on_download_finished:
+      - lvgl.widget.hide: camera_popup_spinner
       - lvgl.image.update:
           id: camera_popup_img_widget
           src: camera_popup_image
@@ -63,6 +64,7 @@ online_image:
             lambda: return id(camera_popup_open_flag);
           then:
             - lambda: id(camera_popup_open_flag) = false;
+            - lvgl.widget.hide: camera_popup_spinner
             - lvgl.widget.hide: camera_popup_overlay
 
 esphome:
@@ -104,11 +106,13 @@ script:
                 id(camera_popup_open_flag) = true;
                 id(camera_popup_last_ms) = millis();
             - lvgl.widget.show: camera_popup_overlay
+            - lvgl.widget.show: camera_popup_spinner
             - script.execute: camera_popup_fetch_script
 
   - id: camera_popup_close_script
     then:
       - lambda: id(camera_popup_open_flag) = false;
+      - lvgl.widget.hide: camera_popup_spinner
       - lvgl.widget.hide: camera_popup_overlay
       - online_image.release: camera_popup_image
 
@@ -144,6 +148,17 @@ lvgl:
                 id: camera_popup_img_widget
                 src: camera_popup_image
                 align: center
+            - spinner:
+                id: camera_popup_spinner
+                hidden: true
+                width: 72
+                height: 72
+                align: center
+                arc_length: 60
+                speed: 800
+                arc_color: 0x444444
+                indicator:
+                  arc_color: 0xFFFFFF
             - obj:
                 id: camera_popup_close_btn
                 width: 48
@@ -161,5 +176,6 @@ lvgl:
                 widgets:
                   - label:
                       text: "\U000F0156"
+                      font: icon_font
                       align: center
                       text_color: 0xFFFFFF

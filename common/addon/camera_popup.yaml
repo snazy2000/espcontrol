@@ -169,6 +169,7 @@ lvgl:
                 bg_color: 0x333333
                 bg_opa: 90%
                 border_width: 0
+                scrollbar_mode: "off"
                 clickable: true
                 on_click:
                   - script.execute: camera_popup_close_script

@@ -371,8 +371,7 @@ var CSS =
   ".sp-subpage-badge{font-size:var(--btn-label);line-height:1.2;opacity:.5;flex-shrink:0;" +
   "cursor:pointer;padding:2px 0 2px 4px;border-radius:4px;transition:opacity .15s}" +
   ".sp-subpage-badge:hover{opacity:1}" +
-  ".sp-type-badge{font-size:var(--btn-label);line-height:1.2;opacity:.35;flex-shrink:0;" +
-  "padding:2px 0 2px 4px;pointer-events:none}" +
+  ".sp-type-badge{display:none}" +
 
   "@media(max-width:768px){" +
   ":root{--gap:12px}" +

@@ -92,6 +92,8 @@ struct ClimateControlModalUi {
   ClimateControlCtx *active = nullptr;
   bool updating_arc = false;
   bool dragging_arc = false;
+  bool has_drag_preview = false;
+  int drag_preview_tenths = CLIMATE_DEFAULT_TARGET_TENTHS;
   bool action_menu_open = false;
 };
 
@@ -201,6 +203,25 @@ inline int climate_selected_target(ClimateControlCtx *ctx) {
   if (ctx->has_low) return ctx->low_tenths;
   if (ctx->has_high) return ctx->high_tenths;
   return climate_clamp_tenths(ctx, CLIMATE_DEFAULT_TARGET_TENTHS);
+}
+
+inline int climate_display_target(ClimateControlCtx *ctx) {
+  ClimateControlModalUi &ui = climate_control_modal_ui();
+  if (ctx && ui.active == ctx && ui.dragging_arc && ui.has_drag_preview)
+    return climate_clamp_tenths(ctx, ui.drag_preview_tenths);
+  return climate_selected_target(ctx);
+}
+
+inline int climate_constrain_selected_target(ClimateControlCtx *ctx, int value) {
+  if (!ctx) return CLIMATE_DEFAULT_TARGET_TENTHS;
+  value = climate_clamp_tenths(ctx, value);
+  if (climate_dual_target(ctx)) {
+    int gap = ctx->step_tenths > 0 ? ctx->step_tenths : CLIMATE_DEFAULT_STEP_TENTHS;
+    if (ctx->edit_high && value <= ctx->low_tenths) value = ctx->low_tenths + gap;
+    else if (!ctx->edit_high && value >= ctx->high_tenths) value = ctx->high_tenths - gap;
+    value = climate_clamp_tenths(ctx, value);
+  }
+  return value;
 }
 
 inline std::string climate_format_tenths(int value, int precision) {
@@ -354,7 +375,7 @@ inline void climate_layout_handle_dot(ClimateControlCtx *ctx, const ControlModal
   lv_coord_t handle_size = layout.arc_stroke + pad * 2;
   lv_coord_t radius = layout.arc_size / 2 - layout.arc_stroke / 2;
   if (radius < 0) radius = layout.arc_size / 2;
-  climate_layout_arc_dot(ctx, layout, ui.handle_dot, climate_selected_target(ctx), handle_size, radius);
+  climate_layout_arc_dot(ctx, layout, ui.handle_dot, climate_display_target(ctx), handle_size, radius);
 }
 
 inline void climate_apply_background_arc_width(lv_obj_t *arc, const ControlModalLayout &layout) {
@@ -480,15 +501,12 @@ inline void climate_apply_selected_target(ClimateControlCtx *ctx, int value, boo
     climate_control_set_modal_value(ctx);
     return;
   }
-  value = climate_round_to_step(ctx, value);
+  value = climate_round_to_step(ctx, climate_constrain_selected_target(ctx, value));
   if (climate_dual_target(ctx)) {
-    int gap = ctx->step_tenths > 0 ? ctx->step_tenths : CLIMATE_DEFAULT_STEP_TENTHS;
     if (ctx->edit_high) {
-      if (value <= ctx->low_tenths) value = ctx->low_tenths + gap;
       ctx->high_tenths = climate_clamp_tenths(ctx, value);
       ctx->has_high = true;
     } else {
-      if (value >= ctx->high_tenths) value = ctx->high_tenths - gap;
       ctx->low_tenths = climate_clamp_tenths(ctx, value);
       ctx->has_low = true;
     }
@@ -501,6 +519,14 @@ inline void climate_apply_selected_target(ClimateControlCtx *ctx, int value, boo
   climate_control_set_modal_value(ctx);
   if (send_now) climate_send_temperature(ctx);
   else if (debounce) climate_schedule_temperature_send(ctx);
+}
+
+inline void climate_preview_selected_target(ClimateControlCtx *ctx, int value) {
+  if (!ctx || !climate_temperature_controls_enabled(ctx)) return;
+  ClimateControlModalUi &ui = climate_control_modal_ui();
+  ui.drag_preview_tenths = climate_constrain_selected_target(ctx, value);
+  ui.has_drag_preview = true;
+  climate_control_set_modal_value(ctx);
 }
 
 inline std::vector<std::string> climate_parse_options(esphome::StringRef value) {
@@ -913,7 +939,7 @@ inline void climate_control_set_modal_value(ClimateControlCtx *ctx) {
   if (!ctx || ui.active != ctx) return;
   bool temp_enabled = climate_temperature_controls_enabled(ctx);
   bool show_dial = ctx->available;
-  int target = climate_selected_target(ctx);
+  int target = climate_display_target(ctx);
   if (ui.arc) {
     climate_set_obj_visible(ui.arc, show_dial);
     if (show_dial && !ui.dragging_arc) {
@@ -1209,15 +1235,24 @@ inline void climate_control_open_modal(ClimateControlCtx *ctx) {
     if (ui.updating_arc || !ui.active) return;
     ui.dragging_arc = true;
     lv_obj_t *arc = static_cast<lv_obj_t *>(lv_event_get_target(e));
-    climate_apply_selected_target(ui.active, lv_arc_get_value(arc), false, false);
+    climate_preview_selected_target(ui.active, lv_arc_get_value(arc));
   }, LV_EVENT_VALUE_CHANGED, nullptr);
   lv_obj_add_event_cb(ui.arc, [](lv_event_t *e) {
     ClimateControlModalUi &ui = climate_control_modal_ui();
     if (ui.updating_arc || !ui.active) return;
     lv_obj_t *arc = static_cast<lv_obj_t *>(lv_event_get_target(e));
+    int value = ui.has_drag_preview ? ui.drag_preview_tenths : lv_arc_get_value(arc);
     ui.dragging_arc = false;
-    climate_apply_selected_target(ui.active, lv_arc_get_value(arc), true, false);
+    ui.has_drag_preview = false;
+    climate_apply_selected_target(ui.active, value, true, false);
   }, LV_EVENT_RELEASED, nullptr);
+  lv_obj_add_event_cb(ui.arc, [](lv_event_t *) {
+    ClimateControlModalUi &ui = climate_control_modal_ui();
+    if (!ui.active) return;
+    ui.dragging_arc = false;
+    ui.has_drag_preview = false;
+    climate_control_set_modal_value(ui.active);
+  }, LV_EVENT_PRESS_LOST, nullptr);
 
   ui.current_dot = lv_obj_create(ui.panel);
   lv_obj_set_style_bg_color(ui.current_dot, lv_color_hex(CLIMATE_NEUTRAL_COLOR), LV_PART_MAIN);

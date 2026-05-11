@@ -96,13 +96,16 @@
       "layout": {
         "cols": 2,
         "rows": 3,
-        "firmwareGrid": "3x2"
+        "firmwareGrid": "3x2",
+        "portraitCols": 3
       },
       "rotation": {
         "enabled": true,
         "options": [
           "0",
-          "180"
+          "90",
+          "180",
+          "270"
         ],
         "displayOffset": 180
       },
@@ -112,6 +115,14 @@
         "screen": {
           "width": "44%",
           "aspect": "480/800"
+        },
+        "portrait": {
+          "cols": 3,
+          "rows": 2,
+          "screen": {
+            "width": "74%",
+            "aspect": "800/480"
+          }
         },
         "topbar": {
           "height": 6.45,

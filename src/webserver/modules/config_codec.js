@@ -53,7 +53,7 @@ function normalizeButtonConfig(b) {
   }
   if (b && !b.type) {
     b.options = normalizeSwitchConfirmationOptions(b.options);
-  } else if (b && (b.type !== "sensor" || b.precision === "text")) {
+  } else if (b && !cardLargeNumbersSupported(b)) {
     b.options = "";
   }
   return b;
@@ -118,8 +118,19 @@ function setConfigOptionValue(options, name, value) {
   return out.join(",");
 }
 
+function cardLargeNumbersSupported(b) {
+  if (!b) return false;
+  return (b.type === "sensor" && b.precision !== "text") ||
+    (b.type === "weather" && (b.precision === "today" || b.precision === "tomorrow"));
+}
+
+function cardLargeNumbersEnabled(b) {
+  return !!(b && cardLargeNumbersSupported(b) &&
+    configOptionEnabled(b.options, SENSOR_LARGE_NUMBERS_OPTION));
+}
+
 function sensorLargeNumbersEnabled(b) {
-  return !!(b && configOptionEnabled(b.options, SENSOR_LARGE_NUMBERS_OPTION));
+  return cardLargeNumbersEnabled(b);
 }
 
 function setSensorLargeNumbersEnabled(b, enabled) {
@@ -265,7 +276,7 @@ function buttonConfigFields(b) {
   var options = b && b.options || "";
   if (type === "") {
     options = normalizeSwitchConfirmationOptions(options);
-  } else if (!(type === "sensor" && precision !== "text")) {
+  } else if (!cardLargeNumbersSupported({ type: type, precision: precision })) {
     options = "";
   }
   if (!type && !sensor) {
@@ -545,7 +556,7 @@ function legacySubpageConfigSafe(sp) {
     var options = b.options || "";
     if (!b.type) {
       options = normalizeSwitchConfirmationOptions(options);
-    } else if (!(b.type === "sensor" && precision !== "text")) {
+    } else if (!cardLargeNumbersSupported({ type: b.type || "", precision: precision })) {
       options = "";
     }
     var fields = [b.entity || "", b.label || "", icon, iconOn, sensor, unit, b.type || "", precision, options];
@@ -572,7 +583,7 @@ function serializeLegacySubpageConfig(sp) {
     var options = b.options || "";
     if (!b.type) {
       options = normalizeSwitchConfirmationOptions(options);
-    } else if (!(b.type === "sensor" && precision !== "text")) {
+    } else if (!cardLargeNumbersSupported({ type: b.type || "", precision: precision })) {
       options = "";
     }
     var fields = [b.entity || "", b.label || "", icon, iconOn, sensor, unit, b.type || "", precision, options];
@@ -599,7 +610,7 @@ function serializeCompactSubpageConfig(sp) {
     var options = b.options || "";
     if (!b.type) {
       options = normalizeSwitchConfirmationOptions(options);
-    } else if (!(b.type === "sensor" && precision !== "text")) {
+    } else if (!cardLargeNumbersSupported({ type: b.type || "", precision: precision })) {
       options = "";
     }
     var fields = [

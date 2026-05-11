@@ -86,6 +86,11 @@ struct ParsedCfg {
   std::string options;     // 8  comma-delimited card options
 };
 
+inline bool card_large_numbers_supported(const ParsedCfg &p) {
+  return (p.type == "sensor" && p.precision != "text") ||
+    (p.type == "weather" && (p.precision == "today" || p.precision == "tomorrow"));
+}
+
 inline ParsedCfg normalize_parsed_cfg(ParsedCfg p) {
   // Slider cards used to store "h" here for horizontal layout. Sliders are
   // now always vertical, so treat any saved slider sensor value as legacy.
@@ -125,7 +130,7 @@ inline ParsedCfg normalize_parsed_cfg(ParsedCfg p) {
     p.sensor.clear();
     p.unit.clear();
   }
-  if (!p.type.empty() && (p.type != "sensor" || p.precision == "text")) {
+  if (!p.type.empty() && !card_large_numbers_supported(p)) {
     p.options.clear();
   }
   return p;
@@ -185,8 +190,12 @@ inline std::string cfg_option_value(const std::string &options, const char *name
   return "";
 }
 
+inline bool card_large_numbers_enabled(const ParsedCfg &p) {
+  return card_large_numbers_supported(p) && cfg_option_enabled(p.options, "large_numbers");
+}
+
 inline bool sensor_large_numbers_enabled(const ParsedCfg &p) {
-  return cfg_option_enabled(p.options, "large_numbers");
+  return card_large_numbers_enabled(p);
 }
 
 inline bool switch_confirmation_enabled(const ParsedCfg &p) {

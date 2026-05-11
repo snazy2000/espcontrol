@@ -441,6 +441,27 @@ assertButtonRoundTrip(hooks, "weather today card", {
   precision: "today",
 }, false);
 
+assertButtonRoundTrip(hooks, "weather large temperature numbers option", {
+  entity: "weather.forecast_home",
+  label: "Today",
+  icon: "Auto",
+  icon_on: "Auto",
+  sensor: "",
+  unit: "",
+  type: "weather",
+  precision: "today",
+  options: "large_numbers",
+}, false);
+
+assert.strictEqual(
+  buttonShape(hooks.parseButtonConfig("weather.forecast_home;;;;;;weather;today;large_numbers")).options,
+  "large_numbers",
+  "weather forecast preserves large numbers option");
+assert.strictEqual(
+  buttonShape(hooks.parseButtonConfig("weather.forecast_home;;;;;;weather;;large_numbers")).options,
+  "",
+  "weather current conditions clears large numbers option");
+
 assertButtonRoundTrip(hooks, "media play pause card", {
   entity: "media_player.living_room",
   label: "Play/Pause",

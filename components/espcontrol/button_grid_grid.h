@@ -123,6 +123,11 @@ inline void setup_card_visual(BtnSlot &s, const ParsedCfg &p,
   if (weather_card_shows_forecast(p)) {
     setup_weather_forecast_card(s, p, palette.has_sensor_color, palette.sensor_val,
       cfg.width_compensation_percent);
+    if (row_span == 2 && col_span == 2 &&
+        card_large_numbers_enabled(p) && cfg.sp_large_sensor_font) {
+      apply_large_sensor_number_style(
+        s, cfg.sp_large_sensor_font, cfg.large_sensor_unit_offset_percent);
+    }
     return;
   }
   if (p.type == "weather") {

@@ -184,6 +184,135 @@ inline void setup_card_visual(BtnSlot &s, const ParsedCfg &p,
   setup_toggle_visual(s, p);
 }
 
+inline void refresh_media_card_layout(BtnSlot &s, const ParsedCfg &p,
+                                      const GridConfig &cfg,
+                                      int row_span = 1) {
+  std::string mode = media_card_mode(p.sensor);
+  lv_coord_t pad = lv_obj_get_style_radius(s.btn, LV_PART_MAIN) + 4;
+
+  if (mode == "now_playing") {
+    MediaNowPlayingCtx *ctx = (MediaNowPlayingCtx *)lv_obj_get_user_data(s.sensor_container);
+    if (!ctx) return;
+    if (ctx->title_lbl) apply_width_compensation(ctx->title_lbl, cfg.width_compensation_percent);
+    if (ctx->artist_lbl) apply_width_compensation(ctx->artist_lbl, cfg.width_compensation_percent);
+    setup_media_now_playing_layout(
+      s.btn, s.icon_lbl, ctx->title_lbl, ctx->artist_lbl,
+      cfg.media_title_font ? cfg.media_title_font : cfg.sp_sensor_font, pad,
+      row_span == 1, ctx->play_pause_background,
+      ctx->progress_slider ? pad : 0, false);
+    if (ctx->progress_slider) slider_refresh_geometry(ctx->progress_slider);
+    return;
+  }
+
+  if (mode == "position") {
+    lv_obj_t *slider = (lv_obj_t *)lv_obj_get_user_data(s.sensor_container);
+    SliderCtx *ctx = slider ? (SliderCtx *)lv_obj_get_user_data(slider) : nullptr;
+    lv_coord_t position_pad = lv_obj_get_style_pad_top(s.btn, LV_PART_MAIN);
+    if (ctx && ctx->media_value_lbl) {
+      apply_width_compensation(ctx->media_value_lbl, cfg.width_compensation_percent);
+      lv_obj_align(ctx->media_value_lbl, LV_ALIGN_TOP_LEFT, position_pad, position_pad);
+      lv_obj_move_foreground(ctx->media_value_lbl);
+    }
+    if (s.text_lbl) {
+      lv_obj_align(s.text_lbl, LV_ALIGN_BOTTOM_LEFT, position_pad, -position_pad);
+      configure_button_label_wrap(s.text_lbl);
+      lv_obj_move_foreground(s.text_lbl);
+    }
+    if (slider) slider_refresh_geometry(slider);
+    if (ctx) media_apply_position(ctx);
+    return;
+  }
+
+  if (media_playback_button_mode(mode)) {
+    if (s.icon_lbl) lv_obj_align(s.icon_lbl, LV_ALIGN_TOP_LEFT, 0, 0);
+    if (s.text_lbl) lv_obj_align(s.text_lbl, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+    return;
+  }
+  if (mode == "volume") return;
+
+  lv_obj_t *slider = (lv_obj_t *)lv_obj_get_user_data(s.sensor_container);
+  if (slider) slider_refresh_geometry(slider);
+}
+
+inline void refresh_slider_card_layout(BtnSlot &s) {
+  lv_obj_t *slider = (lv_obj_t *)lv_obj_get_user_data(s.sensor_container);
+  lv_coord_t pad = lv_obj_get_style_radius(s.btn, LV_PART_MAIN) + 4;
+  if (s.icon_lbl) lv_obj_align(s.icon_lbl, LV_ALIGN_TOP_LEFT, pad, pad);
+  if (s.text_lbl) lv_obj_align(s.text_lbl, LV_ALIGN_BOTTOM_LEFT, pad, -pad);
+  if (slider) slider_refresh_geometry(slider);
+}
+
+inline void refresh_card_layout(BtnSlot &s, const ParsedCfg &p,
+                                const GridConfig &cfg,
+                                int row_span = 1) {
+  if (cfg.wrap_tall_labels && row_span > 1) {
+    lv_label_set_long_mode(s.text_lbl, LV_LABEL_LONG_WRAP);
+    lv_obj_set_width(s.text_lbl, lv_pct(100));
+  }
+  apply_width_compensation(s.icon_lbl, cfg.width_compensation_percent);
+  apply_slot_text_width_compensation(s, cfg.width_compensation_percent);
+
+  if (p.type == "media") {
+    refresh_media_card_layout(s, p, cfg, row_span);
+  } else if (p.type == "slider" || p.type == "light_temperature" ||
+             (p.type == "cover" && !cover_command_mode(p.sensor) && !cover_toggle_mode(p.sensor))) {
+    refresh_slider_card_layout(s);
+  }
+}
+
+inline void grid_refresh_layout(
+    BtnSlot *slots, const GridConfig &cfg,
+    const std::string &order_str,
+    lv_obj_t *main_page_obj = nullptr) {
+  ESP_LOGI("sensors", "Grid refresh: layout start (%lu ms)", esphome::millis());
+  set_display_temperature_unit(cfg.temperature_unit, cfg.timezone);
+  set_width_compensation_vertical_axis(cfg.width_compensation_vertical);
+  int NS = bounded_grid_slots(cfg.num_slots);
+  int COLS = cfg.cols > 0 ? cfg.cols : 1;
+  configure_grid_layout(main_page_obj, NS, COLS);
+  int ROWS = (NS + COLS - 1) / COLS;
+
+  OrderResult parsed, order;
+  parse_order_string(order_str, NS, parsed);
+  clear_spanned_cells(parsed, NS, COLS, order);
+
+  lv_obj_t *first_card = nullptr;
+  if (parsed.positions[0] >= 1 && parsed.positions[0] <= NS) {
+    first_card = slots[parsed.positions[0] - 1].btn;
+  } else if (NS > 0) {
+    first_card = slots[0].btn;
+  }
+  set_media_home_grid_metrics(main_page_obj, COLS, ROWS, first_card);
+
+  for (int i = 0; i < NS; i++)
+    lv_obj_add_flag(slots[i].btn, LV_OBJ_FLAG_HIDDEN);
+
+  for (int pos = 0; pos < NS; pos++) {
+    int idx = order.positions[pos];
+    if (idx < 1 || idx > NS) continue;
+    auto &s = slots[idx - 1];
+    lv_obj_clear_flag(s.btn, LV_OBJ_FLAG_HIDDEN);
+    int col = pos % COLS, row = pos / COLS;
+    int row_span = order.row_span[idx - 1] > 0 ? order.row_span[idx - 1] : 1;
+    int col_span = order.col_span[idx - 1] > 0 ? order.col_span[idx - 1] : 1;
+    lv_obj_set_grid_cell(s.btn,
+      LV_GRID_ALIGN_STRETCH, col, col_span,
+      LV_GRID_ALIGN_STRETCH, row, row_span);
+  }
+
+  if (main_page_obj) lv_obj_update_layout(main_page_obj);
+
+  for (int pos = 0; pos < NS; pos++) {
+    int idx = order.positions[pos];
+    if (idx < 1 || idx > NS) continue;
+    auto &s = slots[idx - 1];
+    ParsedCfg p = parse_cfg(s.config->state);
+    int row_span = order.row_span[idx - 1] > 0 ? order.row_span[idx - 1] : 1;
+    refresh_card_layout(s, p, cfg, row_span);
+  }
+  ESP_LOGI("sensors", "Grid refresh: layout done (%lu ms)", esphome::millis());
+}
+
 // ── Phase 1: Visual setup ────────────────────────────────────────────
 
 inline void grid_phase1(

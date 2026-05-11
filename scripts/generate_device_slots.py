@@ -241,11 +241,8 @@ def script_block(device: dict) -> str:
             "    then:",
             "      - lambda: |-",
             refresh_block(device),
-            "          grid_phase1(slots, cfg,",
+            "          grid_refresh_layout(slots, cfg,",
             "            id(button_order).state,",
-            "            id(button_on_color).state,",
-            "            id(button_off_color).state,",
-            "            id(sensor_card_color).state,",
             "            id(main_page)->obj);",
             "",
         ]
@@ -276,11 +273,12 @@ def replace_script_block(text: str, device: dict) -> str:
     marker = re.compile(
         r"(?ms)^script:\n"
         r"  - id: refresh_button_grid\n"
-        r".*?^          grid_phase1\(slots, cfg,\n"
+        r".*?^          grid_(?:phase1|refresh_layout)\(slots, cfg,\n"
         r"^            id\(button_order\)\.state,\n"
-        r"^            id\(button_on_color\)\.state,\n"
+        r"(?:(?:^            id\(button_on_color\)\.state,\n"
         r"^            id\(button_off_color\)\.state,\n"
         r"^            id\(sensor_card_color\)\.state,\n"
+        r"))?"
         r"^            id\(main_page\)->obj\);\n"
         r"^\n?"
     )

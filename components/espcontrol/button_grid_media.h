@@ -180,7 +180,8 @@ inline void setup_media_now_playing_layout(lv_obj_t *btn, lv_obj_t *icon_lbl,
                                            lv_coord_t pad,
                                            bool limit_title_lines,
                                            bool tappable,
-                                           lv_coord_t content_inset = 0) {
+                                           lv_coord_t content_inset = 0,
+                                           bool reset_text = true) {
   constexpr lv_coord_t TITLE_LINE_SPACE = -1;
   lv_coord_t text_width = lv_pct(100);
   if (btn && content_inset > 0) {
@@ -210,12 +211,12 @@ inline void setup_media_now_playing_layout(lv_obj_t *btn, lv_obj_t *icon_lbl,
       lv_obj_set_width(title_lbl, text_width);
     }
     lv_obj_align(title_lbl, LV_ALIGN_TOP_LEFT, content_inset, content_inset);
-    lv_label_set_text(title_lbl, "--");
+    if (reset_text) lv_label_set_text(title_lbl, "--");
     lv_obj_move_foreground(title_lbl);
   }
   if (artist_lbl) {
     const lv_font_t *font = lv_obj_get_style_text_font(artist_lbl, LV_PART_MAIN);
-    lv_label_set_text(artist_lbl, "--");
+    if (reset_text) lv_label_set_text(artist_lbl, "--");
     lv_label_set_long_mode(artist_lbl, LV_LABEL_LONG_DOT);
     if (font && font->line_height > 0) lv_obj_set_size(artist_lbl, text_width, font->line_height);
     else lv_obj_set_width(artist_lbl, text_width);

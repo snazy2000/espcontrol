@@ -53,9 +53,12 @@ struct ClimateControlCtx {
   uint32_t secondary_color = DEFAULT_OFF_COLOR;
   uint32_t tertiary_color = DEFAULT_TERTIARY_COLOR;
   lv_obj_t *btn = nullptr;
+  lv_obj_t *icon_lbl = nullptr;
   lv_obj_t *label_lbl = nullptr;
   lv_obj_t *value_lbl = nullptr;
   lv_obj_t *unit_lbl = nullptr;
+  const char *icon_off_glyph = nullptr;
+  const char *icon_on_glyph = nullptr;
   int width_compensation_percent = 100;
   const lv_font_t *number_font = nullptr;
   const lv_font_t *unit_font = nullptr;
@@ -398,10 +401,16 @@ inline uint32_t climate_active_color(ClimateControlCtx *ctx) {
   return ctx->accent_color;
 }
 
+inline const char *climate_card_inactive_icon(ClimateControlCtx *ctx) {
+  if (!ctx || !ctx->available || climate_is_active(ctx)) return nullptr;
+  if (ctx->hvac_mode == "off") return ctx->icon_off_glyph ? ctx->icon_off_glyph : find_icon("Thermostat");
+  return ctx->icon_on_glyph ? ctx->icon_on_glyph :
+         (ctx->icon_off_glyph ? ctx->icon_off_glyph : find_icon("Thermostat"));
+}
+
 inline std::string climate_card_value(ClimateControlCtx *ctx) {
   if (!ctx || !ctx->available) return "--";
-  if (ctx->hvac_mode == "off") return "Off";
-  if (!climate_is_active(ctx)) return "Idle";
+  if (climate_card_inactive_icon(ctx)) return "";
   if (ctx->has_low && ctx->has_high)
     return climate_format_tenths(ctx->low_tenths, ctx->precision) + "-" +
            climate_format_tenths(ctx->high_tenths, ctx->precision);
@@ -422,9 +431,18 @@ inline std::string climate_card_label(ClimateControlCtx *ctx) {
 
 inline void climate_update_card(ClimateControlCtx *ctx) {
   if (!ctx) return;
+  const char *inactive_icon = climate_card_inactive_icon(ctx);
   std::string value = climate_card_value(ctx);
+  if (ctx->icon_lbl) {
+    if (inactive_icon) {
+      lv_label_set_text(ctx->icon_lbl, inactive_icon);
+      lv_obj_clear_flag(ctx->icon_lbl, LV_OBJ_FLAG_HIDDEN);
+    } else {
+      lv_obj_add_flag(ctx->icon_lbl, LV_OBJ_FLAG_HIDDEN);
+    }
+  }
   if (ctx->value_lbl) lv_label_set_text(ctx->value_lbl, value.c_str());
-  if (ctx->unit_lbl) lv_label_set_text(ctx->unit_lbl, (value == "--" || value == "Off" || value == "Idle") ? "" : display_temperature_unit_symbol());
+  if (ctx->unit_lbl) lv_label_set_text(ctx->unit_lbl, (value.empty() || value == "--") ? "" : display_temperature_unit_symbol());
   if (ctx->label_lbl) lv_label_set_text(ctx->label_lbl, climate_card_label(ctx).c_str());
   if (ctx->btn) {
     if (climate_is_active(ctx)) lv_obj_add_state(ctx->btn, LV_STATE_CHECKED);
@@ -1396,7 +1414,7 @@ inline void setup_climate_control_button(lv_obj_t *btn, lv_obj_t *icon_lbl,
 }
 
 inline ClimateControlCtx *create_climate_control_context(
-    lv_obj_t *btn, lv_obj_t *label_lbl, const ParsedCfg &p,
+    lv_obj_t *btn, lv_obj_t *icon_lbl, lv_obj_t *label_lbl, const ParsedCfg &p,
     uint32_t accent_color, uint32_t secondary_color, uint32_t tertiary_color,
     const lv_font_t *number_font, const lv_font_t *unit_font,
     const lv_font_t *label_font, const lv_font_t *icon_font,
@@ -1411,9 +1429,12 @@ inline ClimateControlCtx *create_climate_control_context(
   ctx->secondary_color = secondary_color;
   ctx->tertiary_color = tertiary_color;
   ctx->btn = btn;
+  ctx->icon_lbl = icon_lbl;
   ctx->label_lbl = label_lbl;
   ctx->value_lbl = value_lbl;
   ctx->unit_lbl = unit_lbl;
+  ctx->icon_off_glyph = (p.icon.empty() || p.icon == "Auto") ? find_icon("Thermostat") : find_icon(p.icon.c_str());
+  ctx->icon_on_glyph = (p.icon_on.empty() || p.icon_on == "Auto") ? ctx->icon_off_glyph : find_icon(p.icon_on.c_str());
   ctx->number_font = number_font;
   ctx->unit_font = unit_font;
   ctx->label_font = label_font;

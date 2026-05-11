@@ -30,7 +30,7 @@ font:
     size: 62
     bpp: 4
     glyphs:
-      - "0123456789.-°/% ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+      - "0123456789.-°/%"
       - ":"
 
   # Large-card sensor values (3x the regular sensor value font)
@@ -39,7 +39,7 @@ font:
     size: 186
     bpp: 4
     glyphs:
-      - "0123456789.-°/% ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+      - "0123456789.-°/%"
       - ":"
 
   # Media now-playing titles (sensor value size, full text glyph coverage)

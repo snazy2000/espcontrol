@@ -505,7 +505,7 @@ inline void grid_phase2(
     if (p.type == "climate") {
       if (!p.entity.empty()) {
         ClimateControlCtx *ctx = create_climate_control_context(
-          s.btn, s.text_lbl, p,
+          s.btn, s.icon_lbl, s.text_lbl, p,
           has_on ? on_val : DEFAULT_SLIDER_COLOR,
           has_off ? off_val : DEFAULT_OFF_COLOR,
           has_sensor_color ? sensor_val : DEFAULT_TERTIARY_COLOR,
@@ -919,7 +919,7 @@ inline void grid_phase2(
       if (sb_cfg.type == "climate") {
         if (!sb_cfg.entity.empty()) {
           ClimateControlCtx *ctx = create_climate_control_context(
-            sub_slot.btn, sub_slot.text_lbl, sb_cfg,
+            sub_slot.btn, sub_slot.icon_lbl, sub_slot.text_lbl, sb_cfg,
             has_on ? on_val : DEFAULT_SLIDER_COLOR,
             has_off ? off_val : DEFAULT_OFF_COLOR,
             has_sensor_color ? sensor_val : DEFAULT_TERTIARY_COLOR,

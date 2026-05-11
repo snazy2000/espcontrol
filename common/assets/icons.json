@@ -46,6 +46,11 @@
       "mdi": "air-purifier"
     },
     {
+      "name": "Air Purifier Off",
+      "codepoint": "F1B57",
+      "mdi": "air-purifier-off"
+    },
+    {
       "name": "Alarm",
       "codepoint": "F009E",
       "mdi": "bell-ring"
@@ -371,6 +376,11 @@
       "mdi": "fire"
     },
     {
+      "name": "Fire Off",
+      "codepoint": "F1722",
+      "mdi": "fire-off"
+    },
+    {
       "name": "Fireplace",
       "codepoint": "F0E2E",
       "mdi": "fireplace"
@@ -494,6 +504,16 @@
       "name": "Heat Pump",
       "codepoint": "F1A43",
       "mdi": "heat-pump"
+    },
+    {
+      "name": "Heat Wave",
+      "codepoint": "F1A45",
+      "mdi": "heat-wave"
+    },
+    {
+      "name": "Heating Coil",
+      "codepoint": "F1AAF",
+      "mdi": "heating-coil"
     },
     {
       "name": "HVAC",
@@ -991,9 +1011,19 @@
       "mdi": "thermometer-low"
     },
     {
+      "name": "Thermometer Off",
+      "codepoint": "F1531",
+      "mdi": "thermometer-off"
+    },
+    {
       "name": "Thermostat",
       "codepoint": "F0393",
       "mdi": "thermostat"
+    },
+    {
+      "name": "Thermostat Box",
+      "codepoint": "F0891",
+      "mdi": "thermostat-box"
     },
     {
       "name": "Home-Thermostat",
@@ -1051,9 +1081,14 @@
       "mdi": "wall-sconce"
     },
     {
-      "name": "Washer",
+      "name": "Washing Machine",
       "codepoint": "F072A",
       "mdi": "washing-machine"
+    },
+    {
+      "name": "Washing Machine Off",
+      "codepoint": "F11BD",
+      "mdi": "washing-machine-off"
     },
     {
       "name": "Water",
@@ -1061,9 +1096,14 @@
       "mdi": "water"
     },
     {
-      "name": "Water Heater",
+      "name": "Water Boiler",
       "codepoint": "F0F92",
       "mdi": "water-boiler"
+    },
+    {
+      "name": "Water Boiler Off",
+      "codepoint": "F11B4",
+      "mdi": "water-boiler-off"
     },
     {
       "name": "Water Percent",

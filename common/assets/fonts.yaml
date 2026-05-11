@@ -9,7 +9,7 @@ font:
     size: 48
     bpp: 4
     glyphs:
-      - "0123456789.-°/% ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+      - "0123456789.-°/%"
       - ":"
 
   # Volume/climate modal: large numeric value

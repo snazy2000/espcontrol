@@ -55,6 +55,7 @@ struct ClimateControlCtx {
   lv_obj_t *btn = nullptr;
   lv_obj_t *icon_lbl = nullptr;
   lv_obj_t *label_lbl = nullptr;
+  lv_obj_t *sensor_container = nullptr;
   lv_obj_t *value_lbl = nullptr;
   lv_obj_t *unit_lbl = nullptr;
   const char *icon_off_glyph = nullptr;
@@ -401,16 +402,17 @@ inline uint32_t climate_active_color(ClimateControlCtx *ctx) {
   return ctx->accent_color;
 }
 
-inline const char *climate_card_inactive_icon(ClimateControlCtx *ctx) {
-  if (!ctx || !ctx->available || climate_is_active(ctx)) return nullptr;
-  if (ctx->hvac_mode == "off") return ctx->icon_off_glyph ? ctx->icon_off_glyph : find_icon("Thermostat");
+inline const char *climate_card_state_icon(ClimateControlCtx *ctx) {
+  if (!ctx) return nullptr;
+  if (!ctx->available || ctx->hvac_mode == "off")
+    return ctx->icon_off_glyph ? ctx->icon_off_glyph : find_icon("Thermostat");
   return ctx->icon_on_glyph ? ctx->icon_on_glyph :
          (ctx->icon_off_glyph ? ctx->icon_off_glyph : find_icon("Thermostat"));
 }
 
 inline std::string climate_card_value(ClimateControlCtx *ctx) {
   if (!ctx || !ctx->available) return "--";
-  if (climate_card_inactive_icon(ctx)) return "";
+  if (climate_card_state_icon(ctx)) return "";
   if (ctx->has_low && ctx->has_high)
     return climate_format_tenths(ctx->low_tenths, ctx->precision) + "-" +
            climate_format_tenths(ctx->high_tenths, ctx->precision);
@@ -431,15 +433,20 @@ inline std::string climate_card_label(ClimateControlCtx *ctx) {
 
 inline void climate_update_card(ClimateControlCtx *ctx) {
   if (!ctx) return;
-  const char *inactive_icon = climate_card_inactive_icon(ctx);
+  const char *state_icon = climate_card_state_icon(ctx);
   std::string value = climate_card_value(ctx);
   if (ctx->icon_lbl) {
-    if (inactive_icon) {
-      lv_label_set_text(ctx->icon_lbl, inactive_icon);
+    if (state_icon) {
+      lv_label_set_text(ctx->icon_lbl, state_icon);
       lv_obj_clear_flag(ctx->icon_lbl, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_move_foreground(ctx->icon_lbl);
     } else {
       lv_obj_add_flag(ctx->icon_lbl, LV_OBJ_FLAG_HIDDEN);
     }
+  }
+  if (ctx->sensor_container) {
+    if (state_icon) lv_obj_add_flag(ctx->sensor_container, LV_OBJ_FLAG_HIDDEN);
+    else lv_obj_clear_flag(ctx->sensor_container, LV_OBJ_FLAG_HIDDEN);
   }
   if (ctx->value_lbl) lv_label_set_text(ctx->value_lbl, value.c_str());
   if (ctx->unit_lbl) lv_label_set_text(ctx->unit_lbl, (value.empty() || value == "--") ? "" : display_temperature_unit_symbol());
@@ -1419,7 +1426,7 @@ inline ClimateControlCtx *create_climate_control_context(
     const lv_font_t *number_font, const lv_font_t *unit_font,
     const lv_font_t *label_font, const lv_font_t *icon_font,
     int width_compensation_percent,
-    lv_obj_t *value_lbl, lv_obj_t *unit_lbl) {
+    lv_obj_t *sensor_container, lv_obj_t *value_lbl, lv_obj_t *unit_lbl) {
   ClimateControlCtx *ctx = new ClimateControlCtx();
   ctx->entity_id = p.entity;
   ctx->configured_label = p.label;
@@ -1431,6 +1438,7 @@ inline ClimateControlCtx *create_climate_control_context(
   ctx->btn = btn;
   ctx->icon_lbl = icon_lbl;
   ctx->label_lbl = label_lbl;
+  ctx->sensor_container = sensor_container;
   ctx->value_lbl = value_lbl;
   ctx->unit_lbl = unit_lbl;
   ctx->icon_off_glyph = (p.icon.empty() || p.icon == "Auto") ? find_icon("Thermostat") : find_icon(p.icon.c_str());

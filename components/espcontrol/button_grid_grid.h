@@ -525,7 +525,7 @@ inline void grid_phase2(
             : lv_obj_get_style_text_font(s.text_lbl, LV_PART_MAIN),
           cfg.icon_font,
           cfg.volume_width_compensation_percent,
-          s.sensor_lbl, s.unit_lbl);
+          s.sensor_container, s.sensor_lbl, s.unit_lbl);
         subscribe_climate_control_state(ctx);
       }
       continue;
@@ -939,7 +939,7 @@ inline void grid_phase2(
               : lv_obj_get_style_text_font(sub_slot.text_lbl, LV_PART_MAIN),
             cfg.icon_font,
             cfg.volume_width_compensation_percent,
-            sub_slot.sensor_lbl, sub_slot.unit_lbl);
+            sub_slot.sensor_container, sub_slot.sensor_lbl, sub_slot.unit_lbl);
           subscribe_climate_control_state(ctx);
           lv_obj_add_event_cb(sb_btn, [](lv_event_t *e) {
             ClimateControlCtx *ctx = (ClimateControlCtx *)lv_event_get_user_data(e);

@@ -40,6 +40,8 @@ var CSS =
   "border-radius:var(--radius);position:relative;overflow:hidden;" +
   "box-shadow:0 2px 20px rgba(0,0,0,.35);border:2px solid var(--surface);" +
   "container-type:inline-size;font-family:Roboto,sans-serif;user-select:none}" +
+  ".sp-config-locked .sp-screen{filter:grayscale(1) brightness(.58);opacity:.62;pointer-events:none}" +
+  ".sp-config-locked .sp-screen::after{content:'';position:absolute;inset:0;background:rgba(80,80,84,.28);z-index:5}" +
   ".sp-topbar{position:absolute;top:0;left:0;right:0;height:var(--topbar-h);" +
   "display:flex;align-items:center;padding:var(--topbar-pad);z-index:1}" +
   ".sp-topbar.sp-hidden{display:none}" +
@@ -47,7 +49,7 @@ var CSS =
   ".sp-temp.sp-visible{opacity:1}" +
   ".sp-clock{position:absolute;left:50%;transform:translateX(-50%);" +
   "color:#fff;font-size:var(--clock-fs,var(--topbar-fs));white-space:nowrap}" +
-  ".sp-network-preview{margin-left:auto;color:#fff;font-size:calc(var(--topbar-fs)*.86);" +
+  ".sp-network-preview{margin-left:auto;margin-right:1cqw;color:#fff;font-size:calc(var(--topbar-fs)*.86);" +
   "line-height:1;width:calc(var(--topbar-fs)*1.2);height:100%;display:flex;align-items:center;" +
   "justify-content:center;opacity:0;transition:opacity .3s}" +
   ".sp-network-preview.sp-visible{opacity:1}" +
@@ -67,6 +69,8 @@ var CSS =
   "overflow:hidden;word-break:break-word;min-height:0}" +
   ".sp-sensor-badge{position:absolute;top:var(--sensor-top);right:var(--sensor-right);font-size:var(--sensor-fs);opacity:.5}" +
   ".sp-sensor-preview{display:flex;align-items:baseline;gap:.18em;color:#fff}" +
+  ".sp-btn-big .sp-sensor-preview-large .sp-sensor-value{font-size:calc(var(--btn-icon)*3);font-weight:100}" +
+  ".sp-btn-big .sp-sensor-preview-large .sp-sensor-unit{transform:translateY(var(--large-sensor-unit-offset-y,-20px))}" +
   ".sp-forecast-preview{white-space:nowrap;gap:0}" +
   ".sp-sensor-value{font-size:var(--btn-icon);line-height:1;font-weight:300}" +
   ".sp-sensor-unit{font-size:var(--btn-label);line-height:1;color:#fff}" +
@@ -367,8 +371,7 @@ var CSS =
   ".sp-subpage-badge{font-size:var(--btn-label);line-height:1.2;opacity:.5;flex-shrink:0;" +
   "cursor:pointer;padding:2px 0 2px 4px;border-radius:4px;transition:opacity .15s}" +
   ".sp-subpage-badge:hover{opacity:1}" +
-  ".sp-type-badge{font-size:var(--btn-label);line-height:1.2;opacity:.35;flex-shrink:0;" +
-  "padding:2px 0 2px 4px;pointer-events:none}" +
+  ".sp-type-badge{display:none}" +
 
   "@media(max-width:768px){" +
   ":root{--gap:12px}" +

@@ -32,7 +32,16 @@ font:
     size: 44
     bpp: 4
     glyphs:
-      - "0123456789.-°/%kWhVA Of"
+      - "0123456789.-°/%"
+      - ":"
+
+  # Large-card sensor values (3x the regular sensor value font)
+  - file: "gfonts://Roboto@Thin"
+    id: statistics_font_sm_xl
+    size: 132
+    bpp: 4
+    glyphs:
+      - "0123456789.-°/%"
       - ":"
 
   # Media now-playing titles (sensor value size, full text glyph coverage)

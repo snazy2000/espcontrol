@@ -53,6 +53,8 @@ script:
           cfg.wrap_tall_labels = true;
           cfg.icon_font = id(icon_font_800)->get_lv_font();
           cfg.sp_sensor_font = id(statistics_font_lt)->get_lv_font();
+          cfg.sp_large_sensor_font = id(statistics_font_lt_xl)->get_lv_font();
+          cfg.large_sensor_unit_offset_percent = -10;
           cfg.media_title_font = id(media_title_font_lt)->get_lv_font();
           cfg.volume_number_font = id(volume_modal_number_font_800)->get_lv_font();
           cfg.volume_label_font = id(volume_modal_label_font_800)->get_lv_font();
@@ -72,11 +74,8 @@ script:
           apply_width_compensation(id(temperatures), cfg.width_compensation_percent);
           apply_width_compensation(id(clock_label), cfg.width_compensation_percent);
           // END GENERATED REFRESH GRID WIRING
-          grid_phase1(slots, cfg,
+          grid_refresh_layout(slots, cfg,
             id(button_order).state,
-            id(button_on_color).state,
-            id(button_off_color).state,
-            id(sensor_card_color).state,
             id(main_page)->obj);
 esphome:
   on_boot:
@@ -118,6 +117,8 @@ esphome:
             cfg.wrap_tall_labels = true;
             cfg.icon_font = id(icon_font_800)->get_lv_font();
             cfg.sp_sensor_font = id(statistics_font_lt)->get_lv_font();
+            cfg.sp_large_sensor_font = id(statistics_font_lt_xl)->get_lv_font();
+            cfg.large_sensor_unit_offset_percent = -10;
             cfg.media_title_font = id(media_title_font_lt)->get_lv_font();
             cfg.volume_number_font = id(volume_modal_number_font_800)->get_lv_font();
             cfg.volume_label_font = id(volume_modal_label_font_800)->get_lv_font();
@@ -217,6 +218,8 @@ esphome:
             cfg.wrap_tall_labels = true;
             cfg.icon_font = id(icon_font_800)->get_lv_font();
             cfg.sp_sensor_font = id(statistics_font_lt)->get_lv_font();
+            cfg.sp_large_sensor_font = id(statistics_font_lt_xl)->get_lv_font();
+            cfg.large_sensor_unit_offset_percent = -10;
             cfg.media_title_font = id(media_title_font_lt)->get_lv_font();
             cfg.volume_number_font = id(volume_modal_number_font_800)->get_lv_font();
             cfg.volume_label_font = id(volume_modal_label_font_800)->get_lv_font();

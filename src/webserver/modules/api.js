@@ -201,7 +201,9 @@ function post(url, fallbackUrl, errorMessage) {
       });
     }
     return tryNext().catch(function () {
+      setConfigLocked(true, "Reconnecting to device\u2026");
       showBanner("Cannot reach device \u2014 is it connected?", "error");
+      setTimeout(connectEvents, 5000);
     });
   });
   return _postQueue;
@@ -593,13 +595,15 @@ function loadStateItems(items, handleState, concurrency) {
   });
 }
 
-function loadInitialState(handleState) {
+function loadInitialState(handleState, onLoaded) {
   loadStateItems(cardStateEntities(), handleState, 4).then(function (loadedCount) {
     if (loadedCount === 0) {
+      setConfigLocked(true, "Reconnecting to device\u2026");
       showBanner("Reconnecting to device\u2026", "offline");
       setTimeout(connectEvents, 5000);
       return;
     }
+    if (onLoaded) onLoaded();
     clearTimeout(migrationTimer);
     migrationTimer = setTimeout(scheduleMigration, 5000);
     clearTimeout(sliderMigrationTimer);
@@ -631,13 +635,9 @@ function refreshScreensaverTimeout() {
 
 function waitForReboot() {
   if (_eventSource) { _eventSource.close(); _eventSource = null; }
+  setConfigLocked(true, "Restarting device\u2026");
   showBanner("Restarting device\u2026", "offline");
   setTimeout(function () {
-    if (els.banner) els.banner.className = "sp-banner";
-    els.root.querySelectorAll(".sp-apply-btn").forEach(function (btn) {
-      btn.disabled = false;
-      btn.textContent = "Apply Configuration";
-    });
     connectEvents();
   }, 15000);
 }

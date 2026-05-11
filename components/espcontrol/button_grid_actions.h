@@ -22,6 +22,18 @@ inline void send_toggle_action(const std::string &entity_id) {
   esphome::api::global_api_server->send_homeassistant_action(req);
 }
 
+inline void send_turn_off_action(const std::string &entity_id) {
+  if (entity_id.empty()) return;
+  esphome::api::HomeassistantActionRequest req;
+  req.service = decltype(req.service)("homeassistant.turn_off");
+  req.is_event = false;
+  req.data.init(1);
+  auto &kv = req.data.emplace_back();
+  kv.key = decltype(kv.key)("entity_id");
+  kv.value = decltype(kv.value)(entity_id.c_str());
+  esphome::api::global_api_server->send_homeassistant_action(req);
+}
+
 inline bool action_card_requires_value(const std::string &action) {
   return action == "input_number.set_value" || action == "input_select.select_option";
 }
@@ -356,6 +368,7 @@ inline void media_volume_open_modal(MediaVolumeCtx *ctx);
 struct ClimateControlCtx;
 inline void climate_control_open_modal(ClimateControlCtx *ctx);
 inline void camera_popup_open_from_cfg(const ParsedCfg &p);
+inline void switch_confirmation_open_modal(const ParsedCfg &p, lv_obj_t *btn_obj);
 
 // Handle a main-grid button press: dispatch push event, subpage nav,
 // slider toggle, or entity toggle based on the config string.
@@ -432,6 +445,14 @@ inline void handle_button_click(const std::string &cfg, int slot_num,
   } else if (p.type == "slider" || p.type == "cover") {
     if (!p.entity.empty()) send_slider_action(p.entity, -1, cover_tilt_mode(p.sensor));
   } else {
-    if (!p.entity.empty()) send_toggle_action(p.entity);
+    if (!p.entity.empty()) {
+      if (switch_confirmation_enabled(p) && btn_obj &&
+          lv_obj_has_state(btn_obj, LV_STATE_CHECKED) &&
+          !is_button_entity(p.entity)) {
+        switch_confirmation_open_modal(p, btn_obj);
+      } else {
+        send_toggle_action(p.entity);
+      }
+    }
   }
 }

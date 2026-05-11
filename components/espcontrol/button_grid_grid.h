@@ -19,6 +19,8 @@ struct GridConfig {
   int volume_width_compensation_percent = 100;
   const lv_font_t *icon_font;
   const lv_font_t *sp_sensor_font;
+  const lv_font_t *sp_large_sensor_font = nullptr;
+  int large_sensor_unit_offset_percent = -10;
   const lv_font_t *media_title_font;
   const lv_font_t *volume_number_font;
   const lv_font_t *volume_label_font = nullptr;
@@ -67,6 +69,22 @@ struct CardPalette {
   uint32_t sensor_val = DEFAULT_TERTIARY_COLOR;
 };
 
+inline lv_coord_t large_sensor_unit_offset_px(const lv_font_t *large_font, int percent) {
+  if (!large_font || large_font->line_height <= 0) return 0;
+  return large_font->line_height * percent / 100;
+}
+
+inline void apply_large_sensor_number_style(const BtnSlot &s, const lv_font_t *large_font,
+                                            int unit_offset_percent) {
+  if (s.sensor_lbl && large_font) {
+    lv_obj_set_style_text_font(s.sensor_lbl, large_font, LV_PART_MAIN);
+  }
+  if (s.unit_lbl) {
+    lv_obj_set_style_translate_y(
+      s.unit_lbl, large_sensor_unit_offset_px(large_font, unit_offset_percent), LV_PART_MAIN);
+  }
+}
+
 inline void setup_card_visual(BtnSlot &s, const ParsedCfg &p,
                               const GridConfig &cfg,
                               const CardPalette &palette,
@@ -74,6 +92,7 @@ inline void setup_card_visual(BtnSlot &s, const ParsedCfg &p,
                               int col_span = 1) {
   apply_button_colors(s.btn, palette.has_on, palette.on_val,
     palette.has_off, palette.off_val);
+  if (s.unit_lbl) lv_obj_set_style_translate_y(s.unit_lbl, 0, LV_PART_MAIN);
 
   if (!experimental_card_enabled(p, cfg)) {
     setup_toggle_visual(s, ParsedCfg{});
@@ -86,19 +105,39 @@ inline void setup_card_visual(BtnSlot &s, const ParsedCfg &p,
   if (p.type == "sensor") {
     if (p.sensor.empty()) return;
     setup_sensor_card(s, p, palette.has_sensor_color, palette.sensor_val);
+    if (row_span == 2 && col_span == 2 &&
+        sensor_large_numbers_enabled(p) && cfg.sp_large_sensor_font) {
+      apply_large_sensor_number_style(
+        s, cfg.sp_large_sensor_font, cfg.large_sensor_unit_offset_percent);
+    }
     return;
   }
   if (p.type == "calendar") {
     setup_calendar_card(s, p, palette.has_sensor_color, palette.sensor_val);
+    if (row_span == 2 && col_span == 2 &&
+        card_large_numbers_enabled(p) && cfg.sp_large_sensor_font) {
+      apply_large_sensor_number_style(
+        s, cfg.sp_large_sensor_font, cfg.large_sensor_unit_offset_percent);
+    }
     return;
   }
   if (p.type == "timezone") {
     setup_timezone_card(s, p, palette.has_sensor_color, palette.sensor_val);
+    if (row_span == 2 && col_span == 2 &&
+        card_large_numbers_enabled(p) && cfg.sp_large_sensor_font) {
+      apply_large_sensor_number_style(
+        s, cfg.sp_large_sensor_font, cfg.large_sensor_unit_offset_percent);
+    }
     return;
   }
   if (weather_card_shows_forecast(p)) {
     setup_weather_forecast_card(s, p, palette.has_sensor_color, palette.sensor_val,
       cfg.width_compensation_percent);
+    if (row_span == 2 && col_span == 2 &&
+        card_large_numbers_enabled(p) && cfg.sp_large_sensor_font) {
+      apply_large_sensor_number_style(
+        s, cfg.sp_large_sensor_font, cfg.large_sensor_unit_offset_percent);
+    }
     return;
   }
   if (p.type == "weather") {
@@ -162,6 +201,135 @@ inline void setup_card_visual(BtnSlot &s, const ParsedCfg &p,
     return;
   }
   setup_toggle_visual(s, p);
+}
+
+inline void refresh_media_card_layout(BtnSlot &s, const ParsedCfg &p,
+                                      const GridConfig &cfg,
+                                      int row_span = 1) {
+  std::string mode = media_card_mode(p.sensor);
+  lv_coord_t pad = lv_obj_get_style_radius(s.btn, LV_PART_MAIN) + 4;
+
+  if (mode == "now_playing") {
+    MediaNowPlayingCtx *ctx = (MediaNowPlayingCtx *)lv_obj_get_user_data(s.sensor_container);
+    if (!ctx) return;
+    if (ctx->title_lbl) apply_width_compensation(ctx->title_lbl, cfg.width_compensation_percent);
+    if (ctx->artist_lbl) apply_width_compensation(ctx->artist_lbl, cfg.width_compensation_percent);
+    setup_media_now_playing_layout(
+      s.btn, s.icon_lbl, ctx->title_lbl, ctx->artist_lbl,
+      cfg.media_title_font ? cfg.media_title_font : cfg.sp_sensor_font, pad,
+      row_span == 1, ctx->play_pause_background,
+      ctx->progress_slider ? pad : 0, false);
+    if (ctx->progress_slider) slider_refresh_geometry(ctx->progress_slider);
+    return;
+  }
+
+  if (mode == "position") {
+    lv_obj_t *slider = (lv_obj_t *)lv_obj_get_user_data(s.sensor_container);
+    SliderCtx *ctx = slider ? (SliderCtx *)lv_obj_get_user_data(slider) : nullptr;
+    lv_coord_t position_pad = lv_obj_get_style_pad_top(s.btn, LV_PART_MAIN);
+    if (ctx && ctx->media_value_lbl) {
+      apply_width_compensation(ctx->media_value_lbl, cfg.width_compensation_percent);
+      lv_obj_align(ctx->media_value_lbl, LV_ALIGN_TOP_LEFT, position_pad, position_pad);
+      lv_obj_move_foreground(ctx->media_value_lbl);
+    }
+    if (s.text_lbl) {
+      lv_obj_align(s.text_lbl, LV_ALIGN_BOTTOM_LEFT, position_pad, -position_pad);
+      configure_button_label_wrap(s.text_lbl);
+      lv_obj_move_foreground(s.text_lbl);
+    }
+    if (slider) slider_refresh_geometry(slider);
+    if (ctx) media_apply_position(ctx);
+    return;
+  }
+
+  if (media_playback_button_mode(mode)) {
+    if (s.icon_lbl) lv_obj_align(s.icon_lbl, LV_ALIGN_TOP_LEFT, 0, 0);
+    if (s.text_lbl) lv_obj_align(s.text_lbl, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+    return;
+  }
+  if (mode == "volume") return;
+
+  lv_obj_t *slider = (lv_obj_t *)lv_obj_get_user_data(s.sensor_container);
+  if (slider) slider_refresh_geometry(slider);
+}
+
+inline void refresh_slider_card_layout(BtnSlot &s) {
+  lv_obj_t *slider = (lv_obj_t *)lv_obj_get_user_data(s.sensor_container);
+  lv_coord_t pad = lv_obj_get_style_radius(s.btn, LV_PART_MAIN) + 4;
+  if (s.icon_lbl) lv_obj_align(s.icon_lbl, LV_ALIGN_TOP_LEFT, pad, pad);
+  if (s.text_lbl) lv_obj_align(s.text_lbl, LV_ALIGN_BOTTOM_LEFT, pad, -pad);
+  if (slider) slider_refresh_geometry(slider);
+}
+
+inline void refresh_card_layout(BtnSlot &s, const ParsedCfg &p,
+                                const GridConfig &cfg,
+                                int row_span = 1) {
+  if (cfg.wrap_tall_labels && row_span > 1) {
+    lv_label_set_long_mode(s.text_lbl, LV_LABEL_LONG_WRAP);
+    lv_obj_set_width(s.text_lbl, lv_pct(100));
+  }
+  apply_width_compensation(s.icon_lbl, cfg.width_compensation_percent);
+  apply_slot_text_width_compensation(s, cfg.width_compensation_percent);
+
+  if (p.type == "media") {
+    refresh_media_card_layout(s, p, cfg, row_span);
+  } else if (p.type == "slider" || p.type == "light_temperature" ||
+             (p.type == "cover" && !cover_command_mode(p.sensor) && !cover_toggle_mode(p.sensor))) {
+    refresh_slider_card_layout(s);
+  }
+}
+
+inline void grid_refresh_layout(
+    BtnSlot *slots, const GridConfig &cfg,
+    const std::string &order_str,
+    lv_obj_t *main_page_obj = nullptr) {
+  ESP_LOGI("sensors", "Grid refresh: layout start (%lu ms)", esphome::millis());
+  set_display_temperature_unit(cfg.temperature_unit, cfg.timezone);
+  set_width_compensation_vertical_axis(cfg.width_compensation_vertical);
+  int NS = bounded_grid_slots(cfg.num_slots);
+  int COLS = cfg.cols > 0 ? cfg.cols : 1;
+  configure_grid_layout(main_page_obj, NS, COLS);
+  int ROWS = (NS + COLS - 1) / COLS;
+
+  OrderResult parsed, order;
+  parse_order_string(order_str, NS, parsed);
+  clear_spanned_cells(parsed, NS, COLS, order);
+
+  lv_obj_t *first_card = nullptr;
+  if (parsed.positions[0] >= 1 && parsed.positions[0] <= NS) {
+    first_card = slots[parsed.positions[0] - 1].btn;
+  } else if (NS > 0) {
+    first_card = slots[0].btn;
+  }
+  set_media_home_grid_metrics(main_page_obj, COLS, ROWS, first_card);
+
+  for (int i = 0; i < NS; i++)
+    lv_obj_add_flag(slots[i].btn, LV_OBJ_FLAG_HIDDEN);
+
+  for (int pos = 0; pos < NS; pos++) {
+    int idx = order.positions[pos];
+    if (idx < 1 || idx > NS) continue;
+    auto &s = slots[idx - 1];
+    lv_obj_clear_flag(s.btn, LV_OBJ_FLAG_HIDDEN);
+    int col = pos % COLS, row = pos / COLS;
+    int row_span = order.row_span[idx - 1] > 0 ? order.row_span[idx - 1] : 1;
+    int col_span = order.col_span[idx - 1] > 0 ? order.col_span[idx - 1] : 1;
+    lv_obj_set_grid_cell(s.btn,
+      LV_GRID_ALIGN_STRETCH, col, col_span,
+      LV_GRID_ALIGN_STRETCH, row, row_span);
+  }
+
+  if (main_page_obj) lv_obj_update_layout(main_page_obj);
+
+  for (int pos = 0; pos < NS; pos++) {
+    int idx = order.positions[pos];
+    if (idx < 1 || idx > NS) continue;
+    auto &s = slots[idx - 1];
+    ParsedCfg p = parse_cfg(s.config->state);
+    int row_span = order.row_span[idx - 1] > 0 ? order.row_span[idx - 1] : 1;
+    refresh_card_layout(s, p, cfg, row_span);
+  }
+  ESP_LOGI("sensors", "Grid refresh: layout done (%lu ms)", esphome::millis());
 }
 
 // ── Phase 1: Visual setup ────────────────────────────────────────────
@@ -271,6 +439,7 @@ inline void grid_phase2(
   ESP_LOGI("sensors", "Phase 2: subscriptions + subpages start (%lu ms)", esphome::millis());
   set_display_temperature_unit(cfg.temperature_unit, cfg.timezone);
   set_width_compensation_vertical_axis(cfg.width_compensation_vertical);
+  set_switch_confirmation_message_font(cfg.volume_label_font);
   int NS = bounded_grid_slots(cfg.num_slots);
   int COLS = cfg.cols > 0 ? cfg.cols : 1;
   configure_grid_layout(main_page_obj, NS, COLS);
@@ -492,7 +661,7 @@ inline void grid_phase2(
     if (p.type == "climate") {
       if (!p.entity.empty()) {
         ClimateControlCtx *ctx = create_climate_control_context(
-          s.btn, s.text_lbl, p,
+          s.btn, s.icon_lbl, s.text_lbl, p,
           has_on ? on_val : DEFAULT_SLIDER_COLOR,
           has_off ? off_val : DEFAULT_OFF_COLOR,
           has_sensor_color ? sensor_val : DEFAULT_TERTIARY_COLOR,
@@ -505,7 +674,7 @@ inline void grid_phase2(
             : lv_obj_get_style_text_font(s.text_lbl, LV_PART_MAIN),
           cfg.icon_font,
           cfg.volume_width_compensation_percent,
-          s.sensor_lbl, s.unit_lbl);
+          s.sensor_container, s.sensor_lbl, s.unit_lbl);
         subscribe_climate_control_state(ctx);
       }
       continue;
@@ -913,7 +1082,7 @@ inline void grid_phase2(
       if (sb_cfg.type == "climate") {
         if (!sb_cfg.entity.empty()) {
           ClimateControlCtx *ctx = create_climate_control_context(
-            sub_slot.btn, sub_slot.text_lbl, sb_cfg,
+            sub_slot.btn, sub_slot.icon_lbl, sub_slot.text_lbl, sb_cfg,
             has_on ? on_val : DEFAULT_SLIDER_COLOR,
             has_off ? off_val : DEFAULT_OFF_COLOR,
             has_sensor_color ? sensor_val : DEFAULT_TERTIARY_COLOR,
@@ -926,7 +1095,7 @@ inline void grid_phase2(
               : lv_obj_get_style_text_font(sub_slot.text_lbl, LV_PART_MAIN),
             cfg.icon_font,
             cfg.volume_width_compensation_percent,
-            sub_slot.sensor_lbl, sub_slot.unit_lbl);
+            sub_slot.sensor_container, sub_slot.sensor_lbl, sub_slot.unit_lbl);
           subscribe_climate_control_state(ctx);
           lv_obj_add_event_cb(sb_btn, [](lv_event_t *e) {
             ClimateControlCtx *ctx = (ClimateControlCtx *)lv_event_get_user_data(e);
@@ -1064,7 +1233,19 @@ inline void grid_phase2(
         }
 
         add_parent_indicator(sb_cfg.entity);
-        add_subpage_toggle_click(sb_btn, sb_cfg.entity, false);
+        ParsedCfg *click_ctx = new ParsedCfg(sb_cfg);
+        lv_obj_add_event_cb(sb_btn, [](lv_event_t *e) {
+          ParsedCfg *c = (ParsedCfg *)lv_event_get_user_data(e);
+          lv_obj_t *target = static_cast<lv_obj_t *>(lv_event_get_target(e));
+          if (!c || c->entity.empty()) return;
+          if (switch_confirmation_enabled(*c) && target &&
+              lv_obj_has_state(target, LV_STATE_CHECKED) &&
+              !is_button_entity(c->entity)) {
+            switch_confirmation_open_modal(*c, target);
+          } else {
+            send_toggle_action(c->entity);
+          }
+        }, LV_EVENT_CLICKED, click_ctx);
       }
     }
 

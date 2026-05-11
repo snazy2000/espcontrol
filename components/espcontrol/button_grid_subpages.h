@@ -14,6 +14,7 @@ struct SubpageBtn {
   std::string unit;
   std::string type;       // button type: "" (toggle), action, sensor, calendar, timezone, weather_forecast, slider, cover, garage, lock, media, push, internal, subpage
   std::string precision;  // decimal places for sensor display; "text" = text sensor mode
+  std::string options;    // comma-delimited card options
 };
 
 inline std::vector<std::string> split_subpage_fields(const std::string &value, char delim) {
@@ -88,8 +89,12 @@ inline SubpageBtn normalize_subpage_btn(SubpageBtn b) {
   if (b.type == "climate") {
     b.sensor.clear();
     b.unit.clear();
-    b.icon = "Auto";
-    b.icon_on = "Auto";
+  }
+  ParsedCfg p;
+  p.type = b.type;
+  p.precision = b.precision;
+  if (!b.type.empty() && !card_large_numbers_supported(p)) {
+    b.options.clear();
   }
   return b;
 }
@@ -104,6 +109,7 @@ inline ParsedCfg parsed_cfg_from_subpage_btn(const SubpageBtn &b) {
   p.unit = b.unit;
   p.type = b.type;
   p.precision = b.precision;
+  p.options = b.options;
   return normalize_parsed_cfg(p);
 }
 
@@ -204,7 +210,8 @@ inline std::vector<SubpageBtn> parse_subpage_config(const std::string &sp_cfg) {
       std::string sn = flds.size() > 5 ? decode_compact_subpage_field(flds[5]) : "";
       std::string un = flds.size() > 6 ? decode_compact_subpage_field(flds[6]) : "";
       std::string pr = flds.size() > 7 ? decode_compact_subpage_field(flds[7]) : "";
-      btns.push_back(normalize_subpage_btn({e, l, ic, io, sn, un, tp, pr}));
+      std::string op = flds.size() > 8 ? decode_compact_subpage_field(flds[8]) : "";
+      btns.push_back(normalize_subpage_btn({e, l, ic, io, sn, un, tp, pr, op}));
       continue;
     }
     std::vector<std::string> flds = split_subpage_fields(pipes[pi], ':');
@@ -218,7 +225,8 @@ inline std::vector<SubpageBtn> parse_subpage_config(const std::string &sp_cfg) {
     std::string un = flds.size() > 5 ? flds[5] : "";
     std::string tp = flds.size() > 6 ? flds[6] : "";
     std::string pr = flds.size() > 7 ? flds[7] : "";
-    btns.push_back(normalize_subpage_btn({e, l, ic, io, sn, un, tp, pr}));
+    std::string op = flds.size() > 8 ? flds[8] : "";
+    btns.push_back(normalize_subpage_btn({e, l, ic, io, sn, un, tp, pr, op}));
   }
   return btns;
 }

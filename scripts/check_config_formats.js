@@ -79,6 +79,7 @@ function firmwareParseButtonConfig(str) {
     unit: parts[5] || "",
     type: parts[6] || "",
     precision: parts[7] || "",
+    options: parts[8] || "",
   };
 }
 
@@ -106,6 +107,7 @@ function firmwareParseSubpageConfig(str) {
         sensor: decodeField(f[5]),
         unit: decodeField(f[6]),
         precision: decodeField(f[7]),
+        options: decodeField(f[8]),
       });
     } else {
       const f = splitFields(pipes[i], ":");
@@ -118,6 +120,7 @@ function firmwareParseSubpageConfig(str) {
         unit: f[5] || "",
         type: f[6] || "",
         precision: f[7] || "",
+        options: f[8] || "",
       });
     }
   }
@@ -134,6 +137,7 @@ function buttonShape(b) {
     unit: b.unit || "",
     type: b.type || "",
     precision: b.precision || "",
+    options: b.options || "",
   };
 }
 
@@ -253,6 +257,24 @@ assertButtonRoundTrip(hooks, "switch text sensor when on", {
   precision: "text",
 }, false);
 
+const confirmSwitch = {
+  entity: "switch.printer",
+  label: "Printer",
+  icon: "Printer 3D",
+  icon_on: "Printer 3D",
+  sensor: "",
+  unit: "",
+  type: "",
+  precision: "",
+  options: "confirm_off,confirm_message=Stop the print?,confirm_yes=Power Down,confirm_no=Keep On",
+};
+assertButtonRoundTrip(hooks, "switch off confirmation", confirmSwitch, false);
+const parsedConfirmSwitch = hooks.parseButtonConfig(hooks.serializeButtonConfig(confirmSwitch));
+assert.strictEqual(hooks.switchConfirmationEnabled(parsedConfirmSwitch), true, "switch confirmation enabled");
+assert.strictEqual(hooks.switchConfirmationMessage(parsedConfirmSwitch), "Stop the print?", "switch confirmation message");
+assert.strictEqual(hooks.switchConfirmationYesText(parsedConfirmSwitch), "Power Down", "switch confirmation yes text");
+assert.strictEqual(hooks.switchConfirmationNoText(parsedConfirmSwitch), "Keep On", "switch confirmation no text");
+
 assertButtonRoundTrip(hooks, "delimiter button", {
   entity: "sensor.kitchen_temperature",
   label: "Kitchen; west, 50% | prep: zone",
@@ -263,6 +285,18 @@ assertButtonRoundTrip(hooks, "delimiter button", {
   type: "sensor",
   precision: "1",
 }, true);
+
+assertButtonRoundTrip(hooks, "large sensor numbers option", {
+  entity: "sensor.blood_glucose",
+  label: "Blood Glucose",
+  icon: "Auto",
+  icon_on: "Auto",
+  sensor: "sensor.blood_glucose",
+  unit: "",
+  type: "sensor",
+  precision: "",
+  options: "large_numbers",
+}, false);
 
 assertButtonRoundTrip(hooks, "internal relay push button", {
   entity: "relay_1",
@@ -363,6 +397,18 @@ assertButtonRoundTrip(hooks, "cover set position command button", {
   precision: "",
 }, false);
 
+assertButtonRoundTrip(hooks, "calendar large numbers option", {
+  entity: "sensor.date",
+  label: "",
+  icon: "Auto",
+  icon_on: "Auto",
+  sensor: "",
+  unit: "",
+  type: "calendar",
+  precision: "datetime",
+  options: "large_numbers",
+}, false);
+
 assertButtonRoundTrip(hooks, "timezone card", {
   entity: "America/New_York (GMT-5)",
   label: "",
@@ -372,6 +418,18 @@ assertButtonRoundTrip(hooks, "timezone card", {
   unit: "",
   type: "timezone",
   precision: "",
+}, false);
+
+assertButtonRoundTrip(hooks, "timezone large numbers option", {
+  entity: "America/New_York (GMT-5)",
+  label: "",
+  icon: "Auto",
+  icon_on: "Auto",
+  sensor: "",
+  unit: "",
+  type: "timezone",
+  precision: "",
+  options: "large_numbers",
 }, false);
 
 assertButtonRoundTrip(hooks, "weather tomorrow card", {
@@ -406,6 +464,27 @@ assertButtonRoundTrip(hooks, "weather today card", {
   type: "weather",
   precision: "today",
 }, false);
+
+assertButtonRoundTrip(hooks, "weather large temperature numbers option", {
+  entity: "weather.forecast_home",
+  label: "Today",
+  icon: "Auto",
+  icon_on: "Auto",
+  sensor: "",
+  unit: "",
+  type: "weather",
+  precision: "today",
+  options: "large_numbers",
+}, false);
+
+assert.strictEqual(
+  buttonShape(hooks.parseButtonConfig("weather.forecast_home;;;;;;weather;today;large_numbers")).options,
+  "large_numbers",
+  "weather forecast preserves large numbers option");
+assert.strictEqual(
+  buttonShape(hooks.parseButtonConfig("weather.forecast_home;;;;;;weather;;large_numbers")).options,
+  "",
+  "weather current conditions clears large numbers option");
 
 assertButtonRoundTrip(hooks, "media play pause card", {
   entity: "media_player.living_room",
@@ -545,7 +624,7 @@ assertButtonRoundTrip(hooks, "media now playing play pause control", {
 assertButtonRoundTrip(hooks, "climate card", {
   entity: "climate.living_room",
   label: "Living Room",
-  icon: "Auto",
+  icon: "Thermostat",
   icon_on: "Auto",
   sensor: "",
   unit: "",
@@ -589,7 +668,7 @@ assertButtonRoundTrip(hooks, "climate card custom range", {
 assertButtonMigration(hooks, "climate clears ignored fields", "climate.living_room;Living;Thermostat;Radiator;sensor.temp;deg C;climate;bad", {
   entity: "climate.living_room",
   label: "Living",
-  icon: "Auto",
+  icon: "Thermostat",
   icon_on: "Auto",
   sensor: "",
   unit: "",
@@ -785,7 +864,7 @@ assertButtonRoundTrip(hooks, "input select delimiter action card", {
   precision: "",
 }, true);
 
-assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("light.legacy;Legacy;Auto;Lightbulb;sensor.legacy;W;sensor;1")), {
+assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("light.legacy;Legacy;Auto;Lightbulb;sensor.legacy;W;sensor;1")), buttonShape({
   entity: "light.legacy",
   label: "Legacy",
   icon: "Auto",
@@ -794,9 +873,9 @@ assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("light.legacy;Legacy;
   unit: "W",
   type: "sensor",
   precision: "1",
-}, "legacy button parse");
+}), "legacy button parse");
 
-assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("~light.compact,Compact%3B%20Label,Auto,Auto,sensor.compact,deg%3BC,sensor,2")), {
+assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("~light.compact,Compact%3B%20Label,Auto,Auto,sensor.compact,deg%3BC,sensor,2")), buttonShape({
   entity: "light.compact",
   label: "Compact; Label",
   icon: "Auto",
@@ -805,7 +884,7 @@ assert.deepStrictEqual(buttonShape(hooks.parseButtonConfig("~light.compact,Compa
   unit: "deg;C",
   type: "sensor",
   precision: "2",
-}, "compact button parse");
+}), "compact button parse");
 
 assertButtonMigration(hooks, "legacy horizontal slider card", "light.strip;Strip;Lightbulb;Lightbulb On;h;;slider", {
   entity: "light.strip",
@@ -850,6 +929,21 @@ assertSubpageRoundTrip(hooks, "normal subpage", {
     buttonShape({ type: "calendar" }),
   ],
 }, true);
+
+assertSubpageRoundTrip(hooks, "date time large numbers subpage", {
+  order: ["1", "B", "2"],
+  buttons: [
+    buttonShape({ type: "calendar", precision: "datetime", options: "large_numbers" }),
+    buttonShape({ entity: "America/New_York (GMT-5)", type: "timezone", options: "large_numbers" }),
+  ],
+}, true);
+
+assertSubpageRoundTrip(hooks, "switch confirmation subpage", {
+  order: ["1", "B"],
+  buttons: [
+    buttonShape(confirmSwitch),
+  ],
+}, false);
 
 assertSubpageRoundTrip(hooks, "internal relay subpage", {
   order: ["1", "B"],
@@ -934,7 +1028,7 @@ assertSubpageRoundTrip(hooks, "delimiter subpage", {
   order: ["1", "B", "2"],
   buttons: [
     buttonShape({ entity: "light.zone", label: "Kitchen: west | 50%, main", icon: "Auto", icon_on: "Auto" }),
-    buttonShape({ entity: "sensor.zone", label: "Temp: west | 50%", icon: "Thermometer", icon_on: "Auto", sensor: "sensor.zone", unit: "deg:C", type: "sensor", precision: "1" }),
+    buttonShape({ entity: "sensor.zone", label: "Temp: west | 50%", icon: "Thermometer", icon_on: "Auto", sensor: "sensor.zone", unit: "deg:C", type: "sensor", precision: "1", options: "large_numbers" }),
   ],
 }, true);
 

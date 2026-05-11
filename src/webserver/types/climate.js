@@ -11,14 +11,17 @@ registerButtonType("climate", {
     b.sensor = "";
     b.unit = "";
     b.precision = "";
-    b.icon = "Auto";
+    b.icon = "Thermostat";
     b.icon_on = "Auto";
   },
   renderSettings: function (panel, b, slot, helpers) {
     b.sensor = "";
     b.unit = "";
-    b.icon = "Auto";
-    b.icon_on = "Auto";
+    if (!b.icon) b.icon = "Thermostat";
+    if (b.icon_on !== "Auto") {
+      b.icon_on = "Auto";
+      helpers.saveField("icon_on", "Auto");
+    }
     var climateConfig = parseClimatePrecisionConfig(b.precision);
     var normalizedPrecision = climatePrecisionConfig(
       climateConfig.precision,
@@ -38,6 +41,14 @@ registerButtonType("climate", {
 
     panel.appendChild(helpers.textField(
       "Label", helpers.idPrefix + "label", b.label, "e.g. Living Room", "label", true).field);
+
+    panel.appendChild(helpers.iconPickerField(
+      helpers.idPrefix + "climate-icon-picker", helpers.idPrefix + "climate-icon",
+      b.icon || "Thermostat", function (opt) {
+        b.icon = opt;
+        helpers.saveField("icon", opt);
+      }, "Icon"
+    ));
 
     var precisionField = helpers.selectField("Unit Precision", helpers.idPrefix + "climate-precision", [
       ["", "10"],
@@ -91,16 +102,9 @@ registerButtonType("climate", {
   },
   renderPreview: function (b, helpers) {
     var label = (b.label && b.label.trim()) || (b.entity && b.entity.trim()) || "Climate";
-    var climateConfig = parseClimatePrecisionConfig(b.precision);
-    var value = climateConfig.precision === "1" ? "20.0" : (climateConfig.precision === "2" ? "20.00" : "20");
-    var unit = (typeof state !== "undefined" && state.temperatureUnit && state.temperatureUnit !== "Auto")
-      ? state.temperatureUnit
-      : "°C";
+    var iconName = b.icon && b.icon !== "Auto" ? iconSlug(b.icon) : "thermostat";
     return {
-      iconHtml:
-        '<span class="sp-sensor-preview"><span class="sp-sensor-value">' +
-        helpers.escHtml(value) + '</span><span class="sp-sensor-unit">' +
-        helpers.escHtml(unit) + '</span></span>',
+      iconHtml: '<span class="sp-btn-icon mdi mdi-' + iconName + '"></span>',
       labelHtml:
         '<span class="sp-btn-label-row"><span class="sp-btn-label">' +
         helpers.escHtml(label) + '</span><span class="sp-type-badge mdi mdi-thermostat"></span></span>',

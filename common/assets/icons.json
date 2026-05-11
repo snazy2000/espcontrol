@@ -46,6 +46,11 @@
       "mdi": "air-purifier"
     },
     {
+      "name": "Air Purifier Off",
+      "codepoint": "F1B57",
+      "mdi": "air-purifier-off"
+    },
+    {
       "name": "Alarm",
       "codepoint": "F009E",
       "mdi": "bell-ring"
@@ -296,6 +301,21 @@
       "mdi": "curtains-closed"
     },
     {
+      "name": "Delete",
+      "codepoint": "F01B4",
+      "mdi": "delete"
+    },
+    {
+      "name": "Delete Empty",
+      "codepoint": "F06CC",
+      "mdi": "delete-empty"
+    },
+    {
+      "name": "Delete Outline",
+      "codepoint": "F09E7",
+      "mdi": "delete-outline"
+    },
+    {
       "name": "Desk Lamp",
       "codepoint": "F095F",
       "mdi": "desk-lamp"
@@ -354,6 +374,11 @@
       "name": "Fire",
       "codepoint": "F0238",
       "mdi": "fire"
+    },
+    {
+      "name": "Fire Off",
+      "codepoint": "F1722",
+      "mdi": "fire-off"
     },
     {
       "name": "Fireplace",
@@ -479,6 +504,16 @@
       "name": "Heat Pump",
       "codepoint": "F1A43",
       "mdi": "heat-pump"
+    },
+    {
+      "name": "Heat Wave",
+      "codepoint": "F1A45",
+      "mdi": "heat-wave"
+    },
+    {
+      "name": "Heating Coil",
+      "codepoint": "F1AAF",
+      "mdi": "heating-coil"
     },
     {
       "name": "HVAC",
@@ -796,6 +831,11 @@
       "mdi": "projector-off"
     },
     {
+      "name": "Recycle",
+      "codepoint": "F044C",
+      "mdi": "recycle"
+    },
+    {
       "name": "Robot Vacuum",
       "codepoint": "F070D",
       "mdi": "robot-vacuum"
@@ -971,9 +1011,19 @@
       "mdi": "thermometer-low"
     },
     {
+      "name": "Thermometer Off",
+      "codepoint": "F1531",
+      "mdi": "thermometer-off"
+    },
+    {
       "name": "Thermostat",
       "codepoint": "F0393",
       "mdi": "thermostat"
+    },
+    {
+      "name": "Thermostat Box",
+      "codepoint": "F0891",
+      "mdi": "thermostat-box"
     },
     {
       "name": "Home-Thermostat",
@@ -1011,6 +1061,11 @@
       "mdi": "trash-can"
     },
     {
+      "name": "Trash Can Outline",
+      "codepoint": "F0A7A",
+      "mdi": "trash-can-outline"
+    },
+    {
       "name": "Volume High",
       "codepoint": "F057E",
       "mdi": "volume-high"
@@ -1026,9 +1081,14 @@
       "mdi": "wall-sconce"
     },
     {
-      "name": "Washer",
+      "name": "Washing Machine",
       "codepoint": "F072A",
       "mdi": "washing-machine"
+    },
+    {
+      "name": "Washing Machine Off",
+      "codepoint": "F11BD",
+      "mdi": "washing-machine-off"
     },
     {
       "name": "Water",
@@ -1036,9 +1096,14 @@
       "mdi": "water"
     },
     {
-      "name": "Water Heater",
+      "name": "Water Boiler",
       "codepoint": "F0F92",
       "mdi": "water-boiler"
+    },
+    {
+      "name": "Water Boiler Off",
+      "codepoint": "F11B4",
+      "mdi": "water-boiler-off"
     },
     {
       "name": "Water Percent",

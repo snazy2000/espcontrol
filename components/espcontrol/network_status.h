@@ -166,11 +166,14 @@ inline void network_status_open_modal(const std::string &device_name,
                                       const lv_font_t *label_font,
                                       const lv_font_t *icon_font,
                                       const std::string &panel_color_hex) {
+  media_volume_hide_modal();
+  climate_control_hide_modal();
+  switch_confirmation_hide_modal();
   network_status_hide_modal();
   NetworkStatusModalUi &ui = network_status_modal_ui();
 
   ControlModalLayout layout = control_modal_calc_layout(100);
-  lv_coord_t radius = 18;
+  lv_coord_t radius = control_modal_card_radius(nullptr);
   lv_coord_t table_w = layout.panel_w - layout.inset * 2;
   if (table_w < 120) table_w = layout.panel_w;
   lv_coord_t row_gap = control_modal_scaled_px(18, layout.short_side);

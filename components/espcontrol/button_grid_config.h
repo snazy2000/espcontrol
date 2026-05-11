@@ -73,7 +73,7 @@ inline std::string decode_compact_field(const std::string &value) {
   return out;
 }
 
-// Structured view of a button config string: entity;label;icon;icon_on;sensor;unit;type;precision
+// Structured view of a button config string: entity;label;icon;icon_on;sensor;unit;type;precision;options
 struct ParsedCfg {
   std::string entity;      // 0  HA entity_id, internal relay key, or timezone option
   std::string label;       // 1  display name (blank = use HA friendly_name)
@@ -83,7 +83,15 @@ struct ParsedCfg {
   std::string unit;        // 5  unit suffix for sensor display
   std::string type;        // 6  button type: "" (toggle), action, sensor, calendar, timezone, weather_forecast, slider, cover, garage, lock, media, climate, push, internal, subpage
   std::string precision;   // 7  decimal places for sensors; "text" = text sensor mode
+  std::string options;     // 8  comma-delimited card options
 };
+
+inline bool card_large_numbers_supported(const ParsedCfg &p) {
+  return (p.type == "sensor" && p.precision != "text") ||
+    (p.type == "weather" && (p.precision == "today" || p.precision == "tomorrow")) ||
+    p.type == "calendar" ||
+    p.type == "timezone";
+}
 
 inline ParsedCfg normalize_parsed_cfg(ParsedCfg p) {
   // Slider cards used to store "h" here for horizontal layout. Sliders are
@@ -123,8 +131,10 @@ inline ParsedCfg normalize_parsed_cfg(ParsedCfg p) {
   if (p.type == "climate") {
     p.sensor.clear();
     p.unit.clear();
-    p.icon = "Auto";
-    p.icon_on = "Auto";
+    p.icon_on.clear();
+  }
+  if (!p.type.empty() && !card_large_numbers_supported(p)) {
+    p.options.clear();
   }
   if (p.type == "camera") {
     // sensor field = refresh interval in seconds (default 5, clamped 2-120)
@@ -151,6 +161,7 @@ inline ParsedCfg parse_cfg(const std::string &cfg) {
     p.unit      = f.size() > 5 ? decode_compact_field(f[5]) : "";
     p.type      = f.size() > 6 ? decode_compact_field(f[6]) : "";
     p.precision = f.size() > 7 ? decode_compact_field(f[7]) : "";
+    p.options   = f.size() > 8 ? decode_compact_field(f[8]) : "";
     return normalize_parsed_cfg(p);
   }
   p.entity    = cfg_field(cfg, 0);
@@ -161,7 +172,62 @@ inline ParsedCfg parse_cfg(const std::string &cfg) {
   p.unit      = cfg_field(cfg, 5);
   p.type      = cfg_field(cfg, 6);
   p.precision = cfg_field(cfg, 7);
+  p.options   = cfg_field(cfg, 8);
   return normalize_parsed_cfg(p);
+}
+
+inline bool cfg_option_enabled(const std::string &options, const char *name) {
+  if (!name || !*name || options.empty()) return false;
+  size_t start = 0;
+  while (start <= options.length()) {
+    size_t end = options.find(',', start);
+    if (end == std::string::npos) end = options.length();
+    if (options.compare(start, end - start, name) == 0) return true;
+    start = end + 1;
+  }
+  return false;
+}
+
+inline std::string cfg_option_value(const std::string &options, const char *name) {
+  if (!name || !*name || options.empty()) return "";
+  std::string prefix = std::string(name) + "=";
+  size_t start = 0;
+  while (start <= options.length()) {
+    size_t end = options.find(',', start);
+    if (end == std::string::npos) end = options.length();
+    if (options.compare(start, prefix.length(), prefix) == 0) {
+      return decode_compact_field(options.substr(start + prefix.length(), end - start - prefix.length()));
+    }
+    start = end + 1;
+  }
+  return "";
+}
+
+inline bool card_large_numbers_enabled(const ParsedCfg &p) {
+  return card_large_numbers_supported(p) && cfg_option_enabled(p.options, "large_numbers");
+}
+
+inline bool sensor_large_numbers_enabled(const ParsedCfg &p) {
+  return card_large_numbers_enabled(p);
+}
+
+inline bool switch_confirmation_enabled(const ParsedCfg &p) {
+  return p.type.empty() && cfg_option_enabled(p.options, "confirm_off");
+}
+
+inline std::string switch_confirmation_message(const ParsedCfg &p) {
+  std::string value = cfg_option_value(p.options, "confirm_message");
+  return value.empty() ? std::string("Turn off this device?") : value;
+}
+
+inline std::string switch_confirmation_yes_text(const ParsedCfg &p) {
+  std::string value = cfg_option_value(p.options, "confirm_yes");
+  return value.empty() ? std::string("Turn Off") : value;
+}
+
+inline std::string switch_confirmation_no_text(const ParsedCfg &p) {
+  std::string value = cfg_option_value(p.options, "confirm_no");
+  return value.empty() ? std::string("Cancel") : value;
 }
 
 inline int parse_precision(const std::string &s) {

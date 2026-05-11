@@ -1214,11 +1214,11 @@ function buildApplyBar() {
   btn.className = "sp-apply-btn";
   btn.textContent = "Apply Configuration";
   btn.addEventListener("click", function () {
+    if (isConfigLocked()) return;
     if (document.activeElement && document.activeElement.blur) {
       document.activeElement.blur();
     }
-    btn.disabled = true;
-    btn.textContent = "Restarting\u2026";
+    setConfigLocked(true, "Restarting device\u2026");
     setTimeout(function () {
       postButtonPress("Apply Configuration");
       waitForReboot();
@@ -1240,6 +1240,51 @@ function switchTab(tab) {
   });
   els.screenPage.className = "sp-page" + (tab === "screen" ? " active" : "");
   els.settingsPage.className = "sp-page" + (tab === "settings" ? " active" : "");
+}
+
+function isConfigLocked() {
+  return !!state.configLocked;
+}
+
+function syncConfigLockUi() {
+  if (els.root) {
+    els.root.classList.toggle("sp-config-locked", isConfigLocked());
+  }
+  if (els.previewMain) {
+    els.previewMain.setAttribute("aria-disabled", isConfigLocked() ? "true" : "false");
+  }
+  if (els.root) {
+    var text = "Waiting for device\u2026";
+    if ((state.configLockReason || "").indexOf("Restarting") !== -1) text = "Restarting\u2026";
+    els.root.querySelectorAll(".sp-apply-btn").forEach(function (btn) {
+      btn.disabled = isConfigLocked();
+      btn.textContent = isConfigLocked() ? text : "Apply Configuration";
+    });
+  }
+  updatePreviewHint();
+}
+
+function setConfigLocked(locked, reason) {
+  var nextLocked = !!locked;
+  state.configLocked = nextLocked;
+  state.configLockReason = nextLocked ? (reason || "Reconnecting to device\u2026") : "";
+
+  if (nextLocked) {
+    hideContextMenu();
+    hideSettingsOverlay();
+    state.settingsDraft = null;
+    state.selectedSlots = [];
+    state.lastClickedSlot = -1;
+    state.subpageSelectedSlots = [];
+    state.subpageLastClicked = -1;
+    if (dragSrcEl) { dragSrcEl.classList.remove("sp-dragging"); dragSrcEl = null; }
+    dragSrcPos = -1;
+    previewDropIdx = -1;
+    clearPlaceholder();
+  }
+
+  syncConfigLockUi();
+  if (els.previewMain) renderPreview();
 }
 
 // ── Preview rendering (unified) ────────────────────────────────────────
@@ -1273,7 +1318,7 @@ function renderPreview() {
       backBtn.style.backgroundColor = "#" + (state.offColor.length === 6 ? state.offColor : "313131");
       backBtn.style.cursor = "pointer";
       backBtn.setAttribute("data-pos", pos);
-      backBtn.draggable = true;
+      backBtn.draggable = !isConfigLocked();
       main.appendChild(backBtn);
     } else if (slot > 0) {
       var bIdx = slot - 1;
@@ -1290,16 +1335,16 @@ function renderPreview() {
         iconName = "cog";
         label = "Configure";
       }
+      var slotSz = c.sizes[slot];
       var typePreview = previewTypeDef && previewTypeDef.renderPreview
-        ? previewTypeDef.renderPreview(b, { escHtml: escHtml })
+        ? previewTypeDef.renderPreview(b, { escHtml: escHtml, cardSize: slotSz || 1 })
         : null;
 
       var btn = document.createElement("div");
-      var slotSz = c.sizes[slot];
       btn.className = "sp-btn" + sizeClass(slotSz) +
         (c.selected.indexOf(slot) !== -1 ? " sp-selected" : "");
       btn.style.backgroundColor = "#" + (color.length === 6 ? color : "313131");
-      btn.draggable = true;
+      btn.draggable = !isConfigLocked();
       btn.setAttribute("data-pos", pos);
       btn.setAttribute("data-slot", slot);
       var hasWhenOn = !typePreview && (b.sensor || (b.icon_on && b.icon_on !== "Auto"));
@@ -1337,7 +1382,9 @@ function updatePreviewHint(c) {
   if (!els.previewHint) return;
   c = c || ctx();
   els.previewHint.style.display = "";
-  if (c.selected.length > 1) {
+  if (isConfigLocked()) {
+    els.previewHint.textContent = "Editing is paused while the device reconnects";
+  } else if (c.selected.length > 1) {
     els.previewHint.textContent = c.selected.length + " buttons selected \u2022 right click to copy, cut, or delete";
   } else {
     els.previewHint.textContent = "tap to select \u2022 shift/ctrl+tap to multi-select \u2022 right click to manage";
@@ -1348,7 +1395,7 @@ function renderSelectionBar(c) {
   if (!els.selectionBar) return;
   c = c || ctx();
   els.selectionBar.innerHTML = "";
-  if (!c.selected.length) {
+  if (isConfigLocked() || !c.selected.length) {
     els.selectionBar.className = "sp-selection-bar";
     return;
   }
@@ -1425,12 +1472,14 @@ function handleDocumentSelectionMouseDown(e) {
 }
 
 function openSelectedCardSettings() {
+  if (isConfigLocked()) return;
   var c = ctx();
   if (c.selected.length !== 1) return;
   renderButtonSettings(true);
 }
 
 function openCardSettings(slot) {
+  if (isConfigLocked()) return;
   var c = ctx();
   if ((slot > 0 || (slot === -2 && c.isSub)) && c.selected.indexOf(slot) === -1) {
     c.setSelected([slot]);
@@ -1493,6 +1542,11 @@ function renderButtonSettings(forceOpen) {
   container.innerHTML = "";
   var c = ctx();
 
+  if (isConfigLocked()) {
+    hideSettingsOverlay();
+    return;
+  }
+
   if (c.selected.length === 0) {
     hideSettingsOverlay();
     return;
@@ -1528,6 +1582,7 @@ function renderButtonSettings(forceOpen) {
       unit: src.unit || "",
       type: src.type || "",
       precision: src.precision || "",
+      options: src.options || "",
       _whenOnActive: src._whenOnActive,
       _whenOnMode: src._whenOnMode,
     };
@@ -1542,6 +1597,7 @@ function renderButtonSettings(forceOpen) {
     target.unit = src.unit || "";
     target.type = src.type || "";
     target.precision = src.precision || "";
+    target.options = src.options || "";
     target._whenOnActive = src._whenOnActive;
     target._whenOnMode = src._whenOnMode;
     normalizeButtonConfig(target);
@@ -1649,6 +1705,13 @@ function renderButtonSettings(forceOpen) {
     }
     if (!firstInvalid) return true;
     firstInvalid.focus();
+    return false;
+  }
+
+  function validateConfigSize() {
+    if (c.isSub) return true;
+    if (serializeButtonConfig(b).length <= 255) return true;
+    showBanner("Card settings are too large to save. Shorten confirmation text, labels, or entity IDs.", "error");
     return false;
   }
 
@@ -1855,6 +1918,7 @@ function renderButtonSettings(forceOpen) {
     requireField: requireField,
     clearFieldError: clearFieldError,
     toggleRow: toggleRow,
+    cardSize: c.sizes[slot] || 1,
     idPrefix: idPrefix,
   };
 
@@ -2065,6 +2129,7 @@ function renderButtonSettings(forceOpen) {
   saveBtn.textContent = "Save";
   saveBtn.addEventListener("click", function () {
     if (!validateSettingsDraft()) return;
+    if (!validateConfigSize()) return;
     applySettingsDraft();
     closeSettings();
   });
@@ -2454,12 +2519,18 @@ function setupPreviewEvents() {
   }
 
   container.addEventListener("mousedown", function (e) {
+    if (isConfigLocked()) return;
     if (!e.target.closest("[data-pos]")) return;
     if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault();
   });
 
   // Click delegation
   container.addEventListener("click", function (e) {
+    if (isConfigLocked()) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     if (e.target.closest(".sp-subpage-badge")) {
       var btnEl = e.target.closest("[data-slot]");
       if (btnEl) {
@@ -2494,6 +2565,10 @@ function setupPreviewEvents() {
 
   // Context menu delegation
   container.addEventListener("contextmenu", function (e) {
+    if (isConfigLocked()) {
+      e.preventDefault();
+      return;
+    }
     var target = e.target.closest("[data-pos]");
     if (!target) return;
     e.preventDefault();
@@ -2511,6 +2586,10 @@ function setupPreviewEvents() {
 
   // Drag delegation
   container.addEventListener("dragstart", function (e) {
+    if (isConfigLocked()) {
+      e.preventDefault();
+      return;
+    }
     var target = e.target.closest(".sp-btn") || e.target.closest(".sp-back-btn");
     if (!target) return;
     var pos = parseInt(target.getAttribute("data-pos"), 10);
@@ -2550,12 +2629,14 @@ function setupPreviewEvents() {
   }
 
   container.addEventListener("dragenter", function (e) {
+    if (isConfigLocked()) return;
     if (dragSrcPos < 0) return;
     e.preventDefault();
     dragEnterCount++;
   });
 
   container.addEventListener("dragover", function (e) {
+    if (isConfigLocked()) return;
     if (dragSrcPos < 0) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
@@ -2583,6 +2664,10 @@ function setupPreviewEvents() {
   });
 
   container.addEventListener("drop", function (e) {
+    if (isConfigLocked()) {
+      e.preventDefault();
+      return;
+    }
     e.preventDefault();
     dragEnterCount = 0;
     var toPos = previewDropIdx;
@@ -2602,6 +2687,7 @@ function setupPreviewEvents() {
 }
 
 function handleBtnClick(e, slot, pos) {
+  if (isConfigLocked()) return;
   if (didDrag) { didDrag = false; return; }
   var c = ctx();
   if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault();
@@ -2649,6 +2735,7 @@ function handleBtnClick(e, slot, pos) {
 }
 
 function selectButton(slot) {
+  if (isConfigLocked()) return;
   if (slot < 1) {
     state.selectedSlots = [];
   } else {
@@ -2680,10 +2767,11 @@ function firstFreeCell(afterPos) {
 }
 
 function emptyButtonConfig(type) {
-  return { entity: "", label: "", icon: "Auto", icon_on: "Auto", sensor: "", unit: "", type: type || "", precision: "" };
+  return { entity: "", label: "", icon: "Auto", icon_on: "Auto", sensor: "", unit: "", type: type || "", precision: "", options: "" };
 }
 
 function addSlot(pos) {
+  if (isConfigLocked()) return;
   var c = ctx();
   if (c.isSub) {
     var sp = getSubpage(state.editingSubpage);
@@ -2711,6 +2799,7 @@ function addSlot(pos) {
 }
 
 function addSubpageSlot(pos) {
+  if (isConfigLocked()) return;
   var c = ctx();
   if (c.isSub) return;
   var slot = firstFreeSlot();
@@ -2726,6 +2815,7 @@ function addSubpageSlot(pos) {
 }
 
 function duplicateButton(srcSlot) {
+  if (isConfigLocked()) return;
   var newSlot = firstFreeSlot();
   if (newSlot < 0) return;
   var srcSz = state.sizes[srcSlot] || 1;
@@ -2738,6 +2828,7 @@ function duplicateButton(srcSlot) {
     entity: src.entity, label: src.label, icon: src.icon,
     icon_on: src.icon_on, sensor: src.sensor, unit: src.unit,
     type: src.type || "", precision: src.precision || "",
+    options: src.options || "",
   };
 
   if (placement.size === 1) delete state.sizes[newSlot]; else state.sizes[newSlot] = placement.size;
@@ -2759,6 +2850,7 @@ function duplicateButton(srcSlot) {
 }
 
 function duplicateSubpageButton(srcSlot) {
+  if (isConfigLocked()) return;
   var homeSlot = state.editingSubpage;
   var sp = getSubpage(homeSlot);
   var newSlot = subpageFirstFreeSlot(sp);
@@ -2775,6 +2867,7 @@ function duplicateSubpageButton(srcSlot) {
     entity: src.entity, label: src.label, icon: src.icon,
     icon_on: src.icon_on, sensor: src.sensor, unit: src.unit,
     type: src.type || "", precision: src.precision || "",
+    options: src.options || "",
   };
 
   if (placement.size === 1) delete sp.sizes[newSlot]; else sp.sizes[newSlot] = placement.size;
@@ -2788,6 +2881,7 @@ function duplicateSubpageButton(srcSlot) {
 }
 
 function deleteSlot(slot) {
+  if (isConfigLocked()) return;
   var c = ctx();
   for (var i = 0; i < c.maxSlots; i++) {
     if (c.grid[i] === slot) {
@@ -2807,14 +2901,14 @@ function deleteSlot(slot) {
   if (c.isSub) {
     var sp = getSubpage(state.editingSubpage);
     if (slot >= 1 && slot <= sp.buttons.length) {
-      sp.buttons[slot - 1] = { entity: "", label: "", icon: "Auto", icon_on: "Auto", sensor: "", unit: "", type: "", precision: "" };
+      sp.buttons[slot - 1] = emptyButtonConfig();
     }
     sp.order = serializeSubpageGrid(sp);
     state.subpageLastClicked = -1;
     saveSubpageConfig(state.editingSubpage);
   } else {
     postText("Button Order", serializeGrid(state.grid));
-    state.buttons[slot - 1] = { entity: "", label: "", icon: "Auto", icon_on: "Auto", sensor: "", unit: "", type: "", precision: "" };
+    state.buttons[slot - 1] = emptyButtonConfig();
     delete state.subpages[slot];
     saveButtonConfig(slot);
     saveSubpageEntity(slot);
@@ -2825,6 +2919,7 @@ function deleteSlot(slot) {
 }
 
 function deleteButtons(slots) {
+  if (isConfigLocked()) return;
   var c = ctx();
   for (var i = 0; i < c.maxSlots; i++) {
     if (slots.indexOf(c.grid[i]) !== -1) {
@@ -2842,14 +2937,14 @@ function deleteButtons(slots) {
     var sp = getSubpage(state.editingSubpage);
     slots.forEach(function (slot) {
       if (slot >= 1 && slot <= sp.buttons.length) {
-        sp.buttons[slot - 1] = { entity: "", label: "", icon: "Auto", icon_on: "Auto", sensor: "", unit: "", type: "", precision: "" };
+        sp.buttons[slot - 1] = emptyButtonConfig();
       }
     });
     sp.order = serializeSubpageGrid(sp);
     saveSubpageConfig(state.editingSubpage);
   } else {
     slots.forEach(function (slot) {
-      state.buttons[slot - 1] = { entity: "", label: "", icon: "Auto", icon_on: "Auto", sensor: "", unit: "", type: "", precision: "" };
+      state.buttons[slot - 1] = emptyButtonConfig();
       delete state.subpages[slot];
       saveButtonConfig(slot);
       saveSubpageEntity(slot);
@@ -2922,6 +3017,7 @@ function addSubItem(container, icon, text, handler, active) {
 }
 
 function resizeSlot(slot, targetSz) {
+  if (isConfigLocked()) return;
   var c = ctx();
   var slotPos = slot === -2 ? c.grid.indexOf(-2) : c.grid.indexOf(slot);
   if (slotPos < 0) return;
@@ -3006,6 +3102,7 @@ function addSingleCardMenuItems(slot) {
 }
 
 function showSelectionMenu(e) {
+  if (isConfigLocked()) return;
   hideContextMenu();
   var c = ctx();
   if (!c.selected.length) return;
@@ -3022,6 +3119,7 @@ function showSelectionMenu(e) {
 }
 
 function showContextMenu(e, slot) {
+  if (isConfigLocked()) return;
   hideContextMenu();
   var c = ctx();
 
@@ -3051,6 +3149,7 @@ function showContextMenu(e, slot) {
 }
 
 function showBackContextMenu(e) {
+  if (isConfigLocked()) return;
   hideContextMenu();
   ctxMenu = document.createElement("div");
   ctxMenu.className = "sp-ctx-menu";
@@ -3072,6 +3171,7 @@ function showBackContextMenu(e) {
 }
 
 function showEmptySlotMenu(e, pos) {
+  if (isConfigLocked()) return;
   hideContextMenu();
   ctxMenu = document.createElement("div");
   ctxMenu.className = "sp-ctx-menu";
@@ -3111,6 +3211,7 @@ function buildClipboardEntry(slot) {
     entity: src.entity, label: src.label, icon: src.icon,
     icon_on: src.icon_on, sensor: src.sensor, unit: src.unit,
     type: src.type || "", precision: src.precision || "",
+    options: src.options || "",
     subpageConfig: null, size: c.sizes[slot] || 1,
   };
   if (!c.isSub && src.type === "subpage" && state.subpages[slot]) {
@@ -3130,16 +3231,19 @@ function copyButtons(slots) {
 }
 
 function cutSlot(slot) {
+  if (isConfigLocked()) return;
   copySlot(slot);
   deleteSlot(slot);
 }
 
 function cutButtons(slots) {
+  if (isConfigLocked()) return;
   copyButtons(slots);
   deleteButtons(slots);
 }
 
 function pasteButton(pos) {
+  if (isConfigLocked()) return;
   if (!state.clipboard) return;
   var entries = state.clipboard.buttons;
   var lastSlot = -1;
@@ -3155,6 +3259,7 @@ function pasteButton(pos) {
       entity: e.entity, label: e.label, icon: e.icon,
       icon_on: e.icon_on, sensor: e.sensor, unit: e.unit,
       type: e.type || "", precision: e.precision || "",
+      options: e.options || "",
     };
     if (placeSize === 1) delete state.sizes[newSlot]; else state.sizes[newSlot] = placeSize;
     placeSlotAt(state.grid, newSlot, cell, placeSize);
@@ -3175,6 +3280,7 @@ function pasteButton(pos) {
 }
 
 function pasteSubpageButton(pos) {
+  if (isConfigLocked()) return;
   if (!state.clipboard) return;
   var homeSlot = state.editingSubpage;
   var sp = getSubpage(homeSlot);
@@ -3195,6 +3301,7 @@ function pasteSubpageButton(pos) {
       entity: e.entity, label: e.label, icon: e.icon,
       icon_on: e.icon_on, sensor: e.sensor, unit: e.unit,
       type: e.type || "", precision: e.precision || "",
+      options: e.options || "",
     };
     if (placeSize === 1) delete sp.sizes[newSlot]; else sp.sizes[newSlot] = placeSize;
     placeSlotAt(sp.grid, newSlot, cell, placeSize);

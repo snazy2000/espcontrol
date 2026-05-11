@@ -20,7 +20,16 @@ font:
     size: 55
     bpp: 4
     glyphs:
-      - "0123456789.-°/%kWhVA Of"
+      - "0123456789.-°/%"
+      - ":"
+
+  # Main page: large-card sensor values (3x the regular sensor value font)
+  - file: "gfonts://Roboto@Thin"
+    id: statistics_font_600_xl
+    size: 165
+    bpp: 4
+    glyphs:
+      - "0123456789.-°/%"
       - ":"
 
   # Button labels (22px)

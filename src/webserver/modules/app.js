@@ -97,6 +97,7 @@ function exportConfig() {
         entity: b.entity, label: b.label, icon: b.icon,
         icon_on: b.icon_on, sensor: b.sensor, unit: b.unit,
         type: b.type || "", precision: b.precision || "",
+        options: b.options || "",
       };
     }),
     subpages: (function () {
@@ -216,7 +217,7 @@ function importConfig() {
       postText("Button Off Color", data.button_off_color || "313131");
       postText("Sensor Card Color", data.sensor_card_color || "212121");
 
-      var empty = { entity: "", label: "", icon: "Auto", icon_on: "Auto", sensor: "", unit: "", type: "", precision: "" };
+      var empty = { entity: "", label: "", icon: "Auto", icon_on: "Auto", sensor: "", unit: "", type: "", precision: "", options: "" };
       var buttons, orderStr, spKeyMap, importedSizes;
 
       if (importedCount !== NUM_SLOTS) {
@@ -305,6 +306,7 @@ function importConfig() {
           icon: b.icon || "Auto", icon_on: b.icon_on || "Auto",
           sensor: b.sensor || "", unit: b.unit || "",
           type: b.type || "", precision: b.precision || "",
+          options: b.options || "",
         });
         saveButtonConfig(n);
       }
@@ -634,6 +636,7 @@ function connectEvents() {
     state.subpageSelectedSlots = [];
     state.subpageLastClicked = -1;
     orderReceived = false;
+    setConfigLocked(false);
     if (els.banner) els.banner.className = "sp-banner";
     els.root.querySelectorAll(".sp-apply-btn").forEach(function (btn) {
       btn.disabled = false;
@@ -648,6 +651,7 @@ function connectEvents() {
   }
 
   function handleDisconnected(source) {
+    setConfigLocked(true, "Reconnecting to device\u2026");
     showBanner("Reconnecting to device\u2026", "offline");
     if (source.readyState === 2) {
       source.close();
@@ -1044,6 +1048,7 @@ function connectEvents() {
         b.unit = parsed.unit;
         b.type = parsed.type;
         b.precision = parsed.precision;
+        b.options = parsed.options;
         if (migrateConfig) saveButtonConfig(slot);
         scheduleRender();
       },
@@ -1118,9 +1123,8 @@ function connectEvents() {
     console.log("[state] unhandled:", id, val);
   }
 
-  markConnected();
   if (!eventStreamEnabled()) {
-    loadInitialState(handleState);
+    loadInitialState(handleState, markConnected);
     return;
   }
 
@@ -1233,6 +1237,10 @@ if (typeof globalThis !== "undefined" && globalThis.__ESPCONTROL_TEST_HOOKS__) {
   globalThis.__ESPCONTROL_TEST_HOOKS__.config = {
     parseButtonConfig: parseButtonConfig,
     serializeButtonConfig: serializeButtonConfig,
+    switchConfirmationEnabled: switchConfirmationEnabled,
+    switchConfirmationMessage: switchConfirmationMessage,
+    switchConfirmationYesText: switchConfirmationYesText,
+    switchConfirmationNoText: switchConfirmationNoText,
     parseSubpageConfig: parseSubpageConfig,
     serializeSubpageConfig: serializeSubpageConfig,
     parseBackOrderToken: parseBackOrderToken,

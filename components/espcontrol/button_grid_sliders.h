@@ -134,7 +134,9 @@ inline lv_coord_t control_modal_scaled_px(lv_coord_t px, lv_coord_t short_side) 
 }
 
 inline lv_coord_t control_modal_card_radius(lv_obj_t *btn) {
-  return btn ? lv_obj_get_style_radius(btn, LV_PART_MAIN) : 18;
+  if (btn) return lv_obj_get_style_radius(btn, LV_PART_MAIN);
+  MediaHomeGridMetrics &metrics = media_home_grid_metrics();
+  return metrics.first_card ? lv_obj_get_style_radius(metrics.first_card, LV_PART_MAIN) : 18;
 }
 
 inline ControlModalLayout control_modal_calc_layout(int width_compensation_percent) {
@@ -279,8 +281,7 @@ inline MediaVolumeModalUi &media_volume_modal_ui() {
 }
 
 inline lv_coord_t media_volume_card_radius(MediaVolumeCtx *ctx) {
-  if (!ctx || !ctx->btn) return 18;
-  return lv_obj_get_style_radius(ctx->btn, LV_PART_MAIN);
+  return control_modal_card_radius(ctx ? ctx->btn : nullptr);
 }
 
 inline void slider_fit_to_button(lv_obj_t *slider, lv_obj_t *btn, bool horizontal) {

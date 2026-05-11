@@ -9,11 +9,18 @@ registerButtonType("weather", {
     b.icon_on = "Auto";
     b.sensor = "";
     b.unit = "";
+    b.options = "";
     if (b.precision !== "today" && b.precision !== "tomorrow") b.precision = "";
   },
   renderSettings: function (panel, b, slot, helpers) {
+    var isLargeCard = helpers.cardSize === 4;
+
     function defaultForecastLabel() {
       return b.precision === "today" ? "Today" : "Tomorrow";
+    }
+
+    function isForecastMode() {
+      return b.precision === "today" || b.precision === "tomorrow";
     }
 
     var modeField = helpers.selectField("Display", helpers.idPrefix + "weather-display", [
@@ -31,18 +38,38 @@ registerButtonType("weather", {
     var labelInp = labelControl.input;
     panel.appendChild(labelField);
 
-    function syncLabelField() {
-      var forecast = b.precision === "today" || b.precision === "tomorrow";
+    var largeNumbersToggle = null;
+    if (isLargeCard) {
+      largeNumbersToggle = helpers.toggleRow(
+        "Large Temperature Numbers", helpers.idPrefix + "large-weather-numbers",
+        cardLargeNumbersEnabled(b));
+      panel.appendChild(largeNumbersToggle.row);
+      largeNumbersToggle.input.addEventListener("change", function () {
+        setSensorLargeNumbersEnabled(b, this.checked);
+        helpers.saveField("options", b.options);
+      });
+    }
+
+    function syncForecastFields() {
+      var forecast = isForecastMode();
       labelField.style.display = forecast ? "" : "none";
       labelInp.placeholder = "e.g. " + defaultForecastLabel();
+      if (largeNumbersToggle) {
+        largeNumbersToggle.row.style.display = forecast ? "" : "none";
+        if (!forecast && cardLargeNumbersEnabled(b)) {
+          setSensorLargeNumbersEnabled(b, false);
+          largeNumbersToggle.input.checked = false;
+          helpers.saveField("options", b.options);
+        }
+      }
     }
 
     modeSelect.addEventListener("change", function () {
       b.precision = this.value;
       helpers.saveField("precision", b.precision);
-      syncLabelField();
+      syncForecastFields();
     });
-    syncLabelField();
+    syncForecastFields();
 
     var entityField = helpers.entityField(
       "Weather Entity", helpers.idPrefix + "entity", b.entity,
@@ -54,9 +81,11 @@ registerButtonType("weather", {
     if (b.precision === "today" || b.precision === "tomorrow") {
       var defaultLabel = b.precision === "today" ? "Today" : "Tomorrow";
       var label = b.label || defaultLabel;
+      var previewClass = "sp-sensor-preview sp-forecast-preview" +
+        (helpers.cardSize === 4 && cardLargeNumbersEnabled(b) ? " sp-sensor-preview-large" : "");
       return {
         iconHtml:
-          '<span class="sp-sensor-preview sp-forecast-preview">' +
+          '<span class="' + previewClass + '">' +
             '<span class="sp-sensor-value sp-forecast-value">18/10</span>' +
             '<span class="sp-sensor-unit">' + temperatureUnitSymbol() + '</span>' +
           '</span>',

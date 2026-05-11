@@ -1,4 +1,7 @@
 {
+  "settings": {
+    "largeSensorUnitOffsetPercent": -10
+  },
   "devices": {
     "guition-esp32-p4-jc1060p470": {
       "slots": 15,
@@ -76,6 +79,7 @@
         "fonts": {
           "icon": "icon_font_600",
           "sensor": "statistics_font_600",
+          "largeSensor": "statistics_font_600_xl",
           "mediaTitle": "media_title_font",
           "volumeNumber": "volume_modal_number_font_600",
           "volumeLabel": "volume_modal_label_font_600"
@@ -92,13 +96,16 @@
       "layout": {
         "cols": 2,
         "rows": 3,
-        "firmwareGrid": "3x2"
+        "firmwareGrid": "3x2",
+        "portraitCols": 3
       },
       "rotation": {
         "enabled": true,
         "options": [
           "0",
-          "180"
+          "90",
+          "180",
+          "270"
         ],
         "displayOffset": 180
       },
@@ -108,6 +115,14 @@
         "screen": {
           "width": "44%",
           "aspect": "480/800"
+        },
+        "portrait": {
+          "cols": 3,
+          "rows": 2,
+          "screen": {
+            "width": "74%",
+            "aspect": "800/480"
+          }
         },
         "topbar": {
           "height": 6.45,
@@ -149,6 +164,7 @@
         "fonts": {
           "icon": "icon_font_480",
           "sensor": "statistics_font_lg",
+          "largeSensor": "statistics_font_lg_xl",
           "mediaTitle": "media_title_font_lg",
           "volumeNumber": "volume_modal_number_font_lg",
           "volumeLabel": "label_font_lg"
@@ -233,6 +249,7 @@
         "fonts": {
           "icon": "icon_font_800",
           "sensor": "statistics_font_lt",
+          "largeSensor": "statistics_font_lt_xl",
           "mediaTitle": "media_title_font_lt",
           "volumeNumber": "volume_modal_number_font_800",
           "volumeLabel": "volume_modal_label_font_800"
@@ -316,6 +333,7 @@
         "fonts": {
           "icon": "icon_font_md_square",
           "sensor": "statistics_font_md_square",
+          "largeSensor": "statistics_font_md_square_xl",
           "mediaTitle": "media_title_font_md_square",
           "volumeNumber": "volume_modal_number_font_md_square",
           "volumeLabel": "volume_modal_label_font_md_square"
@@ -403,6 +421,7 @@
         "fonts": {
           "icon": "icon_font_sm",
           "sensor": "statistics_font_sm",
+          "largeSensor": "statistics_font_sm_xl",
           "mediaTitle": "media_title_font_sm",
           "volumeNumber": "volume_modal_number_font",
           "volumeLabel": "label_font_sm"

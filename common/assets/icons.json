@@ -296,6 +296,21 @@
       "mdi": "curtains-closed"
     },
     {
+      "name": "Delete",
+      "codepoint": "F01B4",
+      "mdi": "delete"
+    },
+    {
+      "name": "Delete Empty",
+      "codepoint": "F06CC",
+      "mdi": "delete-empty"
+    },
+    {
+      "name": "Delete Outline",
+      "codepoint": "F09E7",
+      "mdi": "delete-outline"
+    },
+    {
       "name": "Desk Lamp",
       "codepoint": "F095F",
       "mdi": "desk-lamp"
@@ -796,6 +811,11 @@
       "mdi": "projector-off"
     },
     {
+      "name": "Recycle",
+      "codepoint": "F044C",
+      "mdi": "recycle"
+    },
+    {
       "name": "Robot Vacuum",
       "codepoint": "F070D",
       "mdi": "robot-vacuum"
@@ -1009,6 +1029,11 @@
       "name": "Trash Can",
       "codepoint": "F0A79",
       "mdi": "trash-can"
+    },
+    {
+      "name": "Trash Can Outline",
+      "codepoint": "F0A7A",
+      "mdi": "trash-can-outline"
     },
     {
       "name": "Volume High",

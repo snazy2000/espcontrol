@@ -291,6 +291,9 @@ const ICON_GROUPS = {
   'Broom': 'General',
   'Check': 'General',
   'Clock': 'General',
+  'Delete': 'General',
+  'Delete Empty': 'General',
+  'Delete Outline': 'General',
   'Dog': 'General',
   'Dots Horizontal': 'General',
   'Gesture Tap': 'General',
@@ -301,8 +304,10 @@ const ICON_GROUPS = {
   'Package Closed': 'General',
   'Plus': 'General',
   'Progress Clock': 'General',
+  'Recycle': 'General',
   'Timer': 'General',
   'Trash Can': 'General',
+  'Trash Can Outline': 'General',
 }
 
 const icons = iconsData.icons

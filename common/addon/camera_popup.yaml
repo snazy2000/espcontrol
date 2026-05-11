@@ -175,6 +175,6 @@ lvgl:
                 widgets:
                   - label:
                       text: "\U000F0156"
-                      font: icon_font
+                      text_font: icon_font
                       align: center
                       text_color: 0xFFFFFF

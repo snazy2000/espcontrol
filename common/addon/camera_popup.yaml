@@ -84,6 +84,13 @@ script:
       - lambda: |-
           std::string url = id(ha_base_url).state + "/api/camera_proxy/" +
             id(camera_popup_entity) + "?t=" + std::to_string(millis());
+          std::string token = id(ha_rest_token).state;
+          if (token.empty()) {
+            ESP_LOGW("camera_popup", "Fetch: no token set — request will be unauthenticated");
+          } else {
+            ESP_LOGD("camera_popup", "Fetch: token present (len=%d), first4=%s", (int)token.size(), token.substr(0,4).c_str());
+          }
+          ESP_LOGD("camera_popup", "Fetch URL: %s", url.c_str());
           id(camera_popup_image).set_url(url.c_str());
       - component.update: camera_popup_image
 

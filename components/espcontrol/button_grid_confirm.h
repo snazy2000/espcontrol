@@ -17,6 +17,20 @@ inline SwitchConfirmationModalUi &switch_confirmation_modal_ui() {
   return ui;
 }
 
+inline const lv_font_t *&switch_confirmation_message_font_ref() {
+  static const lv_font_t *font = nullptr;
+  return font;
+}
+
+inline void set_switch_confirmation_message_font(const lv_font_t *font) {
+  switch_confirmation_message_font_ref() = font;
+}
+
+inline const lv_font_t *switch_confirmation_message_font(const lv_font_t *fallback) {
+  const lv_font_t *font = switch_confirmation_message_font_ref();
+  return font ? font : fallback;
+}
+
 inline void switch_confirmation_hide_modal() {
   SwitchConfirmationModalUi &ui = switch_confirmation_modal_ui();
   if (ui.overlay) lv_obj_del(ui.overlay);
@@ -79,9 +93,10 @@ inline void switch_confirmation_open_modal(const ParsedCfg &p, lv_obj_t *btn_obj
   lv_coord_t button_w = (content_w - button_gap) / 2;
   if (button_w < 56) button_w = content_w;
 
-  const lv_font_t *label_font = btn_obj
+  const lv_font_t *button_font = btn_obj
     ? lv_obj_get_style_text_font(btn_obj, LV_PART_MAIN)
     : nullptr;
+  const lv_font_t *message_font = switch_confirmation_message_font(button_font);
 
   ui.overlay = lv_obj_create(lv_layer_top());
   control_modal_style_overlay(ui.overlay);
@@ -90,13 +105,6 @@ inline void switch_confirmation_open_modal(const ParsedCfg &p, lv_obj_t *btn_obj
   control_modal_style_panel(ui.panel, DEFAULT_TERTIARY_COLOR, radius);
   control_modal_apply_panel_layout(ui.overlay, ui.panel, layout, radius);
 
-  lv_obj_t *title = lv_label_create(ui.panel);
-  lv_label_set_text(title, "Confirm");
-  lv_obj_set_style_text_color(title, lv_color_hex(0xA0A0A0), LV_PART_MAIN);
-  lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-  if (label_font) lv_obj_set_style_text_font(title, label_font, LV_PART_MAIN);
-  lv_obj_align(title, LV_ALIGN_TOP_MID, 0, layout.inset);
-
   ui.message_lbl = lv_label_create(ui.panel);
   std::string message = switch_confirmation_message(p);
   lv_label_set_text(ui.message_lbl, message.c_str());
@@ -104,15 +112,15 @@ inline void switch_confirmation_open_modal(const ParsedCfg &p, lv_obj_t *btn_obj
   lv_obj_set_width(ui.message_lbl, content_w);
   lv_obj_set_style_text_color(ui.message_lbl, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
   lv_obj_set_style_text_align(ui.message_lbl, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-  if (label_font) lv_obj_set_style_text_font(ui.message_lbl, label_font, LV_PART_MAIN);
+  if (message_font) lv_obj_set_style_text_font(ui.message_lbl, message_font, LV_PART_MAIN);
   lv_obj_align(ui.message_lbl, LV_ALIGN_CENTER, 0, -button_h / 2);
 
   ui.cancel_btn = switch_confirmation_create_text_button(
     ui.panel, switch_confirmation_no_text(p), button_w, button_h,
-    button_h / 2, 0x454545, label_font);
+    button_h / 2, 0x454545, button_font);
   ui.confirm_btn = switch_confirmation_create_text_button(
     ui.panel, switch_confirmation_yes_text(p), button_w, button_h,
-    button_h / 2, DEFAULT_SLIDER_COLOR, label_font);
+    button_h / 2, DEFAULT_SLIDER_COLOR, button_font);
 
   if (button_w == content_w) {
     lv_obj_align(ui.confirm_btn, LV_ALIGN_BOTTOM_MID, 0, -layout.inset);

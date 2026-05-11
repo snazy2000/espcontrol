@@ -35,10 +35,6 @@ globals:
     type: uint32_t
     restore_value: false
     initial_value: '0'
-  - id: camera_popup_auth_header
-    type: std::string
-    restore_value: false
-    initial_value: '""'
 
 online_image:
   - id: camera_popup_image
@@ -48,6 +44,11 @@ online_image:
     update_interval: never
     resize: "${camera_popup_resize}"
     buffer_size: 65536
+    request_headers:
+      Authorization: !lambda |-
+        std::string token = id(ha_rest_token).state;
+        if (token.empty()) return std::string("");
+        return "Bearer " + token;
     on_download_finished:
       - lvgl.image.update:
           id: camera_popup_img_widget
@@ -76,21 +77,13 @@ esphome:
             });
 
 script:
-  # Builds the URL + Bearer header and triggers a single image download.
-  # Called by open_script (first frame) and the interval (refresh frames).
+  # Builds the timestamped URL and triggers a single image download.
+  # The Authorization header is applied automatically via the online_image headers config.
   - id: camera_popup_fetch_script
     then:
       - lambda: |-
           std::string url = id(ha_base_url).state + "/api/camera_proxy/" +
             id(camera_popup_entity) + "?t=" + std::to_string(millis());
-          std::string token = id(ha_rest_token).state;
-          if (!token.empty()) {
-            id(camera_popup_auth_header) = "Bearer " + token;
-            id(camera_popup_image).set_headers({{"Authorization", id(camera_popup_auth_header).c_str()}});
-          } else {
-            id(camera_popup_auth_header) = "";
-            id(camera_popup_image).set_headers({});
-          }
           id(camera_popup_image).set_url(url.c_str());
       - component.update: camera_popup_image
 

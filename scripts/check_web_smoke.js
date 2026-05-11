@@ -2,12 +2,15 @@
 "use strict";
 
 const assert = require("assert");
+const fs = require("fs");
 const path = require("path");
 const vm = require("vm");
 const { loadBundledWebSource } = require("./web_source");
 
 const ROOT = path.resolve(__dirname, "..");
 const SOURCE = path.join(ROOT, "src", "webserver", "www.js");
+const DEVICE_MANIFEST = path.join(ROOT, "devices", "manifest.json");
+const WEB_OUTPUT_DIR = path.join(ROOT, "docs", "public", "webserver");
 
 function loadHooks() {
   const sandbox = {
@@ -34,6 +37,17 @@ function plain(value) {
 
 const hooks = loadHooks();
 assert(hooks, "web test hooks were not exported");
+
+const manifest = JSON.parse(fs.readFileSync(DEVICE_MANIFEST, "utf8"));
+for (const [slug, device] of Object.entries(manifest.devices || {})) {
+  if (!device.rotation || !device.rotation.enabled) continue;
+  const webOutput = path.join(WEB_OUTPUT_DIR, slug, "www.js");
+  const generated = fs.readFileSync(webOutput, "utf8");
+  assert(
+    /features:\{[^}]*screenRotation:!0/.test(generated),
+    `${slug}: generated web UI must expose screen rotation when rotation is enabled`
+  );
+}
 
 const button = {
   entity: "light.kitchen",

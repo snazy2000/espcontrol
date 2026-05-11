@@ -231,7 +231,7 @@ select:
     entity_category: config
     icon: "mdi:screen-rotation"
     optimistic: true
-    restore_value: false
+    restore_value: true
     initial_option: "180"
     options:
       - "0"

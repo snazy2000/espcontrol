@@ -311,9 +311,7 @@ def build_config_block(slug, cfg):
 def web_features(device):
     features = {}
     rotation = device.get("rotation") or {}
-    # Rotation support is firmware-internal until a device explicitly opts in
-    # to exposing it through the public web UI.
-    if rotation.get("enabled") and rotation.get("public"):
+    if rotation.get("enabled"):
         features["screenRotation"] = True
         features["screenRotationOptions"] = rotation.get("options", [])
         if rotation.get("experimentalOptions"):

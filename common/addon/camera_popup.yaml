@@ -35,6 +35,10 @@ globals:
     type: uint32_t
     restore_value: false
     initial_value: '0'
+  - id: camera_popup_auth_header
+    type: std::string
+    restore_value: false
+    initial_value: '""'
 
 online_image:
   - id: camera_popup_image
@@ -53,9 +57,12 @@ online_image:
           level: WARN
           tag: camera_popup
           format: "Camera snapshot download failed"
-      - lambda: |-
-          id(camera_popup_open_flag) = false;
-          lv_obj_add_flag(id(camera_popup_overlay), LV_OBJ_FLAG_HIDDEN);
+      - if:
+          condition:
+            lambda: return id(camera_popup_open_flag);
+          then:
+            - lambda: id(camera_popup_open_flag) = false;
+            - lvgl.widget.hide: camera_popup_overlay
 
 esphome:
   on_boot:
@@ -69,19 +76,35 @@ esphome:
             });
 
 script:
-  - id: camera_popup_open_script
+  # Builds the URL + Bearer header and triggers a single image download.
+  # Called by open_script (first frame) and the interval (refresh frames).
+  - id: camera_popup_fetch_script
     then:
       - lambda: |-
-          if (id(camera_popup_entity).empty()) return;
           std::string url = id(ha_base_url).state + "/api/camera_proxy/" +
             id(camera_popup_entity) + "?t=" + std::to_string(millis());
           std::string token = id(ha_rest_token).state;
-          if (!token.empty()) url += "&access_token=" + token;
+          if (!token.empty()) {
+            id(camera_popup_auth_header) = "Bearer " + token;
+            id(camera_popup_image).set_headers({{"Authorization", id(camera_popup_auth_header).c_str()}});
+          } else {
+            id(camera_popup_auth_header) = "";
+            id(camera_popup_image).set_headers({});
+          }
           id(camera_popup_image).set_url(url.c_str());
-          id(camera_popup_open_flag) = true;
-          id(camera_popup_last_ms) = millis();
-      - lvgl.widget.show: camera_popup_overlay
       - component.update: camera_popup_image
+
+  - id: camera_popup_open_script
+    then:
+      - if:
+          condition:
+            lambda: return !id(camera_popup_entity).empty();
+          then:
+            - lambda: |-
+                id(camera_popup_open_flag) = true;
+                id(camera_popup_last_ms) = millis();
+            - lvgl.widget.show: camera_popup_overlay
+            - script.execute: camera_popup_fetch_script
 
   - id: camera_popup_close_script
     then:
@@ -92,17 +115,14 @@ script:
 interval:
   - interval: 1s
     then:
-      - lambda: |-
-          if (!id(camera_popup_open_flag)) return;
-          uint32_t now_ms = millis();
-          if (now_ms - id(camera_popup_last_ms) < id(camera_popup_refresh_ms)) return;
-          id(camera_popup_last_ms) = now_ms;
-          std::string url = id(ha_base_url).state + "/api/camera_proxy/" +
-            id(camera_popup_entity) + "?t=" + std::to_string(now_ms);
-          std::string token = id(ha_rest_token).state;
-          if (!token.empty()) url += "&access_token=" + token;
-          id(camera_popup_image).set_url(url.c_str());
-          id(camera_popup_image).update();
+      - if:
+          condition:
+            lambda: |-
+              if (!id(camera_popup_open_flag)) return false;
+              return (millis() - id(camera_popup_last_ms)) >= id(camera_popup_refresh_ms);
+          then:
+            - lambda: id(camera_popup_last_ms) = millis();
+            - script.execute: camera_popup_fetch_script
 
 lvgl:
   top_layer:

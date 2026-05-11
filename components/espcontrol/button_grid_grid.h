@@ -437,6 +437,7 @@ inline void grid_phase2(
     const std::string &sensor_hex,
     lv_obj_t *main_page_obj) {
   ESP_LOGI("sensors", "Phase 2: subscriptions + subpages start (%lu ms)", esphome::millis());
+  nav_registry_reset(main_page_obj);
   set_display_temperature_unit(cfg.temperature_unit, cfg.timezone);
   set_width_compensation_vertical_axis(cfg.width_compensation_vertical);
   set_switch_confirmation_message_font(cfg.volume_label_font);
@@ -1250,6 +1251,7 @@ inline void grid_phase2(
     }
 
     lv_obj_set_user_data(slots[si].btn, (void *)sub_scr);
+    nav_registry_add(p.label, sub_scr);
   }
   refresh_weather_forecast_cards();
   ESP_LOGI("sensors", "Phase 2: done (%lu ms)", esphome::millis());

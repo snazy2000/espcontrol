@@ -1,0 +1,33 @@
+# =============================================================================
+# CONFIG: REMOTE NAVIGATION
+# =============================================================================
+# Exposes a text entity to Home Assistant so automations can navigate the panel
+# to a named subpage or back to the home screen.
+#
+# Usage from a Home Assistant automation:
+#   service: text.set_value
+#   target:
+#     entity_id: text.<device_name>_navigate_to_page
+#   data:
+#     value: "Music"       # navigate to the subpage whose label is "Music"
+#     value: "home"        # or "" to return to the home screen
+#
+# The label match is case-insensitive. The value is not persisted across reboots
+# (the panel always starts on the home screen after a reboot).
+# =============================================================================
+
+text:
+  - platform: template
+    name: "Navigate To Page"
+    id: page_navigator
+    optimistic: true
+    restore_value: false
+    initial_value: ""
+    min_length: 0
+    max_length: 64
+    mode: text
+    icon: "mdi:page-next"
+    update_interval: never
+    on_value:
+      then:
+        - lambda: navigate_to_page(x);

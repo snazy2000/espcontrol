@@ -628,6 +628,7 @@ function connectEvents() {
     state.subpageSelectedSlots = [];
     state.subpageLastClicked = -1;
     orderReceived = false;
+    setConfigLocked(false);
     if (els.banner) els.banner.className = "sp-banner";
     els.root.querySelectorAll(".sp-apply-btn").forEach(function (btn) {
       btn.disabled = false;
@@ -642,6 +643,7 @@ function connectEvents() {
   }
 
   function handleDisconnected(source) {
+    setConfigLocked(true, "Reconnecting to device\u2026");
     showBanner("Reconnecting to device\u2026", "offline");
     if (source.readyState === 2) {
       source.close();
@@ -1105,9 +1107,8 @@ function connectEvents() {
     console.log("[state] unhandled:", id, val);
   }
 
-  markConnected();
   if (!eventStreamEnabled()) {
-    loadInitialState(handleState);
+    loadInitialState(handleState, markConnected);
     return;
   }
 

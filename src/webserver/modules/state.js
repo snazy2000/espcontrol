@@ -75,6 +75,8 @@ var state = {
   updateFrequency: "Daily",
   updateFreqOptions: ["Hourly", "Daily", "Weekly", "Monthly"],
   developerExperimentalFeatures: false,
+  configLocked: false,
+  configLockReason: "",
   subpages: {},
   subpageRaw: {},
   subpageSavePending: {},

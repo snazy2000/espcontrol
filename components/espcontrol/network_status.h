@@ -166,6 +166,8 @@ inline void network_status_open_modal(const std::string &device_name,
                                       const lv_font_t *label_font,
                                       const lv_font_t *icon_font,
                                       const std::string &panel_color_hex) {
+  media_volume_hide_modal();
+  climate_control_hide_modal();
   network_status_hide_modal();
   NetworkStatusModalUi &ui = network_status_modal_ui();
 

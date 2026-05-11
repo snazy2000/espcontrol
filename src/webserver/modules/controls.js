@@ -1307,12 +1307,12 @@ function renderPreview() {
         iconName = "cog";
         label = "Configure";
       }
+      var slotSz = c.sizes[slot];
       var typePreview = previewTypeDef && previewTypeDef.renderPreview
         ? previewTypeDef.renderPreview(b, { escHtml: escHtml, cardSize: slotSz || 1 })
         : null;
 
       var btn = document.createElement("div");
-      var slotSz = c.sizes[slot];
       btn.className = "sp-btn" + sizeClass(slotSz) +
         (c.selected.indexOf(slot) !== -1 ? " sp-selected" : "");
       btn.style.backgroundColor = "#" + (color.length === 6 ? color : "313131");

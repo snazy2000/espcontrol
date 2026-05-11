@@ -37,4 +37,5 @@
 #include "button_grid_media.h"
 #include "button_grid_camera.h"
 #include "button_grid_subpages.h"
+#include "button_grid_navigate.h"
 #include "button_grid_grid.h"

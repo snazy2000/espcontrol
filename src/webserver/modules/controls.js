@@ -1680,6 +1680,13 @@ function renderButtonSettings(forceOpen) {
     return false;
   }
 
+  function validateConfigSize() {
+    if (c.isSub) return true;
+    if (serializeButtonConfig(b).length <= 255) return true;
+    showBanner("Card settings are too large to save. Shorten confirmation text, labels, or entity IDs.", "error");
+    return false;
+  }
+
   function applySettingsDraft() {
     if (!state.settingsDraft || state.settingsDraft.key !== draftKey) return;
     copyButtonConfig(liveButton, state.settingsDraft.button);
@@ -2094,6 +2101,7 @@ function renderButtonSettings(forceOpen) {
   saveBtn.textContent = "Save";
   saveBtn.addEventListener("click", function () {
     if (!validateSettingsDraft()) return;
+    if (!validateConfigSize()) return;
     applySettingsDraft();
     closeSettings();
   });

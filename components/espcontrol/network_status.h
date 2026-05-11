@@ -168,6 +168,7 @@ inline void network_status_open_modal(const std::string &device_name,
                                       const std::string &panel_color_hex) {
   media_volume_hide_modal();
   climate_control_hide_modal();
+  switch_confirmation_hide_modal();
   network_status_hide_modal();
   NetworkStatusModalUi &ui = network_status_modal_ui();
 

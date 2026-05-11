@@ -127,7 +127,7 @@ inline ParsedCfg normalize_parsed_cfg(ParsedCfg p) {
     p.icon = "Auto";
     p.icon_on = "Auto";
   }
-  if (p.type != "sensor" || p.precision == "text") {
+  if (!p.type.empty() && (p.type != "sensor" || p.precision == "text")) {
     p.options.clear();
   }
   return p;
@@ -172,8 +172,42 @@ inline bool cfg_option_enabled(const std::string &options, const char *name) {
   return false;
 }
 
+inline std::string cfg_option_value(const std::string &options, const char *name) {
+  if (!name || !*name || options.empty()) return "";
+  std::string prefix = std::string(name) + "=";
+  size_t start = 0;
+  while (start <= options.length()) {
+    size_t end = options.find(',', start);
+    if (end == std::string::npos) end = options.length();
+    if (options.compare(start, prefix.length(), prefix) == 0) {
+      return decode_compact_field(options.substr(start + prefix.length(), end - start - prefix.length()));
+    }
+    start = end + 1;
+  }
+  return "";
+}
+
 inline bool sensor_large_numbers_enabled(const ParsedCfg &p) {
   return cfg_option_enabled(p.options, "large_numbers");
+}
+
+inline bool switch_confirmation_enabled(const ParsedCfg &p) {
+  return p.type.empty() && cfg_option_enabled(p.options, "confirm_off");
+}
+
+inline std::string switch_confirmation_message(const ParsedCfg &p) {
+  std::string value = cfg_option_value(p.options, "confirm_message");
+  return value.empty() ? std::string("Turn off this device?") : value;
+}
+
+inline std::string switch_confirmation_yes_text(const ParsedCfg &p) {
+  std::string value = cfg_option_value(p.options, "confirm_yes");
+  return value.empty() ? std::string("Turn Off") : value;
+}
+
+inline std::string switch_confirmation_no_text(const ParsedCfg &p) {
+  std::string value = cfg_option_value(p.options, "confirm_no");
+  return value.empty() ? std::string("Cancel") : value;
 }
 
 inline int parse_precision(const std::string &s) {

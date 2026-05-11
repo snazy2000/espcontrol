@@ -257,6 +257,24 @@ assertButtonRoundTrip(hooks, "switch text sensor when on", {
   precision: "text",
 }, false);
 
+const confirmSwitch = {
+  entity: "switch.printer",
+  label: "Printer",
+  icon: "Printer 3D",
+  icon_on: "Printer 3D",
+  sensor: "",
+  unit: "",
+  type: "",
+  precision: "",
+  options: "confirm_off,confirm_message=Stop the print?,confirm_yes=Power Down,confirm_no=Keep On",
+};
+assertButtonRoundTrip(hooks, "switch off confirmation", confirmSwitch, false);
+const parsedConfirmSwitch = hooks.parseButtonConfig(hooks.serializeButtonConfig(confirmSwitch));
+assert.strictEqual(hooks.switchConfirmationEnabled(parsedConfirmSwitch), true, "switch confirmation enabled");
+assert.strictEqual(hooks.switchConfirmationMessage(parsedConfirmSwitch), "Stop the print?", "switch confirmation message");
+assert.strictEqual(hooks.switchConfirmationYesText(parsedConfirmSwitch), "Power Down", "switch confirmation yes text");
+assert.strictEqual(hooks.switchConfirmationNoText(parsedConfirmSwitch), "Keep On", "switch confirmation no text");
+
 assertButtonRoundTrip(hooks, "delimiter button", {
   entity: "sensor.kitchen_temperature",
   label: "Kitchen; west, 50% | prep: zone",
@@ -561,8 +579,8 @@ assertButtonRoundTrip(hooks, "media now playing play pause control", {
 assertButtonRoundTrip(hooks, "climate card", {
   entity: "climate.living_room",
   label: "Living Room",
-  icon: "Auto",
-  icon_on: "Auto",
+  icon: "Thermostat",
+  icon_on: "Fire",
   sensor: "",
   unit: "",
   type: "climate",
@@ -605,8 +623,8 @@ assertButtonRoundTrip(hooks, "climate card custom range", {
 assertButtonMigration(hooks, "climate clears ignored fields", "climate.living_room;Living;Thermostat;Radiator;sensor.temp;deg C;climate;bad", {
   entity: "climate.living_room",
   label: "Living",
-  icon: "Auto",
-  icon_on: "Auto",
+  icon: "Thermostat",
+  icon_on: "Radiator",
   sensor: "",
   unit: "",
   type: "climate",
@@ -866,6 +884,13 @@ assertSubpageRoundTrip(hooks, "normal subpage", {
     buttonShape({ type: "calendar" }),
   ],
 }, true);
+
+assertSubpageRoundTrip(hooks, "switch confirmation subpage", {
+  order: ["1", "B"],
+  buttons: [
+    buttonShape(confirmSwitch),
+  ],
+}, false);
 
 assertSubpageRoundTrip(hooks, "internal relay subpage", {
   order: ["1", "B"],

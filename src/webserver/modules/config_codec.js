@@ -47,17 +47,26 @@ function normalizeButtonConfig(b) {
   if (b && b.type === "climate") {
     b.sensor = "";
     b.unit = "";
-    b.icon = "Auto";
-    b.icon_on = "Auto";
+    if (!b.icon) b.icon = "Thermostat";
+    if (!b.icon_on) b.icon_on = b.icon;
     b.precision = normalizeClimatePrecisionConfig(b.precision);
   }
-  if (b && (b.type !== "sensor" || b.precision === "text")) {
+  if (b && !b.type) {
+    b.options = normalizeSwitchConfirmationOptions(b.options);
+  } else if (b && (b.type !== "sensor" || b.precision === "text")) {
     b.options = "";
   }
   return b;
 }
 
 var SENSOR_LARGE_NUMBERS_OPTION = "large_numbers";
+var SWITCH_CONFIRM_OFF_OPTION = "confirm_off";
+var SWITCH_CONFIRM_MESSAGE_OPTION = "confirm_message";
+var SWITCH_CONFIRM_YES_OPTION = "confirm_yes";
+var SWITCH_CONFIRM_NO_OPTION = "confirm_no";
+var SWITCH_CONFIRM_DEFAULT_MESSAGE = "Turn off this device?";
+var SWITCH_CONFIRM_DEFAULT_YES = "Turn Off";
+var SWITCH_CONFIRM_DEFAULT_NO = "Cancel";
 
 function configOptionEnabled(options, name) {
   var parts = String(options || "").split(",");
@@ -85,6 +94,30 @@ function setConfigOption(options, name, enabled) {
   return out.join(",");
 }
 
+function configOptionValue(options, name) {
+  var prefix = name + "=";
+  var parts = String(options || "").split(",");
+  for (var i = 0; i < parts.length; i++) {
+    var part = parts[i];
+    if (part.indexOf(prefix) === 0) return decodeConfigField(part.substring(prefix.length));
+  }
+  return "";
+}
+
+function setConfigOptionValue(options, name, value) {
+  var prefix = name + "=";
+  var parts = String(options || "").split(",");
+  var out = [];
+  for (var i = 0; i < parts.length; i++) {
+    var part = parts[i];
+    if (!part || part.indexOf(prefix) === 0) continue;
+    if (out.indexOf(part) < 0) out.push(part);
+  }
+  value = String(value || "").trim();
+  if (value) out.push(prefix + encodeConfigField(value));
+  return out.join(",");
+}
+
 function sensorLargeNumbersEnabled(b) {
   return !!(b && configOptionEnabled(b.options, SENSOR_LARGE_NUMBERS_OPTION));
 }
@@ -92,6 +125,61 @@ function sensorLargeNumbersEnabled(b) {
 function setSensorLargeNumbersEnabled(b, enabled) {
   if (!b) return "";
   b.options = setConfigOption(b.options, SENSOR_LARGE_NUMBERS_OPTION, enabled);
+  return b.options;
+}
+
+function switchConfirmationEnabled(b) {
+  return !!(b && configOptionEnabled(b.options, SWITCH_CONFIRM_OFF_OPTION));
+}
+
+function switchConfirmationMessage(b) {
+  return configOptionValue(b && b.options, SWITCH_CONFIRM_MESSAGE_OPTION) ||
+    SWITCH_CONFIRM_DEFAULT_MESSAGE;
+}
+
+function switchConfirmationYesText(b) {
+  return configOptionValue(b && b.options, SWITCH_CONFIRM_YES_OPTION) ||
+    SWITCH_CONFIRM_DEFAULT_YES;
+}
+
+function switchConfirmationNoText(b) {
+  return configOptionValue(b && b.options, SWITCH_CONFIRM_NO_OPTION) ||
+    SWITCH_CONFIRM_DEFAULT_NO;
+}
+
+function normalizeSwitchConfirmationOptions(options) {
+  if (!configOptionEnabled(options, SWITCH_CONFIRM_OFF_OPTION)) return "";
+  var out = setConfigOption("", SWITCH_CONFIRM_OFF_OPTION, true);
+  var msg = configOptionValue(options, SWITCH_CONFIRM_MESSAGE_OPTION);
+  var yes = configOptionValue(options, SWITCH_CONFIRM_YES_OPTION);
+  var no = configOptionValue(options, SWITCH_CONFIRM_NO_OPTION);
+  if (msg && msg !== SWITCH_CONFIRM_DEFAULT_MESSAGE) {
+    out = setConfigOptionValue(out, SWITCH_CONFIRM_MESSAGE_OPTION, msg);
+  }
+  if (yes && yes !== SWITCH_CONFIRM_DEFAULT_YES) {
+    out = setConfigOptionValue(out, SWITCH_CONFIRM_YES_OPTION, yes);
+  }
+  if (no && no !== SWITCH_CONFIRM_DEFAULT_NO) {
+    out = setConfigOptionValue(out, SWITCH_CONFIRM_NO_OPTION, no);
+  }
+  return out;
+}
+
+function setSwitchConfirmationOptions(b, enabled, message, yesText, noText) {
+  if (!b) return "";
+  var out = setConfigOption("", SWITCH_CONFIRM_OFF_OPTION, !!enabled);
+  if (enabled) {
+    if (message && message !== SWITCH_CONFIRM_DEFAULT_MESSAGE) {
+      out = setConfigOptionValue(out, SWITCH_CONFIRM_MESSAGE_OPTION, message);
+    }
+    if (yesText && yesText !== SWITCH_CONFIRM_DEFAULT_YES) {
+      out = setConfigOptionValue(out, SWITCH_CONFIRM_YES_OPTION, yesText);
+    }
+    if (noText && noText !== SWITCH_CONFIRM_DEFAULT_NO) {
+      out = setConfigOptionValue(out, SWITCH_CONFIRM_NO_OPTION, noText);
+    }
+  }
+  b.options = out;
   return b.options;
 }
 
@@ -170,16 +258,19 @@ function buttonConfigFields(b) {
   var type = b && b.type || "";
   var sensor = (type === "slider" || type === "climate") ? "" : (b && b.sensor || "");
   var unit = type === "climate" ? "" : (b && b.unit || "");
-  var icon = type === "climate" ? "Auto" : (b && b.icon || "Auto");
-  var iconOn = type === "climate" ? "Auto" : (b && b.icon_on || "Auto");
+  var icon = b && b.icon || "Auto";
+  var iconOn = b && b.icon_on || "Auto";
   var precision = b && b.precision || "";
   if (type === "climate") precision = normalizeClimatePrecisionConfig(precision);
   var options = b && b.options || "";
-  if (!(type === "sensor" && precision !== "text")) options = "";
+  if (type === "") {
+    options = normalizeSwitchConfirmationOptions(options);
+  } else if (!(type === "sensor" && precision !== "text")) {
+    options = "";
+  }
   if (!type && !sensor) {
     unit = "";
     precision = "";
-    options = "";
   }
   return trimConfigFields([
     b && b.entity || "",
@@ -447,12 +538,16 @@ function legacySubpageConfigSafe(sp) {
     var b = sp.buttons[i];
     var sensor = b.type === "climate" ? "" : (b.sensor || "");
     var unit = b.type === "climate" ? "" : (b.unit || "");
-    var icon = b.type === "climate" ? "Auto" : (b.icon || "Auto");
-    var iconOn = b.type === "climate" ? "Auto" : (b.icon_on || "Auto");
+    var icon = b.icon || "Auto";
+    var iconOn = b.icon_on || "Auto";
     var precision = b.precision || "";
     if (b.type === "climate") precision = normalizeClimatePrecisionConfig(precision);
     var options = b.options || "";
-    if (!(b.type === "sensor" && precision !== "text")) options = "";
+    if (!b.type) {
+      options = normalizeSwitchConfirmationOptions(options);
+    } else if (!(b.type === "sensor" && precision !== "text")) {
+      options = "";
+    }
     var fields = [b.entity || "", b.label || "", icon, iconOn, sensor, unit, b.type || "", precision, options];
     for (var j = 0; j < fields.length; j++) {
       if (String(fields[j] || "").indexOf("|") >= 0 || String(fields[j] || "").indexOf(":") >= 0) {
@@ -470,12 +565,16 @@ function serializeLegacySubpageConfig(sp) {
     var b = sp.buttons[i];
     var sensor = (b.type === "slider" || b.type === "climate") ? "" : (b.sensor || "");
     var unit = b.type === "climate" ? "" : (b.unit || "");
-    var icon = b.type === "climate" ? "Auto" : (b.icon || "Auto");
-    var iconOn = b.type === "climate" ? "Auto" : (b.icon_on || "Auto");
+    var icon = b.icon || "Auto";
+    var iconOn = b.icon_on || "Auto";
     var precision = b.precision || "";
     if (b.type === "climate") precision = normalizeClimatePrecisionConfig(precision);
     var options = b.options || "";
-    if (!(b.type === "sensor" && precision !== "text")) options = "";
+    if (!b.type) {
+      options = normalizeSwitchConfirmationOptions(options);
+    } else if (!(b.type === "sensor" && precision !== "text")) {
+      options = "";
+    }
     var fields = [b.entity || "", b.label || "", icon, iconOn, sensor, unit, b.type || "", precision, options];
     while (fields.length > 1 && !fields[fields.length - 1]) fields.pop();
     if (fields.length > 1 && fields[fields.length - 1] === "Auto") {
@@ -493,12 +592,16 @@ function serializeCompactSubpageConfig(sp) {
     var b = sp.buttons[i];
     var sensor = (b.type === "slider" || b.type === "climate") ? "" : (b.sensor || "");
     var unit = b.type === "climate" ? "" : (b.unit || "");
-    var icon = b.type === "climate" ? "Auto" : (b.icon || "Auto");
-    var iconOn = b.type === "climate" ? "Auto" : (b.icon_on || "Auto");
+    var icon = b.icon || "Auto";
+    var iconOn = b.icon_on || "Auto";
     var precision = b.precision || "";
     if (b.type === "climate") precision = normalizeClimatePrecisionConfig(precision);
     var options = b.options || "";
-    if (!(b.type === "sensor" && precision !== "text")) options = "";
+    if (!b.type) {
+      options = normalizeSwitchConfirmationOptions(options);
+    } else if (!(b.type === "sensor" && precision !== "text")) {
+      options = "";
+    }
     var fields = [
       subpageTypeCode(b.type || ""),
       encodeSubpageField(b.entity),

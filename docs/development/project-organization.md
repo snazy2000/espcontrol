@@ -74,6 +74,7 @@ The implementation is split into smaller internal headers:
 | `button_grid_actions.h` | Home Assistant action dispatch and button click handling |
 | `button_grid_sliders.h` | Slider cards, cover sliders, light temperature sliders, and media volume modal |
 | `button_grid_climate.h` | Climate card and modal behavior |
+| `button_grid_confirm.h` | Switch turn-off confirmation modal behavior |
 | `button_grid_media.h` | Media player status, metadata, progress, and controls |
 | `button_grid_subpages.h` | Subpage config parsing and dynamic subpage slot setup |
 | `button_grid_grid.h` | Main grid setup phases called from generated YAML |

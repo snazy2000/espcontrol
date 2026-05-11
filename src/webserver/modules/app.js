@@ -1221,6 +1221,10 @@ if (typeof globalThis !== "undefined" && globalThis.__ESPCONTROL_TEST_HOOKS__) {
   globalThis.__ESPCONTROL_TEST_HOOKS__.config = {
     parseButtonConfig: parseButtonConfig,
     serializeButtonConfig: serializeButtonConfig,
+    switchConfirmationEnabled: switchConfirmationEnabled,
+    switchConfirmationMessage: switchConfirmationMessage,
+    switchConfirmationYesText: switchConfirmationYesText,
+    switchConfirmationNoText: switchConfirmationNoText,
     parseSubpageConfig: parseSubpageConfig,
     serializeSubpageConfig: serializeSubpageConfig,
     parseBackOrderToken: parseBackOrderToken,

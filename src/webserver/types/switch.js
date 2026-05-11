@@ -110,6 +110,76 @@ registerButtonType("", {
       helpers.saveField("precision", "");
       setSensorMode("numeric", false);
     });
+
+    var confirmOn = switchConfirmationEnabled(b);
+    var confirmToggleSection = helpers.toggleSection(
+      "Confirmation Required",
+      helpers.idPrefix + "confirm-toggle",
+      confirmOn
+    );
+    var confirmToggle = confirmToggleSection.toggle;
+    var confirmSection = confirmToggleSection.section;
+    panel.appendChild(confirmToggle.row);
+    if (confirmOn) confirmSection.classList.add("sp-visible");
+
+    var messageField = helpers.textField(
+      "Message",
+      helpers.idPrefix + "confirm-message",
+      switchConfirmationMessage(b),
+      SWITCH_CONFIRM_DEFAULT_MESSAGE
+    );
+    var messageInput = messageField.input;
+    messageInput.maxLength = 72;
+    confirmSection.appendChild(messageField.field);
+
+    var yesField = helpers.textField(
+      "Confirm Button",
+      helpers.idPrefix + "confirm-yes",
+      switchConfirmationYesText(b),
+      SWITCH_CONFIRM_DEFAULT_YES
+    );
+    var yesInput = yesField.input;
+    yesInput.maxLength = 20;
+    confirmSection.appendChild(yesField.field);
+
+    var noField = helpers.textField(
+      "Cancel Button",
+      helpers.idPrefix + "confirm-no",
+      switchConfirmationNoText(b),
+      SWITCH_CONFIRM_DEFAULT_NO
+    );
+    var noInput = noField.input;
+    noInput.maxLength = 20;
+    confirmSection.appendChild(noField.field);
+
+    panel.appendChild(confirmSection);
+
+    function saveConfirmationOptions() {
+      setSwitchConfirmationOptions(
+        b,
+        confirmToggle.input.checked,
+        messageInput.value || SWITCH_CONFIRM_DEFAULT_MESSAGE,
+        yesInput.value || SWITCH_CONFIRM_DEFAULT_YES,
+        noInput.value || SWITCH_CONFIRM_DEFAULT_NO
+      );
+      helpers.saveField("options", b.options);
+    }
+
+    confirmToggle.input.addEventListener("change", function () {
+      confirmSection.classList.toggle("sp-visible", this.checked);
+      if (this.checked) {
+        if (!messageInput.value) messageInput.value = SWITCH_CONFIRM_DEFAULT_MESSAGE;
+        if (!yesInput.value) yesInput.value = SWITCH_CONFIRM_DEFAULT_YES;
+        if (!noInput.value) noInput.value = SWITCH_CONFIRM_DEFAULT_NO;
+      }
+      saveConfirmationOptions();
+    });
+
+    [messageInput, yesInput, noInput].forEach(function (input) {
+      input.addEventListener("input", saveConfirmationOptions);
+      input.addEventListener("change", saveConfirmationOptions);
+      input.addEventListener("blur", saveConfirmationOptions);
+    });
   },
   renderPreview: function (b, helpers) {
     var label = b.label || b.entity || "Configure";

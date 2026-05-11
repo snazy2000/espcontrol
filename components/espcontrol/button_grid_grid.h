@@ -1058,7 +1058,19 @@ inline void grid_phase2(
         }
 
         add_parent_indicator(sb_cfg.entity);
-        add_subpage_toggle_click(sb_btn, sb_cfg.entity, false);
+        ParsedCfg *click_ctx = new ParsedCfg(sb_cfg);
+        lv_obj_add_event_cb(sb_btn, [](lv_event_t *e) {
+          ParsedCfg *c = (ParsedCfg *)lv_event_get_user_data(e);
+          lv_obj_t *target = static_cast<lv_obj_t *>(lv_event_get_target(e));
+          if (!c || c->entity.empty()) return;
+          if (switch_confirmation_enabled(*c) && target &&
+              lv_obj_has_state(target, LV_STATE_CHECKED) &&
+              !is_button_entity(c->entity)) {
+            switch_confirmation_open_modal(*c, target);
+          } else {
+            send_toggle_action(c->entity);
+          }
+        }, LV_EVENT_CLICKED, click_ctx);
       }
     }
 

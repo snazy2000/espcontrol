@@ -32,6 +32,7 @@
 #include "button_grid_actions.h"
 #include "button_grid_sliders.h"
 #include "button_grid_climate.h"
+#include "button_grid_confirm.h"
 #include "network_status.h"
 #include "button_grid_media.h"
 #include "button_grid_subpages.h"

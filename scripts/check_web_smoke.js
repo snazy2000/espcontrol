@@ -51,6 +51,24 @@ const encoded = hooks.serializeButtonConfig(button);
 assert.strictEqual(encoded, "light.kitchen;Kitchen;Auto;Lightbulb");
 assert.deepStrictEqual(plain(hooks.parseButtonConfig(encoded)), button);
 
+const confirmationButton = {
+  entity: "switch.printer",
+  label: "3D Printer",
+  icon: "Printer 3D",
+  icon_on: "Printer 3D",
+  sensor: "",
+  unit: "",
+  type: "",
+  precision: "",
+  options: "confirm_off,confirm_message=Stop the print?,confirm_yes=Power Down,confirm_no=Keep On",
+};
+const confirmationRoundTrip = hooks.parseButtonConfig(hooks.serializeButtonConfig(confirmationButton));
+assert.deepStrictEqual(plain(confirmationRoundTrip), confirmationButton);
+assert.strictEqual(hooks.switchConfirmationEnabled(confirmationRoundTrip), true);
+assert.strictEqual(hooks.switchConfirmationMessage(confirmationRoundTrip), "Stop the print?");
+assert.strictEqual(hooks.switchConfirmationYesText(confirmationRoundTrip), "Power Down");
+assert.strictEqual(hooks.switchConfirmationNoText(confirmationRoundTrip), "Keep On");
+
 assert.strictEqual(hooks.normalizeTemperatureUnit("fahrenheit"), "\u00b0F");
 assert.strictEqual(hooks.normalizeTemperatureUnit("centigrade"), "\u00b0C");
 assert.strictEqual(hooks.normalizeScreensaverAction("Screen Dimmed"), "dim");

@@ -92,7 +92,7 @@ inline SubpageBtn normalize_subpage_btn(SubpageBtn b) {
     b.icon = "Auto";
     b.icon_on = "Auto";
   }
-  if (b.type != "sensor" || b.precision == "text") {
+  if (!b.type.empty() && (b.type != "sensor" || b.precision == "text")) {
     b.options.clear();
   }
   return b;
